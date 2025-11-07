@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="MoonBot UDP Commander - Профессиональное управление торговыми ботами">
+  <meta name="theme-color" content="#00f5ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MoonBot">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <title>MoonBot UDP Commander</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: #0a0e27;
+      color: #ffffff;
+    }
+    
+    code {
+      font-family: 'Courier New', monospace;
+    }
+    
+    #root {
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+  
+  <!-- Service Worker регистрация -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('✅ Service Worker зарегистрирован:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('❌ Ошибка регистрации Service Worker:', error);
+          });
+      });
+    }
+    
+    // Запрос разрешения на уведомления
+    if ('Notification' in window && 'serviceWorker' in navigator) {
+      if (Notification.permission === 'default') {
+        // Разрешение будет запрошено при входе в систему
+      }
+    }
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,83 @@
+# ==================== БЕЗОПАСНОСТЬ ====================
+# СЕКРЕТНЫЕ КЛЮЧИ - НЕ ЗАГРУЖАТЬ В GIT!
+.env
+*.env
+backend/.env
+backend/secret_key.txt
+backend/encryption_key.txt
+
+# БАЗЫ ДАННЫХ - ЛИЧНЫЕ ДАННЫЕ!
+*.db
+*.sqlite
+*.sqlite3
+backend/moonbot.db
+backend/*.db
+
+# ЛОГИ - МОГУТ СОДЕРЖАТЬ ЧУВСТВИТЕЛЬНУЮ ИНФУ
+*.log
+backend/*.log
+backend/backend.log
+backend/backend-error.log
+backend/scheduler.log
+backend_crash.log
+
+# ВРЕМЕННЫЕ ФАЙЛЫ PYTHON
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ВИРТУАЛЬНОЕ ОКРУЖЕНИЕ
+venv/
+env/
+ENV/
+.venv
+
+# NODE_MODULES - ОГРОМНАЯ ПАПКА!
+frontend/node_modules/
+node_modules/
+
+# PRODUCTION BUILD FRONTEND
+frontend/dist/
+frontend/build/
+
+# NSSM (Windows Service Manager)
+nssm.exe
+nssm/
+
+# IDE И РЕДАКТОРЫ
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# WINDOWS
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ВРЕМЕННЫЕ ФАЙЛЫ
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ЛОГИ CLEANUP
+AUDIT-UNUSED-FILES.txt
+PROJECT-MAP.txt
+CLEANUP-UNUSED-FILES.bat
+
+# БАТНИКИ ДЛЯ ТЕСТОВ (если есть)
+TEST-*.bat
+DEBUG-*.bat
+TEMP-*.bat
+
+# PACKAGE LOCK (можно не коммитить)
+frontend/package-lock.json

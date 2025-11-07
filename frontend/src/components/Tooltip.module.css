@@ -1,0 +1,128 @@
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.icon {
+  color: var(--accent-secondary);
+  font-size: 1rem;
+  transition: color 0.3s;
+}
+
+.icon:hover {
+  color: var(--accent-primary);
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 10000;
+  pointer-events: none;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltipContent {
+  background: linear-gradient(135deg, #0a0e27 0%, #161b3a 100%);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 250px;
+  border: 1px solid var(--accent-primary);
+  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.2),
+              0 0 20px rgba(0, 245, 255, 0.1);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Arrow styles */
+.arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+
+/* Position: top */
+.top {
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.arrow-top {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0 6px;
+  border-color: var(--accent-primary) transparent transparent transparent;
+}
+
+/* Position: bottom */
+.bottom {
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.arrow-bottom {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--accent-primary) transparent;
+}
+
+/* Position: left */
+.left {
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.arrow-left {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 0 6px 6px;
+  border-color: transparent transparent transparent var(--accent-primary);
+}
+
+/* Position: right */
+.right {
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.arrow-right {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px 6px 6px 0;
+  border-color: transparent var(--accent-primary) transparent transparent;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tooltipContent {
+    max-width: 200px;
+    font-size: 0.8rem;
+    padding: 0.6rem 0.8rem;
+  }
+}
+
+

@@ -1,0 +1,58 @@
+/* Network Status Banner */
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  z-index: 10000;
+  font-weight: 600;
+  font-size: 0.9rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.offline {
+  background: linear-gradient(135deg, #ff0055 0%, #cc0044 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(255, 0, 85, 0.5);
+}
+
+.online {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+  color: #0a1628;
+  box-shadow: 0 2px 10px rgba(0, 255, 136, 0.5);
+}
+
+.icon {
+  font-size: 1.2rem;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .banner {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .icon {
+    font-size: 1rem;
+  }
+}
+
+
+
+
+

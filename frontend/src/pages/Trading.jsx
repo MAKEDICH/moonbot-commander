@@ -1,0 +1,118 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Orders from './Orders';
+import SQLLogs from './SQLLogs';
+import TradingStats from './TradingStats';
+import StrategyComparison from './StrategyComparison';
+import ActivityHeatmap from './ActivityHeatmap';
+import styles from './Trading.module.css';
+
+const Trading = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Определяем активную вкладку из URL
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path.includes('/trading/logs')) return 'logs';
+    if (path.includes('/trading/stats')) return 'stats';
+    if (path.includes('/trading/strategies')) return 'strategies';
+    if (path.includes('/trading/heatmap')) return 'heatmap';
+    return 'orders'; // По умолчанию
+  };
+
+  const [activeTab, setActiveTab] = useState(getActiveTab());
+  
+  // ОБЩЕЕ состояние автообновления для всех подвкладок Торговли
+  const [autoRefresh, setAutoRefresh] = useState(() => {
+    const saved = localStorage.getItem('trading_autoRefresh');
+    return saved !== null ? saved === 'true' : false;
+  });
+
+  // Сохраняем состояние автообновления в localStorage
+  useEffect(() => {
+    localStorage.setItem('trading_autoRefresh', autoRefresh.toString());
+  }, [autoRefresh]);
+
+  // Обновляем вкладку при изменении URL
+  useEffect(() => {
+    setActiveTab(getActiveTab());
+  }, [location.pathname]);
+
+  // При первом заходе перенаправляем на orders если путь просто /trading
+  useEffect(() => {
+    if (location.pathname === '/trading' || location.pathname === '/trading/') {
+      navigate('/trading/orders', { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    navigate(`/trading/${tab}`);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'orders':
+        return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} />;
+      case 'logs':
+        return <SQLLogs autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} />;
+      case 'stats':
+        return <TradingStats autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} />;
+      case 'strategies':
+        return <StrategyComparison />;
+      case 'heatmap':
+        return <ActivityHeatmap />;
+      default:
+        return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} />;
+    }
+  };
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1>📊 Торговля</h1>
+      </div>
+
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === 'orders' ? styles.active : ''}`}
+          onClick={() => handleTabChange('orders')}
+        >
+          📈 Ордера
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'logs' ? styles.active : ''}`}
+          onClick={() => handleTabChange('logs')}
+        >
+          📋 SQL Logs
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'stats' ? styles.active : ''}`}
+          onClick={() => handleTabChange('stats')}
+        >
+          📊 Статистика
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'strategies' ? styles.active : ''}`}
+          onClick={() => handleTabChange('strategies')}
+        >
+          🎯 Стратегии
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'heatmap' ? styles.active : ''}`}
+          onClick={() => handleTabChange('heatmap')}
+        >
+          🔥 Heatmap
+        </button>
+      </div>
+
+      <div className={styles.content}>
+        {renderContent()}
+      </div>
+    </div>
+  );
+};
+
+export default Trading;
+

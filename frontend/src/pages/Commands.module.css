@@ -1,0 +1,742 @@
+.container {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.header .icon {
+  font-size: 28px;
+  color: var(--accent-primary);
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Панель серверов */
+.serversPanel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: calc(100vh - 200px);
+  max-height: 800px;
+}
+
+.serversPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.serversPanelHeader h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selectionInfo {
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+/* Поиск */
+.searchBox {
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
+}
+
+.searchInput::placeholder {
+  color: var(--text-muted);
+}
+
+/* Фильтр по группам */
+.groupFilter {
+  margin-top: -8px;
+}
+
+.groupSelect {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.groupSelect:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+/* Кнопки выбора */
+.selectionButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.selectBtn, .deselectBtn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: var(--transition);
+}
+
+.selectBtn {
+  background: var(--accent-gradient);
+  color: white;
+}
+
+.selectBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.deselectBtn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.deselectBtn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.selectBtn:disabled, .deselectBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Список серверов */
+.serversList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.serversList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.serversList::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+}
+
+.serversList::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.serversList::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.noServers {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.serverItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.serverItem:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  transform: translateX(4px);
+}
+
+.serverItem.selected {
+  background: rgba(0, 245, 255, 0.1);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.1);
+}
+
+.checkbox {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.checkboxChecked {
+  color: var(--accent-primary);
+}
+
+.checkboxUnchecked {
+  color: var(--text-muted);
+}
+
+.serverInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.serverName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.serverDetails {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
+}
+
+.serverGroup {
+  color: var(--accent-primary);
+}
+
+/* Панель команд */
+.commandPanel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Секция Botname */
+.botnameSection {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.botnameCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.botnameCheckbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.botnameCheckbox code {
+  background: var(--bg-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: var(--accent-primary);
+}
+
+.botnameInput {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.botnameHint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.botnameHint code {
+  background: var(--bg-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: var(--accent-primary);
+}
+
+/* Форма */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 120px;
+  transition: var(--transition);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
+}
+
+.input:disabled,
+.textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.commandsCount {
+  color: var(--accent-primary);
+  font-weight: normal;
+  font-size: 13px;
+}
+
+.sendButton {
+  padding: 14px 24px;
+  background: var(--accent-gradient);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sendButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.sendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Конструктор команд */
+.constructor {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.constructor h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.constructorButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.constructorBtn {
+  padding: 8px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.constructorBtn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: translateY(-2px);
+}
+
+.constructorBtn.active {
+  background: rgba(0, 245, 255, 0.1);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.constructorBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.constructorForm {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.constructorHeader {
+  margin-bottom: 16px;
+}
+
+.constructorHeader strong {
+  display: block;
+  font-size: 16px;
+  color: var(--accent-primary);
+  font-family: 'Courier New', monospace;
+  margin-bottom: 4px;
+}
+
+.constructorDesc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.constructorFields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.constructorField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.constructorField label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.constructorField .optional {
+  font-weight: normal;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.constructorAddBtn {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--accent-gradient);
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.constructorAddBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.constructorAddBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Быстрые команды */
+.quickCommands {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.quickCommands h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.commandButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quickCommand {
+  padding: 8px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--accent-primary);
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.quickCommand:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+}
+
+.quickCommand:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Ответ */
+.response {
+  border-radius: 8px;
+  border: 1px solid;
+  padding: 16px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.response.success {
+  background: rgba(0, 255, 136, 0.05);
+  border-color: var(--success);
+}
+
+.response.error {
+  background: rgba(255, 0, 85, 0.05);
+  border-color: var(--error);
+}
+
+.responseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.responseTime {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.responseText {
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text-primary);
+}
+
+/* Массовая отправка */
+.summary {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.summary div {
+  flex: 1;
+  text-align: center;
+}
+
+.bulkResults {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.bulkResult {
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.bulkResult.success {
+  background: rgba(0, 255, 136, 0.05);
+  border-color: var(--success);
+}
+
+.bulkResult.error {
+  background: rgba(255, 0, 85, 0.05);
+  border-color: var(--error);
+}
+
+.bulkResultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.bulkResultCommand {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.bulkResultCommand code {
+  background: var(--bg-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent-primary);
+}
+
+.bulkResultStatus {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.bulkResultText {
+  padding: 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text-primary);
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+  .content {
+    grid-template-columns: 350px 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .serversPanel {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .selectionButtons {
+    flex-direction: column;
+  }
+
+  .commandButtons {
+    justify-content: center;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
