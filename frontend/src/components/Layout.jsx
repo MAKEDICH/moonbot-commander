@@ -96,7 +96,10 @@ const Layout = () => {
         <div className={styles.logoSection}>
           <div className={styles.logo}>
             <img src={moonbotIcon} alt="Moonbot" className={styles.logoIcon} />
-            <h1 className={styles.logoText}>Moonbot</h1>
+            <div className={styles.logoTextContainer}>
+              <h1 className={styles.logoText}>Moonbot</h1>
+              <span className={styles.logoSubtext}>Commander</span>
+            </div>
           </div>
           <button 
             className={styles.donateBtn} 
