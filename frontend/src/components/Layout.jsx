@@ -249,12 +249,6 @@ const Layout = () => {
                     <p className={styles.warningText}>⚠️ <strong>Важно:</strong> Отправляйте только активы из сети TRON (TRC20 токены)! Активы из других сетей будут безвозвратно потеряны.</p>
                   </div>
                 </div>
-
-                <p className={styles.recommendText}>💡 <strong>Рекомендуем для донатов:</strong></p>
-                <ul className={styles.recommendList}>
-                  <li><strong>USDT (BEP20)</strong> через BSC - самые низкие комиссии (~$0.20)</li>
-                  <li><strong>USDT (TRC20)</strong> через TRON - тоже низкие комиссии (~$1) и очень популярен</li>
-                </ul>
               </div>
 
               <p className={styles.donateFooter}>

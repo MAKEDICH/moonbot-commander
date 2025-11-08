@@ -227,12 +227,6 @@ TXjF9tLs8MLJIkJVwUfiuNgYhwZXc91k6T
 
 ⚠️ **Important:** Send only TRON network assets (TRC20 tokens) to this address! Assets from other networks will be permanently lost.
 
----
-
-💡 **Recommended for donations:** 
-- **USDT (BEP20)** via BSC - lowest fees (~$0.20)
-- **USDT (TRC20)** via TRON - also low fees (~$1) and very popular
-
 Your support helps maintain and improve MoonBot Commander. Thank you! 🙏
 
 ## 📧 Support
