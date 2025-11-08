@@ -617,6 +617,62 @@ const ScheduledCommands = () => {
 
               <div className={styles.formGroup}>
                 <label>Команды (каждая с новой строки) *</label>
+                
+                {/* Справочник команд (пресеты) */}
+                <div className={styles.commandPresets}>
+                  <div className={styles.presetsTitle}>📝 Быстрые команды:</div>
+                  <div className={styles.presetsGrid}>
+                    <button
+                      type="button"
+                      className={styles.presetBtn}
+                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'list'})}
+                      title="Список активных позиций"
+                    >
+                      + list
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.presetBtn}
+                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'report'})}
+                      title="Отчёт о торговле"
+                    >
+                      + report
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.presetBtn}
+                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'START'})}
+                      title="Запустить торговлю"
+                    >
+                      + START
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.presetBtn}
+                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'STOP'})}
+                      title="Остановить торговлю"
+                    >
+                      + STOP
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.presetBtn}
+                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'SELL'})}
+                      title="Закрыть все позиции"
+                    >
+                      + SELL
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.presetBtn}
+                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'status'})}
+                      title="Статус бота"
+                    >
+                      + status
+                    </button>
+                  </div>
+                </div>
+                
                 <textarea
                   value={formData.commands}
                   onChange={(e) => setFormData({ ...formData, commands: e.target.value })}
