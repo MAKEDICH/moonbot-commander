@@ -476,7 +476,187 @@
 }
 
 /* Mobile Responsive */
+
+/* Кнопка гамбургер-меню (показывается только на мобильных) */
+.mobileMenuToggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1001;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 24px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mobileMenuToggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 16px rgba(0, 245, 255, 0.3);
+}
+
+.mobileMenuToggle:active {
+  transform: scale(0.95);
+}
+
+/* Оверлей для мобильного меню */
+.mobileOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+  animation: fadeIn 0.3s ease-out;
+}
+
 @media (max-width: 768px) {
+  /* Показываем кнопку гамбургера */
+  .mobileMenuToggle {
+    display: flex;
+  }
+
+  /* Показываем оверлей */
+  .mobileOverlay {
+    display: block;
+  }
+
+  /* Sidebar скрыт по умолчанию, выезжает слева */
+  .sidebar {
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Когда меню открыто */
+  .sidebar.sidebarOpen {
+    left: 0;
+  }
+
+  /* Main контент занимает всю ширину */
+  .main {
+    margin-left: 0;
+    width: 100%;
+    padding: 80px 16px 16px 16px; /* Отступ сверху для кнопки гамбургера */
+  }
+
+  /* Навигация вертикальная на мобильных */
+  .nav {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+  }
+
+  /* Показываем текст пунктов меню */
+  .navItem span {
+    display: inline;
+  }
+
+  /* Показываем детали пользователя */
+  .userDetails {
+    display: block;
+  }
+
+  /* Логотип немного меньше */
+  .logoText {
+    font-size: 20px;
+  }
+
+  .logoIcon {
+    font-size: 28px;
+  }
+
+  /* Донейт кнопка компактнее */
+  .donateBtn {
+    padding: 8px 10px;
+  }
+
+  /* Модальное окно доната на весь экран */
+  .donateModal {
+    width: 95vw;
+    max-height: 85vh;
+    border-radius: 12px;
+  }
+
+  .donateHeader {
+    padding: 24px 16px 16px;
+  }
+
+  .donateHeader h2 {
+    font-size: 22px;
+  }
+
+  .donateIcon {
+    font-size: 36px;
+  }
+
+  .donateContent {
+    padding: 24px 16px;
+  }
+
+  .thankYouText {
+    font-size: 18px;
+  }
+
+  .donateDescription {
+    font-size: 14px;
+  }
+
+  .walletAddress code {
+    font-size: 12px;
+  }
+
+  .networkBadge {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 360px) {
+  .sidebar {
+    max-width: 90vw;
+  }
+
+  .mobileMenuToggle {
+    width: 44px;
+    height: 44px;
+    top: 12px;
+    left: 12px;
+  }
+
+  .main {
+    padding: 72px 12px 12px 12px;
+  }
+
+  .logoText {
+    font-size: 18px;
+  }
+
+  .walletAddress code {
+    font-size: 11px;
+  }
+}
+
+/* Старые стили мобильной версии - удаляем */
+/* @media (max-width: 768px) {
   .sidebar {
     width: 100%;
     height: auto;
@@ -501,7 +681,7 @@
   .userDetails {
     display: none;
   }
-}
+} */
 
 
 

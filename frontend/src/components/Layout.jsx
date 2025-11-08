@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiServer, FiCommand, FiClock, FiLogOut, FiActivity, FiUsers, FiKey, FiCalendar, FiHeart, FiCopy, FiCheck, FiTrendingUp } from 'react-icons/fi';
+import { FiHome, FiServer, FiCommand, FiClock, FiLogOut, FiActivity, FiUsers, FiKey, FiCalendar, FiHeart, FiCopy, FiCheck, FiTrendingUp, FiMenu, FiX } from 'react-icons/fi';
 import styles from './Layout.module.css';
 
 const Layout = () => {
@@ -9,6 +9,7 @@ const Layout = () => {
   const [showDonateModal, setShowDonateModal] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(null);
   const [secretRevealed, setSecretRevealed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const copyToClipboard = async (text, type) => {
     try {
@@ -41,9 +42,56 @@ const Layout = () => {
     { path: '/trading/orders', icon: <FiTrendingUp />, label: 'Торговля' },
   ];
 
+  // Закрытие меню при клике на ссылку (для мобильных)
+  const handleNavClick = () => {
+    setMobileMenuOpen(false);
+  };
+
+  // Закрытие меню по нажатию Escape
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [mobileMenuOpen]);
+
+  // Блокировка скролла body когда меню открыто
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <div className={styles.layout}>
-      <aside className={styles.sidebar}>
+      {/* Кнопка гамбургер-меню для мобильных */}
+      <button 
+        className={styles.mobileMenuToggle} 
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Открыть меню"
+      >
+        {mobileMenuOpen ? <FiX /> : <FiMenu />}
+      </button>
+
+      {/* Оверлей для мобильного меню */}
+      {mobileMenuOpen && (
+        <div 
+          className={styles.mobileOverlay} 
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logoSection}>
           <div className={styles.logo}>
             <FiActivity className={styles.logoIcon} />
@@ -66,6 +114,7 @@ const Layout = () => {
               className={({ isActive }) =>
                 `${styles.navItem} ${isActive ? styles.active : ''}`
               }
+              onClick={handleNavClick}
             >
               {item.icon}
               <span>{item.label}</span>

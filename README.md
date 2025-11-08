@@ -1,4 +1,8 @@
-# 🤖 MoonBot Commander
+<p align="center">
+  <img src="logo.png" alt="Moonbot Logo" width="400">
+</p>
+
+# Moonbot Commander
 
 Professional web application for remote management of MoonBot trading bots via UDP protocol.
 
@@ -36,7 +40,7 @@ MoonBot Trading Bots
 
 1. **Clone repository:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/moonbot-commander.git
+git clone https://github.com/MAKEDICH/moonbot-commander.git
 cd moonbot-commander
 ```
 
@@ -208,5 +212,5 @@ For issues and questions:
 
 ---
 
-**Made with ❤️ for MoonBot traders**
+**Made with ❤️ for Moonbot traders**
 
