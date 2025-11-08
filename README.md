@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="moonbot-icon.png" alt="Moonbot Logo" width="120">
-</p>
-
-# Moonbot Commander
+# <img src="moonbot-icon.png" alt="Moonbot Logo" width="32" align="left"> Moonbot Commander
 
 Professional web application for remote management of MoonBot trading bots via UDP protocol.
 
