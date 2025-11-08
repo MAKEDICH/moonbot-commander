@@ -15,6 +15,7 @@ const ScheduledCommands = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsInterval, setSettingsInterval] = useState(5);
   const [presets, setPresets] = useState([]);  // Пресеты команд
+  const [showPresetHelpModal, setShowPresetHelpModal] = useState(false);  // Модальное окно помощи
   const [schedulerEnabled, setSchedulerEnabled] = useState(() => {
     // Загружаем из localStorage или по умолчанию false
     const saved = localStorage.getItem('schedulerEnabled');
@@ -634,29 +635,44 @@ const ScheduledCommands = () => {
                 <label>Команды (каждая с новой строки) *</label>
                 
                 {/* Пресеты команд */}
-                {presets.length > 0 && (
-                  <div className={styles.commandPresets}>
-                    <div className={styles.presetsTitle}>📋 Готовые сценарии (пресеты):</div>
-                    <div className={styles.presetsGrid}>
-                      {presets.map(preset => (
-                        <div key={preset.id} className={styles.presetWrapper}>
-                          <button
-                            type="button"
-                            className={styles.presetBtn}
-                            onClick={() => handleLoadPreset(preset)}
-                            title={`${preset.name}\n\nКоманды:\n${preset.commands}`}
-                          >
-                            {preset.button_number}
-                          </button>
-                          <div className={styles.presetLabel}>{preset.name}</div>
-                        </div>
-                      ))}
+                <div className={styles.commandPresets}>
+                  {presets.length > 0 ? (
+                    <>
+                      <div className={styles.presetsTitle}>📋 Готовые сценарии (пресеты):</div>
+                      <div className={styles.presetsGrid}>
+                        {presets.map(preset => (
+                          <div key={preset.id} className={styles.presetWrapper}>
+                            <button
+                              type="button"
+                              className={styles.presetBtn}
+                              onClick={() => handleLoadPreset(preset)}
+                              title={`${preset.name}\n\nКоманды:\n${preset.commands}`}
+                            >
+                              {preset.button_number}
+                            </button>
+                            <div className={styles.presetLabel}>{preset.name}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className={styles.presetHint}>
+                        💡 Нажмите на кнопку чтобы загрузить команды из пресета
+                      </div>
+                    </>
+                  ) : (
+                    <div className={styles.noPresetsBlock}>
+                      <div className={styles.noPresetsIcon}>📋</div>
+                      <div 
+                        className={styles.noPresetsText}
+                        onClick={() => setShowPresetHelpModal(true)}
+                      >
+                        Пресеты не созданы
+                      </div>
+                      <div className={styles.noPresetsHint}>
+                        👆 Нажмите чтобы узнать как создать
+                      </div>
                     </div>
-                    <div className={styles.presetHint}>
-                      💡 Нажмите на кнопку чтобы загрузить команды из пресета
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
                 
                 <textarea
                   value={formData.commands}
@@ -997,6 +1013,81 @@ const ScheduledCommands = () => {
                 className={styles.cancelBtnModal}
               >
                 <FiX /> Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно помощи по пресетам */}
+      {showPresetHelpModal && (
+        <div className={styles.modal} onClick={() => setShowPresetHelpModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <button 
+              className={styles.closeBtn}
+              onClick={() => setShowPresetHelpModal(false)}
+            >
+              <FiX />
+            </button>
+
+            <div className={styles.modalHeader}>
+              <h2>📋 Как создать пресеты команд</h2>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.helpSection}>
+                <h3>🎯 Что такое пресеты?</h3>
+                <p>
+                  Пресеты — это сохранённые наборы команд, которые можно быстро загрузить одним кликом.
+                  Например: "Утренний рестарт", "Экстренная остановка", "Отчёт по всем ботам" и т.д.
+                </p>
+              </div>
+
+              <div className={styles.helpSection}>
+                <h3>📝 Как создать пресет:</h3>
+                <ol className={styles.instructionList}>
+                  <li>
+                    <strong>Перейдите во вкладку "Команды"</strong>
+                    <p>В левом меню нажмите на раздел "Команды"</p>
+                  </li>
+                  <li>
+                    <strong>Введите команды</strong>
+                    <p>В поле "Команды (каждая с новой строки)" напишите нужные команды, например:</p>
+                    <pre className={styles.codeExample}>list{'\n'}report{'\n'}START</pre>
+                  </li>
+                  <li>
+                    <strong>Введите название пресета</strong>
+                    <p>Внизу формы найдите поле "Название пресета" и введите понятное имя</p>
+                  </li>
+                  <li>
+                    <strong>Сохраните</strong>
+                    <p>Нажмите кнопку "💾 Сохранить как пресет"</p>
+                  </li>
+                  <li>
+                    <strong>Готово!</strong>
+                    <p>Пресет появится в виде пронумерованной кнопки (1, 2, 3...) и станет доступен здесь</p>
+                  </li>
+                </ol>
+              </div>
+
+              <div className={styles.helpSection}>
+                <h3>💡 Полезные примеры пресетов:</h3>
+                <ul className={styles.exampleList}>
+                  <li><strong>Проверка статуса:</strong> list, report, status</li>
+                  <li><strong>Запуск торговли:</strong> START</li>
+                  <li><strong>Остановка:</strong> STOP, SELL</li>
+                  <li><strong>Утренний рестарт:</strong> STOP, SELL, list, START</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button 
+                type="button"
+                onClick={() => setShowPresetHelpModal(false)}
+                className={styles.primaryBtn}
+              >
+                <FiCheck /> Понятно
               </button>
             </div>
           </div>
