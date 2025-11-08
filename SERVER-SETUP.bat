@@ -136,11 +136,19 @@ for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /C:"IPv4"') do (
 :ip_found
 set SERVER_IP=%SERVER_IP: =%
 
-REM Add server IP to CORS_ORIGINS in .env
+REM Add server IP to CORS_ORIGINS in .env (only if not already there)
 if defined SERVER_IP (
     echo Detected server IP: %SERVER_IP%
-    powershell -Command "(Get-Content .env) -replace 'CORS_ORIGINS=(.+)', \"CORS_ORIGINS=`$1,http://%SERVER_IP%:3000\" | Set-Content .env"
-    echo [OK] Added %SERVER_IP% to CORS_ORIGINS
+    
+    REM Check if IP already in CORS_ORIGINS
+    findstr /C:"http://%SERVER_IP%:3000" .env >nul 2>&1
+    if !errorlevel! neq 0 (
+        REM IP not found, add it
+        powershell -Command "(Get-Content .env) -replace 'CORS_ORIGINS=(.+)', \"CORS_ORIGINS=`$1,http://%SERVER_IP%:3000\" | Set-Content .env"
+        echo [OK] Added %SERVER_IP% to CORS_ORIGINS
+    ) else (
+        echo [OK] %SERVER_IP% already in CORS_ORIGINS
+    )
 ) else (
     echo [WARNING] Could not detect server IP, CORS may need manual configuration
 )
