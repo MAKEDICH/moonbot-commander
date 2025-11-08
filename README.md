@@ -1,16 +1,16 @@
 # <img src="moonbot-icon.png" alt="Moonbot Logo" width="32" align="left"> Moonbot Commander
 
-Professional web application for remote management of MoonBot trading bots via UDP protocol.
+Professional web application for remote management of Moonbot trading bots via UDP protocol.
 
 ## 📋 Features
 
-- **🎮 Real-time Control** - Send commands to multiple MoonBot instances
+- **🎮 Real-time Control** - Send commands to multiple Moonbot instances
 - **📊 Statistics Dashboard** - Track trading performance, P&L, and order history
 - **🔐 Secure Authentication** - JWT tokens + 2FA support
-- **📡 UDP Listeners** - Automatic data synchronization from MoonBots
+- **📡 UDP Listeners** - Automatic data synchronization from Moonbots
 - **⏰ Scheduled Commands** - Automation with cron-like scheduling
 - **👥 Group Management** - Organize bots into groups for bulk operations
-- **📝 SQL Query Interface** - Direct database queries to MoonBot
+- **📝 SQL Query Interface** - Direct database queries to Moonbot
 
 ## 🏗️ Architecture
 
@@ -21,7 +21,7 @@ Backend (FastAPI + Python)
     ↓
 UDP Protocol
     ↓
-MoonBot Trading Bots
+Moonbot Trading Bots
 ```
 
 ## 🚀 Quick Start
@@ -113,10 +113,10 @@ DATABASE_URL=sqlite:///./moonbot.db
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
-### MoonBot Configuration
+### Moonbot Configuration
 
-Add your MoonBot servers in the web interface:
-- **Host:** IP address of your MoonBot server
+Add your Moonbot servers in the web interface:
+- **Host:** IP address of your Moonbot server
 - **Port:** UDP port (default: 5005)
 - **Password:** HMAC password (if enabled)
 
@@ -227,7 +227,7 @@ TXjF9tLs8MLJ1kJVwUfiuNgYhwZXc91k6T
 
 ⚠️ **Important:** Send only TRON network assets (TRC20 tokens) to this address! Assets from other networks will be permanently lost.
 
-Your support helps maintain and improve MoonBot Commander. Thank you! 🙏
+Your support helps maintain and improve Moonbot Commander. Thank you! 🙏
 
 ## 📧 Support
 
