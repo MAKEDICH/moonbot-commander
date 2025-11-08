@@ -131,11 +131,15 @@ const Layout = () => {
             Поддержка проекта 💖
           </div>
           <div className={styles.supportWallet}>
-            <div className={styles.supportBadge}>EVM Networks</div>
-            <div className={styles.supportAddress}>0x374c083106189a364a3412dfb66297a4dc991af4</div>
+            <div className={styles.supportBadge}>EVM</div>
+            <div className={styles.supportAddress}>0x374c...1af4</div>
+          </div>
+          <div className={styles.supportWallet}>
+            <div className={styles.supportBadge}>TRON</div>
+            <div className={styles.supportAddress}>TXjF9t...k6T</div>
           </div>
           <div className={styles.supportNote}>
-            BSC, Ethereum, Polygon, Arbitrum и другие
+            BSC, Polygon, TRON - низкие комиссии
           </div>
         </div>
 
@@ -193,7 +197,7 @@ const Layout = () => {
               <div className={styles.walletSection}>
                 <div className={styles.walletItem}>
                   <div className={styles.walletLabel}>
-                    <span className={styles.networkBadge}>EVM Networks (одинадрес для всех сетей)</span>
+                    <span className={styles.networkBadge}>EVM Networks (один адрес для всех сетей)</span>
                   </div>
                   <div className={styles.walletAddress}>
                     <code>0x374c083106189a364a3412dfb66297a4dc991af4</code>
@@ -218,9 +222,39 @@ const Layout = () => {
                       <li><strong>Fantom</strong> - USDT, USDC, FTM | Комиссия: ~$0.05</li>
                     </ul>
                     <p className={styles.warningText}>⚠️ <strong>Важно:</strong> При отправке обязательно выберите правильную сеть! Один адрес работает во всех EVM-сетях, но токены отправленные не в ту сеть могут быть потеряны.</p>
-                    <p className={styles.recommendText}>💡 <strong>Рекомендуем:</strong> USDT через BSC (BEP20) - самые низкие комиссии и быстрое подтверждение.</p>
                   </div>
                 </div>
+
+                <div className={styles.walletItem}>
+                  <div className={styles.walletLabel}>
+                    <span className={styles.networkBadge}>TRON Network (TRC20)</span>
+                  </div>
+                  <div className={styles.walletAddress}>
+                    <code>TXjF9tLs8MLJIkJVwUfiuNgYhwZXc91k6T</code>
+                    <button
+                      className={styles.copyBtn}
+                      onClick={() => copyToClipboard('TXjF9tLs8MLJIkJVwUfiuNgYhwZXc91k6T', 'tron')}
+                      title="Копировать адрес"
+                    >
+                      {copiedAddress === 'tron' ? <FiCheck /> : <FiCopy />}
+                    </button>
+                  </div>
+                  <div className={styles.networksList}>
+                    <p><strong>Поддерживаемые токены:</strong></p>
+                    <ul>
+                      <li><strong>USDT (TRC20)</strong> - Комиссия: ~$1 ⭐</li>
+                      <li><strong>USDC (TRC20)</strong> - Комиссия: ~$1</li>
+                      <li><strong>TRX</strong> - Комиссия: ~$0.01</li>
+                    </ul>
+                    <p className={styles.warningText}>⚠️ <strong>Важно:</strong> Отправляйте только активы из сети TRON (TRC20 токены)! Активы из других сетей будут безвозвратно потеряны.</p>
+                  </div>
+                </div>
+
+                <p className={styles.recommendText}>💡 <strong>Рекомендуем для донатов:</strong></p>
+                <ul className={styles.recommendList}>
+                  <li><strong>USDT (BEP20)</strong> через BSC - самые низкие комиссии (~$0.20)</li>
+                  <li><strong>USDT (TRC20)</strong> через TRON - тоже низкие комиссии (~$1) и очень популярен</li>
+                </ul>
               </div>
 
               <p className={styles.donateFooter}>

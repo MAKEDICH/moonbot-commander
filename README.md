@@ -202,18 +202,36 @@ If you find this project useful and want to support its development, you can mak
 ```
 
 **Supported networks and tokens:**
-- **BSC (BNB Smart Chain)** - USDT (BEP20), USDC, BNB | Fee: ~$0.20
-- **Ethereum** - USDT (ERC20), USDC, ETH | Fee: ~$10-50
+- **BSC (BNB Smart Chain)** - USDT (BEP20), USDC, BNB | Fee: ~$0.20 ⭐
 - **Polygon** - USDT, USDC, MATIC | Fee: ~$0.01
 - **Arbitrum** - USDT, USDC, ETH | Fee: ~$0.10
 - **Optimism** - USDT, USDC, ETH | Fee: ~$0.10
 - **Base** - USDT, USDC, ETH | Fee: ~$0.10
+- **Ethereum** - USDT (ERC20), USDC, ETH | Fee: ~$10-50
 - **Avalanche C-Chain** - USDT, USDC, AVAX | Fee: ~$0.50
 - **Fantom** - USDT, USDC, FTM | Fee: ~$0.05
 
 ⚠️ **Important:** When sending crypto, make sure to select the correct network! The same address works across all EVM networks, but tokens sent on the wrong network may be lost.
 
-💡 **Recommended for donations:** USDT on BSC (BEP20) - lowest fees and fastest confirmation.
+---
+
+**TRON Network (TRC20):**
+```
+TXjF9tLs8MLJIkJVwUfiuNgYhwZXc91k6T
+```
+
+**Supported tokens:**
+- **USDT (TRC20)** - Fee: ~$1 ⭐
+- **USDC (TRC20)** - Fee: ~$1
+- **TRX** - Fee: ~$0.01
+
+⚠️ **Important:** Send only TRON network assets (TRC20 tokens) to this address! Assets from other networks will be permanently lost.
+
+---
+
+💡 **Recommended for donations:** 
+- **USDT (BEP20)** via BSC - lowest fees (~$0.20)
+- **USDT (TRC20)** via TRON - also low fees (~$1) and very popular
 
 Your support helps maintain and improve MoonBot Commander. Thank you! 🙏
 
