@@ -126,19 +126,16 @@ Add your MoonBot servers in the web interface:
 - **CPU:** 1 vCore
 - **RAM:** 2 GB
 - **Disk:** 20 GB SSD
-- **Cost:** ~$10-20/month
 
 ### Recommended (50-100 bots)
 - **CPU:** 2 vCores
 - **RAM:** 4 GB
 - **Disk:** 40 GB SSD
-- **Cost:** ~$20-40/month
 
 ### Optimal per server (100+ bots)
 - **CPU:** 4 vCores
 - **RAM:** 8 GB
 - **Disk:** 80 GB NVMe
-- **Cost:** ~$40-80/month
 
 ## 🌐 Scaling
 
