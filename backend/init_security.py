@@ -23,7 +23,7 @@ def init_env_file():
     # Read existing .env if exists
     existing_env = {}
     if env_path.exists():
-        with open(env_path, 'r') as f:
+        with open(env_path, 'r', encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
@@ -60,7 +60,7 @@ DATABASE_URL=sqlite:///./moonbot_commander.db
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 """
     
-    with open(env_path, 'w') as f:
+    with open(env_path, 'w', encoding='utf-8') as f:
         f.write(env_content)
     
     print('[OK] .env file updated')
