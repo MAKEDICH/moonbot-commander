@@ -50,7 +50,7 @@ const Register = () => {
         <div className={styles.authHeader}>
           <div className={styles.logoContainer}>
             <img src={moonbotIcon} alt="Moonbot" className={styles.logoIcon} />
-            <h1 className={styles.logoText}>MoonBot Commander</h1>
+            <h1 className={styles.logoText}>Moonbot Commander</h1>
           </div>
           <h2 className={styles.authTitle}>Регистрация</h2>
           <p className={styles.authSubtitle}>Создайте аккаунт для управления ботами</p>

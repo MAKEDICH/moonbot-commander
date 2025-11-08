@@ -41,7 +41,7 @@ const Login = () => {
         <div className={styles.authHeader}>
           <div className={styles.logoContainer}>
             <img src={moonbotIcon} alt="Moonbot" className={styles.logoIcon} />
-            <h1 className={styles.logoText}>MoonBot Commander</h1>
+            <h1 className={styles.logoText}>Moonbot Commander</h1>
           </div>
           <h2 className={styles.authTitle}>Вход в систему</h2>
           <p className={styles.authSubtitle}>Управляйте своими торговыми ботами</p>
