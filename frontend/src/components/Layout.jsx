@@ -295,6 +295,16 @@ const Layout = () => {
                   <span className={styles.telegramIcon}>✈️</span>
                   Связаться в Telegram
                 </a>
+                <br />
+                <a 
+                  href="https://t.me/+HfcEre3V6gsxNTUy" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={styles.telegramLink}
+                >
+                  <span className={styles.telegramIcon}>👥</span>
+                  Группа Moonbot Commander
+                </a>
               </p>
             </div>
           </div>
