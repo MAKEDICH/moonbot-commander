@@ -9,21 +9,21 @@
 .moonbotInfo {
   background: linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(180, 0, 255, 0.05) 100%);
   border: 1px solid rgba(0, 245, 255, 0.2);
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
   backdrop-filter: blur(10px);
 }
 
 .moonbotContent {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .moonbotIcon {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
 }
 
@@ -38,8 +38,8 @@
 }
 
 .moonbotText h3 {
-  font-size: 1.2rem;
-  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  margin: 0 0 0.25rem 0;
   color: var(--text-primary);
 }
 
@@ -53,9 +53,9 @@
 
 .moonbotText p {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .moonbotText strong {
@@ -64,12 +64,12 @@
 }
 
 .moonbotLink {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
   background: var(--accent-gradient);
   color: white;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   text-decoration: none;
   white-space: nowrap;
   transition: all 0.3s;
