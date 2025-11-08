@@ -34,19 +34,50 @@ cd backend
 python check_keys.py >nul 2>&1
 if !errorlevel! neq 0 (
     echo.
-    echo [ERROR] Security keys in .env are invalid or corrupted!
+    echo [WARNING] Security keys in .env are invalid or corrupted!
     echo.
     echo This may happen if:
     echo   - .env file was manually edited incorrectly
     echo   - ENCRYPTION_KEY is invalid or placeholder text
     echo   - SECRET_KEY is too short or placeholder text
     echo.
-    echo SOLUTION:
-    echo   1. Run LOCAL-SETUP.bat to regenerate keys (will create new database)
-    echo   2. Or restore .env from backup if you have one
+    echo [ACTION] Auto-fixing security keys...
     echo.
-    pause
-    exit /b 1
+    
+    REM Backup and delete old database
+    if exist moonbot_commander.db (
+        echo Backing up old database...
+        if exist moonbot_commander.db.old del moonbot_commander.db.old >nul 2>&1
+        ren moonbot_commander.db moonbot_commander.db.old >nul 2>&1
+        echo [OK] Old database backed up to moonbot_commander.db.old
+    )
+    
+    REM Delete invalid .env
+    if exist .env (
+        echo Removing invalid .env file...
+        del .env >nul 2>&1
+        echo [OK] Invalid .env removed
+    )
+    
+    REM Generate new valid keys
+    echo Generating new security keys...
+    python init_security.py
+    
+    REM Verify new keys are valid
+    python check_keys.py >nul 2>&1
+    if !errorlevel! neq 0 (
+        echo [ERROR] Failed to generate valid security keys!
+        echo Please run LOCAL-SETUP.bat manually
+        cd ..
+        pause
+        exit /b 1
+    )
+    
+    echo [OK] Security keys regenerated successfully
+    echo [INFO] You will need to register a new user (old database was incompatible)
+    echo.
+    echo [OK] Security fixed! Continuing startup...
+    echo.
 )
 cd ..
 
