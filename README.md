@@ -190,6 +190,24 @@ Contributions are welcome! Please:
 4. Push to the branch
 5. Create Pull Request
 
+## 💝 Support the Project
+
+If you find this project useful and want to support its development, you can make a donation:
+
+### Cryptocurrency (USDT)
+
+**USDT (BSC BEP20):**
+```
+0x0a5e8c59475469705a5ca1d34554e671fe247775
+```
+
+**USDT (TRC20):**
+```
+TGn7BsknJ3dPhutN3kXuMyCFjm37HcGdtL
+```
+
+Your support helps maintain and improve MoonBot Commander. Thank you! 🙏
+
 ## 📧 Support
 
 For issues and questions:
