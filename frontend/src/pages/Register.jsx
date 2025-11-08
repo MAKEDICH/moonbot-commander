@@ -48,7 +48,7 @@ const Register = () => {
       <div className={styles.authCard}>
         <div className={styles.authHeader}>
           <div className={styles.logoContainer}>
-            <FiActivity className={styles.logoIcon} />
+            <img src={moonbotIcon} alt="Moonbot" className={styles.logoIcon} />
             <h1 className={styles.logoText}>MoonBot Commander</h1>
           </div>
           <h2 className={styles.authTitle}>Регистрация</h2>
