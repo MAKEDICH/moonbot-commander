@@ -138,9 +138,6 @@ const Layout = () => {
             <div className={styles.supportBadge}>TRON</div>
             <div className={styles.supportAddress}>TXjF9t...k6T</div>
           </div>
-          <div className={styles.supportNote}>
-            BSC, Polygon, TRON - низкие комиссии
-          </div>
         </div>
 
         <div className={styles.userSection}>
