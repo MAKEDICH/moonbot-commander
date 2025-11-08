@@ -101,13 +101,6 @@ const Layout = () => {
               <span className={styles.logoSubtext}>Commander</span>
             </div>
           </div>
-          <button 
-            className={styles.donateBtn} 
-            onClick={() => setShowDonateModal(true)}
-            title="Помощь энтузиасту"
-          >
-            <FiHeart />
-          </button>
         </div>
 
         <nav className={styles.nav}>
@@ -127,8 +120,16 @@ const Layout = () => {
         </nav>
 
         {/* Блок поддержки проекта */}
-        <div className={styles.supportSection}>
-          <div className={styles.supportTitle}>Поддержка проекта</div>
+        <div 
+          className={styles.supportSection}
+          onClick={() => setShowDonateModal(true)}
+          role="button"
+          tabIndex={0}
+          onKeyPress={(e) => e.key === 'Enter' && setShowDonateModal(true)}
+        >
+          <div className={styles.supportTitle}>
+            Поддержка проекта 💖
+          </div>
           <div className={styles.supportWallet}>
             <div className={styles.supportBadge}>USDT (BSC BEP20)</div>
             <div className={styles.supportAddress}>0x0a5e8c59475469705a5ca1d34554e671fe247775</div>
