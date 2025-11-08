@@ -14,11 +14,11 @@ const Trading = () => {
   // Определяем активную вкладку из URL
   const getActiveTab = () => {
     const path = location.pathname;
-    if (path.includes('/trading/logs')) return 'logs';
+    if (path.includes('/trading/orders')) return 'orders';
     if (path.includes('/trading/stats')) return 'stats';
     if (path.includes('/trading/strategies')) return 'strategies';
     if (path.includes('/trading/heatmap')) return 'heatmap';
-    return 'orders'; // По умолчанию
+    return 'logs'; // По умолчанию SQL Logs
   };
 
   const [activeTab, setActiveTab] = useState(getActiveTab());
@@ -39,10 +39,10 @@ const Trading = () => {
     setActiveTab(getActiveTab());
   }, [location.pathname]);
 
-  // При первом заходе перенаправляем на orders если путь просто /trading
+  // При первом заходе перенаправляем на logs если путь просто /trading
   useEffect(() => {
     if (location.pathname === '/trading' || location.pathname === '/trading/') {
-      navigate('/trading/orders', { replace: true });
+      navigate('/trading/logs', { replace: true });
     }
   }, [location.pathname, navigate]);
 
@@ -76,16 +76,16 @@ const Trading = () => {
 
       <div className={styles.tabs}>
         <button
-          className={`${styles.tab} ${activeTab === 'orders' ? styles.active : ''}`}
-          onClick={() => handleTabChange('orders')}
-        >
-          📈 Ордера
-        </button>
-        <button
           className={`${styles.tab} ${activeTab === 'logs' ? styles.active : ''}`}
           onClick={() => handleTabChange('logs')}
         >
           📋 SQL Logs
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'orders' ? styles.active : ''}`}
+          onClick={() => handleTabChange('orders')}
+        >
+          📈 Ордера
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'stats' ? styles.active : ''}`}
