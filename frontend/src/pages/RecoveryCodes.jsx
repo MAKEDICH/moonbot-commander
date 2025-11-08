@@ -16,14 +16,49 @@ const RecoveryCodes = () => {
 
   const handleCopy = () => {
     // Копируем все коды с заголовком
-    const text = `MoonBot Commander - Recovery Codes\n\n${codes.join('\n')}\n\nСохраните эти коды в безопасном месте!\nКаждый код можно использовать только один раз.`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const text = `Moonbot Commander - Recovery Codes\n\n${codes.join('\n')}\n\nСохраните эти коды в безопасном месте!\nКаждый код можно использовать только один раз.`;
+    
+    // Проверяем доступность Clipboard API (работает только на HTTPS или localhost)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch((err) => {
+          console.error('Clipboard API failed:', err);
+          fallbackCopy(text);
+        });
+    } else {
+      // Fallback для HTTP соединений
+      fallbackCopy(text);
+    }
+  };
+
+  const fallbackCopy = (text) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+      alert('Не удалось скопировать. Пожалуйста, скопируйте коды вручную или скачайте файл.');
+    }
+    
+    document.body.removeChild(textArea);
   };
 
   const handleDownload = () => {
-    const text = `MoonBot Commander - Recovery Codes\n\n${codes.join('\n')}\n\nСохраните эти коды в безопасном месте!\nКаждый код можно использовать только один раз.`;
+    const text = `Moonbot Commander - Recovery Codes\n\n${codes.join('\n')}\n\nСохраните эти коды в безопасном месте!\nКаждый код можно использовать только один раз.`;
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
