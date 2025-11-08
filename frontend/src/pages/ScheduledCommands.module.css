@@ -578,7 +578,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
   cursor: pointer;
   padding: 10px 16px;
   background: rgba(0, 0, 0, 0.2);
