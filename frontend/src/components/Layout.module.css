@@ -558,6 +558,32 @@
   transform: translateY(0);
 }
 
+.telegramGroupLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.telegramGroupLink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(135deg, #16213e 0%, #0f1419 100%);
+}
+
+.telegramGroupLink:active {
+  transform: translateY(0);
+}
+
 .telegramIcon {
   font-size: 16px;
   animation: float 2s ease-in-out infinite;

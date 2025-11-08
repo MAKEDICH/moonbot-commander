@@ -300,7 +300,7 @@ const Layout = () => {
                   href="https://t.me/+HfcEre3V6gsxNTUy" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={styles.telegramLink}
+                  className={styles.telegramGroupLink}
                 >
                   <img 
                     src={moonbotIcon} 
