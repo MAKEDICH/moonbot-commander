@@ -126,6 +126,19 @@ const Layout = () => {
           ))}
         </nav>
 
+        {/* Блок поддержки проекта */}
+        <div className={styles.supportSection}>
+          <div className={styles.supportTitle}>Поддержка проекта</div>
+          <div className={styles.supportWallet}>
+            <div className={styles.supportBadge}>USDT (BSC BEP20)</div>
+            <div className={styles.supportAddress}>0x0a5e8c59475469705a5ca1d34554e671fe247775</div>
+          </div>
+          <div className={styles.supportWallet}>
+            <div className={styles.supportBadge}>USDT (TRC20)</div>
+            <div className={styles.supportAddress}>TGn7BSknJ3dFhutN3kXuMyCFjm37HeGdtL</div>
+          </div>
+        </div>
+
         <div className={styles.userSection}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>

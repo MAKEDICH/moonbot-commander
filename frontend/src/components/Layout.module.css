@@ -118,6 +118,58 @@
   font-size: 20px;
 }
 
+/* === SUPPORT SECTION === */
+.supportSection {
+  margin-top: auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.supportTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.supportWallet {
+  margin-bottom: 8px;
+}
+
+.supportWallet:last-child {
+  margin-bottom: 0;
+}
+
+.supportBadge {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: rgba(0, 245, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.supportAddress {
+  font-size: 9px;
+  font-family: 'Courier New', monospace;
+  color: var(--text-secondary);
+  word-break: break-all;
+  line-height: 1.3;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 245, 255, 0.1);
+}
+
 .userSection {
   padding: 16px;
   border-top: 1px solid var(--border-color);
