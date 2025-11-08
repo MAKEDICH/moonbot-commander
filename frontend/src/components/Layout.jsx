@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiHome, FiServer, FiCommand, FiClock, FiLogOut, FiUsers, FiKey, FiCalendar, FiHeart, FiCopy, FiCheck, FiTrendingUp, FiMenu, FiX } from 'react-icons/fi';
+import { FaTelegramPlane } from 'react-icons/fa';
 import styles from './Layout.module.css';
 import moonbotIcon from '../assets/moonbot-icon.png';
 
@@ -292,7 +293,7 @@ const Layout = () => {
                   rel="noopener noreferrer"
                   className={styles.telegramGroupLink}
                 >
-                  <span className={styles.telegramIcon}>✈️</span>
+                  <FaTelegramPlane className={styles.telegramIcon} />
                   Связаться в Telegram
                 </a>
                 <br />
