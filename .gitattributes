@@ -1,0 +1,4 @@
+# Prevent Git from changing line endings and encoding in batch files
+*.bat binary
+moonbot-udp-port-manager.bat binary
+
