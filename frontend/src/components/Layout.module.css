@@ -59,7 +59,10 @@
 .logoSubtext {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-secondary);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   letter-spacing: 0.5px;
 }
 
