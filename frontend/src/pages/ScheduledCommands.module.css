@@ -713,21 +713,78 @@
 .checkbox {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 12px;
   cursor: pointer;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 100%);
+  border: 2px solid rgba(0, 245, 255, 0.15);
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.checkbox:hover {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(180, 0, 255, 0.03) 100%);
+  border-color: rgba(0, 245, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 245, 255, 0.15);
 }
 
 .checkbox input[type="checkbox"] {
-  width: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 245, 255, 0.4);
+  border-radius: 4px;
+  background: transparent;
   cursor: pointer;
+  position: relative;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.checkbox input[type="checkbox"]:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+}
+
+.checkbox input[type="checkbox"]:checked {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+.checkbox input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+.checkbox span {
+  color: var(--text-secondary);
+  font-size: 14px;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.checkbox:hover span {
+  color: var(--text-primary);
 }
 
 .checkbox code {
-  background: var(--bg-tertiary);
-  padding: 0.2rem 0.4rem;
+  background: rgba(0, 245, 255, 0.1);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  padding: 3px 8px;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 13px;
   color: var(--accent-primary);
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
 }
 
 .modalActions {
