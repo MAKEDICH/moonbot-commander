@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiClock, FiTrash2, FiEdit2, FiX, FiCheck, FiPlus, FiCalendar, FiServer } from 'react-icons/fi';
-import { scheduledCommandsAPI, serversAPI, groupsAPI } from '../api/api';
+import { scheduledCommandsAPI, serversAPI, groupsAPI, presetsAPI } from '../api/api';
 import api from '../api/api';
 import styles from './ScheduledCommands.module.css';
 
@@ -14,6 +14,7 @@ const ScheduledCommands = () => {
   const [schedulerSettings, setSchedulerSettings] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsInterval, setSettingsInterval] = useState(5);
+  const [presets, setPresets] = useState([]);  // Пресеты команд
   const [schedulerEnabled, setSchedulerEnabled] = useState(() => {
     // Загружаем из localStorage или по умолчанию false
     const saved = localStorage.getItem('schedulerEnabled');
@@ -43,6 +44,7 @@ const ScheduledCommands = () => {
     loadServers();
     loadGroups();
     loadSchedulerSettings();
+    loadPresets();
     
     // Обновляем список каждые 30 секунд
     const interval = setInterval(loadScheduledCommands, 30000);
@@ -75,6 +77,19 @@ const ScheduledCommands = () => {
       console.error('Error loading groups:', error);
       setGroups([]);
     }
+  };
+
+  const loadPresets = async () => {
+    try {
+      const response = await presetsAPI.getAll();
+      setPresets(response.data);
+    } catch (error) {
+      console.error('Error loading presets:', error);
+    }
+  };
+
+  const handleLoadPreset = (preset) => {
+    setFormData({ ...formData, commands: preset.commands });
   };
 
   const loadSchedulerSettings = async () => {
@@ -618,60 +633,30 @@ const ScheduledCommands = () => {
               <div className={styles.formGroup}>
                 <label>Команды (каждая с новой строки) *</label>
                 
-                {/* Справочник команд (пресеты) */}
-                <div className={styles.commandPresets}>
-                  <div className={styles.presetsTitle}>📝 Быстрые команды:</div>
-                  <div className={styles.presetsGrid}>
-                    <button
-                      type="button"
-                      className={styles.presetBtn}
-                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'list'})}
-                      title="Список активных позиций"
-                    >
-                      + list
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.presetBtn}
-                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'report'})}
-                      title="Отчёт о торговле"
-                    >
-                      + report
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.presetBtn}
-                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'START'})}
-                      title="Запустить торговлю"
-                    >
-                      + START
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.presetBtn}
-                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'STOP'})}
-                      title="Остановить торговлю"
-                    >
-                      + STOP
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.presetBtn}
-                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'SELL'})}
-                      title="Закрыть все позиции"
-                    >
-                      + SELL
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.presetBtn}
-                      onClick={() => setFormData({...formData, commands: formData.commands + (formData.commands ? '\n' : '') + 'status'})}
-                      title="Статус бота"
-                    >
-                      + status
-                    </button>
+                {/* Пресеты команд */}
+                {presets.length > 0 && (
+                  <div className={styles.commandPresets}>
+                    <div className={styles.presetsTitle}>📋 Готовые сценарии (пресеты):</div>
+                    <div className={styles.presetsGrid}>
+                      {presets.map(preset => (
+                        <div key={preset.id} className={styles.presetWrapper}>
+                          <button
+                            type="button"
+                            className={styles.presetBtn}
+                            onClick={() => handleLoadPreset(preset)}
+                            title={`${preset.name}\n\nКоманды:\n${preset.commands}`}
+                          >
+                            {preset.button_number}
+                          </button>
+                          <div className={styles.presetLabel}>{preset.name}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className={styles.presetHint}>
+                      💡 Нажмите на кнопку чтобы загрузить команды из пресета
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 <textarea
                   value={formData.commands}

@@ -925,37 +925,67 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .presetsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.presetWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .presetBtn {
+  width: 50px;
+  height: 50px;
   background: rgba(0, 245, 255, 0.1);
-  border: 1px solid rgba(0, 245, 255, 0.3);
+  border: 2px solid rgba(0, 245, 255, 0.3);
   color: var(--accent-primary);
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  white-space: nowrap;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .presetBtn:hover {
   background: rgba(0, 245, 255, 0.2);
   border-color: var(--accent-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 245, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.4);
 }
 
 .presetBtn:active {
   transform: translateY(0);
+}
+
+.presetLabel {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.presetHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 245, 255, 0.1);
 }
 
