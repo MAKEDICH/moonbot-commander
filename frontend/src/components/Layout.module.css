@@ -34,9 +34,9 @@
 }
 
 .logoIcon {
-  font-size: 32px;
+  width: 32px;
+  height: 32px;
   color: var(--accent-primary);
-  animation: glow 2s ease-in-out infinite;
 }
 
 .logoText {

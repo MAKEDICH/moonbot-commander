@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiServer, FiCommand, FiClock, FiLogOut, FiActivity, FiUsers, FiKey, FiCalendar, FiHeart, FiCopy, FiCheck, FiTrendingUp, FiMenu, FiX } from 'react-icons/fi';
+import { FiHome, FiServer, FiCommand, FiClock, FiLogOut, FiUsers, FiKey, FiCalendar, FiHeart, FiCopy, FiCheck, FiTrendingUp, FiMenu, FiX } from 'react-icons/fi';
 import styles from './Layout.module.css';
+import moonbotIcon from '../assets/moonbot-icon.png';
 
 const Layout = () => {
   const { user, logout } = useAuth();
@@ -94,8 +95,8 @@ const Layout = () => {
       <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logoSection}>
           <div className={styles.logo}>
-            <FiActivity className={styles.logoIcon} />
-            <h1 className={styles.logoText}>MoonBot</h1>
+            <img src={moonbotIcon} alt="Moonbot" className={styles.logoIcon} />
+            <h1 className={styles.logoText}>Moonbot</h1>
           </div>
           <button 
             className={styles.donateBtn} 
