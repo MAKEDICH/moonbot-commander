@@ -6,6 +6,17 @@
 backend/.env
 .env
 
+# DATABASE - БАЗА ДАННЫХ ПОЛЬЗОВАТЕЛЯ!
+backend/*.db
+backend/*.db-*
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.backup
+
 # ЛОГИ - МОГУТ СОДЕРЖАТЬ ЧУВСТВИТЕЛЬНУЮ ИНФУ
 *.log
 backend/*.log
