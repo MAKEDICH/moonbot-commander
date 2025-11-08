@@ -207,8 +207,8 @@ const Layout = () => {
                     </button>
                   </div>
                   <div className={styles.networksList}>
-                    <p style={{fontSize: '0.85em'}}><strong>Поддерживаемые сети:</strong></p>
-                    <ul style={{fontSize: '0.8em', lineHeight: '1.4'}}>
+                    <p style={{fontSize: '0.9em', textAlign: 'center', marginBottom: '10px', color: '#64b5f6'}}><strong>Поддерживаемые сети:</strong></p>
+                    <ul style={{fontSize: '0.8em', lineHeight: '1.6', textAlign: 'center', listStyle: 'none', padding: 0}}>
                       <li>BSC (BNB Smart Chain) - USDT (BEP20), USDC, BNB</li>
                       <li>Polygon - USDT, USDC, MATIC</li>
                       <li>Arbitrum - USDT, USDC, ETH</li>
@@ -236,8 +236,8 @@ const Layout = () => {
                     </button>
                   </div>
                   <div className={styles.networksList}>
-                    <p style={{fontSize: '0.85em'}}><strong>Поддерживаемые токены:</strong></p>
-                    <ul style={{fontSize: '0.8em', lineHeight: '1.4'}}>
+                    <p style={{fontSize: '0.9em', textAlign: 'center', marginBottom: '10px', color: '#64b5f6'}}><strong>Поддерживаемые токены:</strong></p>
+                    <ul style={{fontSize: '0.8em', lineHeight: '1.6', textAlign: 'center', listStyle: 'none', padding: 0}}>
                       <li>USDT (TRC20)</li>
                       <li>USDC (TRC20)</li>
                       <li>TRX</li>
