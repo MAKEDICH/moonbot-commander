@@ -436,7 +436,7 @@ echo [OK] Python found: !PYTHON_PATH!
     echo Creating Frontend service...
     C:\Windows\System32\nssm.exe install MoonBotFrontend "!SERVE_CMD!"
     C:\Windows\System32\nssm.exe set MoonBotFrontend AppParameters "-s \"%FRONTEND_PATH%\" -l 3000"
-    C:\Windows\System32\nssm.exe set MoonBotFrontend AppDirectory "%FRONTEND_PATH%"
+    C:\Windows\System32\nssm.exe set MoonBotFrontend AppDirectory "\"%FRONTEND_PATH%\""
     C:\Windows\System32\nssm.exe set MoonBotFrontend DisplayName "MoonBot Frontend Service"
     C:\Windows\System32\nssm.exe set MoonBotFrontend Description "MoonBot UDP Commander Web Interface"
     C:\Windows\System32\nssm.exe set MoonBotFrontend Start SERVICE_AUTO_START
