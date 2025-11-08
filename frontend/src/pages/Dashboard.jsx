@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { dashboardAPI, serverStatusAPI, userSettingsAPI } from '../api/api';
 import styles from './Dashboard.module.css';
 import { FiServer, FiActivity, FiCheckCircle, FiXCircle, FiClock, FiTrendingUp, FiSettings, FiAlertCircle, FiPlay, FiPause, FiRefreshCw } from 'react-icons/fi';
+import moonbotIcon from '../assets/moonbot-icon.png';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -174,7 +175,7 @@ const Dashboard = () => {
       <div className={styles.moonbotInfo}>
         <div className={styles.moonbotContent}>
           <div className={styles.moonbotIcon}>
-            <img src={require('../assets/moonbot-icon.png')} alt="Moonbot" />
+            <img src={moonbotIcon} alt="Moonbot" />
           </div>
           <div className={styles.moonbotText}>
             <h3>Powered by <span className={styles.moonbotHighlight}>Moonbot</span></h3>
