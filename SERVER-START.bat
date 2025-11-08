@@ -23,11 +23,45 @@ if not exist "backend\main.py" (
 if not exist "backend\.env" (
     echo [ERROR] .env file not found!
     echo.
-    echo Please run SERVER-SETUP.bat first
+    echo Please run SERVER-SETUP.bat first to generate security keys
     echo.
     pause
     exit /b 1
 )
+
+REM Security check: Verify .env and database compatibility
+cd backend
+if exist moonbot_commander.db (
+    REM Check if .env was recently modified (within last 5 minutes)
+    set "ENV_AGE=0"
+    for /f %%i in ('powershell -command "((Get-Date) - (Get-Item .env).LastWriteTime).TotalMinutes"') do set ENV_AGE=%%i
+    
+    REM If .env is fresh (< 5 minutes) and DB exists, warn about incompatibility
+    if !ENV_AGE! LSS 5 (
+        echo.
+        echo [WARNING] Security Keys Mismatch Detected!
+        echo.
+        echo Your .env file was recently regenerated, but an old database exists.
+        echo This database is encrypted with OLD keys and cannot be decrypted!
+        echo.
+        echo Options:
+        echo   1. If you want to keep OLD data:
+        echo      - Restore old .env file from backup
+        echo      - Then restart SERVER-START.bat
+        echo.
+        echo   2. If you want to start FRESH:
+        echo      - Press any key to delete old database
+        echo      - You will need to re-register and configure servers
+        echo.
+        pause
+        if exist moonbot_commander.db.old del moonbot_commander.db.old >nul 2>&1
+        ren moonbot_commander.db moonbot_commander.db.old >nul 2>&1
+        echo [OK] Old database renamed to moonbot_commander.db.old
+        echo [OK] Fresh database will be created on startup
+        echo.
+    )
+)
+cd ..
 
 if not exist "frontend\dist\index.html" (
     echo [ERROR] Frontend dist not found!
