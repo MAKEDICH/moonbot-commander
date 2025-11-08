@@ -290,7 +290,7 @@ const Layout = () => {
                   href="https://t.me/MAKEDICH" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className={styles.telegramLink}
+                  className={styles.telegramGroupLink}
                 >
                   <span className={styles.telegramIcon}>✈️</span>
                   Связаться в Telegram
