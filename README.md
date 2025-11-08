@@ -203,7 +203,7 @@ If you find this project useful and want to support its development, you can mak
 
 **USDT (TRC20):**
 ```
-TGn7BsknJ3dPhutN3kXuMyCFjm37HcGdtL
+TGn7BSknJ3dFhutN3kXuMyCFjm37HeGdtL
 ```
 
 Your support helps maintain and improve MoonBot Commander. Thank you! 🙏
