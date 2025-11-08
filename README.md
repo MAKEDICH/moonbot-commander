@@ -233,7 +233,7 @@ Your support helps maintain and improve MoonBot Commander. Thank you! 🙏
 
 For issues and questions:
 - Open an issue on GitHub
-- Contact: [YOUR_EMAIL]
+- Contact via Telegram: [@MAKEDICH](https://t.me/MAKEDICH)
 
 ## 🙏 Acknowledgments
 
