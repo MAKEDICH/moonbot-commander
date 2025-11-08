@@ -578,7 +578,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 24px;
   cursor: pointer;
   padding: 12px 20px;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.15) 100%);
@@ -713,7 +713,7 @@
 .checkbox {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
   cursor: pointer;
   padding: 12px 16px;
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 100%);
