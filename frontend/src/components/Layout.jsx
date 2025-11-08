@@ -207,16 +207,16 @@ const Layout = () => {
                     </button>
                   </div>
                   <div className={styles.networksList}>
-                    <p><strong>Поддерживаемые сети:</strong></p>
-                    <ul>
-                      <li><strong>BSC (BNB Smart Chain)</strong> - USDT (BEP20), USDC, BNB | Комиссия: ~$0.20 ⭐</li>
-                      <li><strong>Polygon</strong> - USDT, USDC, MATIC | Комиссия: ~$0.01</li>
-                      <li><strong>Arbitrum</strong> - USDT, USDC, ETH | Комиссия: ~$0.10</li>
-                      <li><strong>Optimism</strong> - USDT, USDC, ETH | Комиссия: ~$0.10</li>
-                      <li><strong>Base</strong> - USDT, USDC, ETH | Комиссия: ~$0.10</li>
-                      <li><strong>Ethereum</strong> - USDT (ERC20), USDC, ETH | Комиссия: ~$10-50</li>
-                      <li><strong>Avalanche C-Chain</strong> - USDT, USDC, AVAX | Комиссия: ~$0.50</li>
-                      <li><strong>Fantom</strong> - USDT, USDC, FTM | Комиссия: ~$0.05</li>
+                    <p style={{fontSize: '0.85em'}}><strong>Поддерживаемые сети:</strong></p>
+                    <ul style={{fontSize: '0.8em', lineHeight: '1.4'}}>
+                      <li>BSC (BNB Smart Chain) - USDT (BEP20), USDC, BNB</li>
+                      <li>Polygon - USDT, USDC, MATIC</li>
+                      <li>Arbitrum - USDT, USDC, ETH</li>
+                      <li>Optimism - USDT, USDC, ETH</li>
+                      <li>Base - USDT, USDC, ETH</li>
+                      <li>Ethereum - USDT (ERC20), USDC, ETH</li>
+                      <li>Avalanche C-Chain - USDT, USDC, AVAX</li>
+                      <li>Fantom - USDT, USDC, FTM</li>
                     </ul>
                     <p className={styles.warningText}>⚠️ <strong>Важно:</strong> При отправке обязательно выберите правильную сеть! Один адрес работает во всех EVM-сетях, но токены отправленные не в ту сеть могут быть потеряны.</p>
                   </div>
@@ -237,11 +237,11 @@ const Layout = () => {
                     </button>
                   </div>
                   <div className={styles.networksList}>
-                    <p><strong>Поддерживаемые токены:</strong></p>
-                    <ul>
-                      <li><strong>USDT (TRC20)</strong> - Комиссия: ~$1 ⭐</li>
-                      <li><strong>USDC (TRC20)</strong> - Комиссия: ~$1</li>
-                      <li><strong>TRX</strong> - Комиссия: ~$0.01</li>
+                    <p style={{fontSize: '0.85em'}}><strong>Поддерживаемые токены:</strong></p>
+                    <ul style={{fontSize: '0.8em', lineHeight: '1.4'}}>
+                      <li>USDT (TRC20)</li>
+                      <li>USDC (TRC20)</li>
+                      <li>TRX</li>
                     </ul>
                     <p className={styles.warningText}>⚠️ <strong>Важно:</strong> Отправляйте только активы из сети TRON (TRC20 токены)! Активы из других сетей будут безвозвратно потеряны.</p>
                   </div>
