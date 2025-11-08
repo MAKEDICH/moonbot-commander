@@ -170,6 +170,30 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboard}>
+      {/* Информационный блок о Moonbot */}
+      <div className={styles.moonbotInfo}>
+        <div className={styles.moonbotContent}>
+          <div className={styles.moonbotIcon}>
+            <img src={require('../assets/moonbot-icon.png')} alt="Moonbot" />
+          </div>
+          <div className={styles.moonbotText}>
+            <h3>Powered by <span className={styles.moonbotHighlight}>Moonbot</span></h3>
+            <p>
+              Этот проект создан благодаря мощному торговому терминалу{' '}
+              <strong>Moonbot</strong> — лучшему решению для криптотрейдинга
+            </p>
+          </div>
+          <a 
+            href="https://moonbot.pro/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className={styles.moonbotLink}
+          >
+            Посетить официальный сайт →
+          </a>
+        </div>
+      </div>
+
       <div className={styles.header}>
         <h1><FiActivity /> Дашборд</h1>
         <button onClick={() => setShowSettings(true)} className={styles.settingsBtn}>
