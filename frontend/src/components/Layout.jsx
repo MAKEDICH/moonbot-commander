@@ -236,6 +236,16 @@ const Layout = () => {
                 </span>
                 <br />
                 <span className={styles.trademark}>MAKEDICH tm</span>
+                <br />
+                <a 
+                  href="https://t.me/MAKEDICH" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={styles.telegramLink}
+                >
+                  <span className={styles.telegramIcon}>✈️</span>
+                  Связаться в Telegram
+                </a>
               </p>
             </div>
           </div>
