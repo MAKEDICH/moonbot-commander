@@ -126,6 +126,25 @@ echo Initializing security keys...
 python init_security.py
 echo [OK] Security keys generated
 
+REM Auto-configure CORS for server IP
+echo.
+echo Configuring CORS for server IP...
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /C:"IPv4"') do (
+    set SERVER_IP=%%a
+    goto ip_found
+)
+:ip_found
+set SERVER_IP=%SERVER_IP: =%
+
+REM Add server IP to CORS_ORIGINS in .env
+if defined SERVER_IP (
+    echo Detected server IP: %SERVER_IP%
+    powershell -Command "(Get-Content .env) -replace 'CORS_ORIGINS=(.+)', \"CORS_ORIGINS=`$1,http://%SERVER_IP%:3000\" | Set-Content .env"
+    echo [OK] Added %SERVER_IP% to CORS_ORIGINS
+) else (
+    echo [WARNING] Could not detect server IP, CORS may need manual configuration
+)
+
 REM If new security keys were generated, delete old database (incompatible with new keys)
 if !NEW_ENV_CREATED! equ 1 (
     if exist moonbot_commander.db (
