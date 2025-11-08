@@ -217,7 +217,7 @@ If you find this project useful and want to support its development, you can mak
 
 **TRON Network (TRC20):**
 ```
-TXjF9tLs8MLJIkJVwUfiuNgYhwZXc91k6T
+TXjF9tLs8MLJ1kJVwUfiuNgYhwZXc91k6T
 ```
 
 **Supported tokens:**

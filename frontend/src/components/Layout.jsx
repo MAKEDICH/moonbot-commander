@@ -230,10 +230,10 @@ const Layout = () => {
                     <span className={styles.networkBadge}>TRON Network (TRC20)</span>
                   </div>
                   <div className={styles.walletAddress}>
-                    <code>TXjF9tLs8MLJIkJVwUfiuNgYhwZXc91k6T</code>
+                    <code>TXjF9tLs8MLJ1kJVwUfiuNgYhwZXc91k6T</code>
                     <button
                       className={styles.copyBtn}
-                      onClick={() => copyToClipboard('TXjF9tLs8MLJIkJVwUfiuNgYhwZXc91k6T', 'tron')}
+                      onClick={() => copyToClipboard('TXjF9tLs8MLJ1kJVwUfiuNgYhwZXc91k6T', 'tron')}
                       title="Копировать адрес"
                     >
                       {copiedAddress === 'tron' ? <FiCheck /> : <FiCopy />}
