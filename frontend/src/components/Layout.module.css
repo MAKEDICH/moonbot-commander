@@ -563,6 +563,14 @@
   animation: float 2s ease-in-out infinite;
 }
 
+.moonbotIconSmall {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: middle;
+  animation: float 2s ease-in-out infinite;
+}
+
 @keyframes float {
   0%, 100% {
     transform: translateY(0);

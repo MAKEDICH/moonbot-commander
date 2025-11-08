@@ -302,7 +302,11 @@ const Layout = () => {
                   rel="noopener noreferrer"
                   className={styles.telegramLink}
                 >
-                  <span className={styles.telegramIcon}>👥</span>
+                  <img 
+                    src={moonbotIcon} 
+                    alt="Moonbot" 
+                    className={styles.moonbotIconSmall} 
+                  />
                   Группа Moonbot Commander
                 </a>
               </p>
