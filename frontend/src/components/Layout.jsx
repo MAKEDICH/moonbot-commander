@@ -218,7 +218,6 @@ const Layout = () => {
                       <li>Avalanche C-Chain - USDT, USDC, AVAX</li>
                       <li>Fantom - USDT, USDC, FTM</li>
                     </ul>
-                    <p className={styles.warningText}>⚠️ <strong>Важно:</strong> При отправке обязательно выберите правильную сеть! Один адрес работает во всех EVM-сетях, но токены отправленные не в ту сеть могут быть потеряны.</p>
                   </div>
                 </div>
 
@@ -243,7 +242,6 @@ const Layout = () => {
                       <li>USDC (TRC20)</li>
                       <li>TRX</li>
                     </ul>
-                    <p className={styles.warningText}>⚠️ <strong>Важно:</strong> Отправляйте только активы из сети TRON (TRC20 токены)! Активы из других сетей будут безвозвратно потеряны.</p>
                   </div>
                 </div>
               </div>
