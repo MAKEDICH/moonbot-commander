@@ -123,8 +123,38 @@ echo [OK] Backend dependencies installed
 
 echo.
 echo Initializing security keys...
+
+REM Check if keys are valid before proceeding
+python check_keys.py >nul 2>&1
+if !errorlevel! neq 0 (
+    echo [WARNING] Security keys are invalid or missing
+    echo [ACTION] Regenerating security keys...
+    
+    REM Mark that we're regenerating keys
+    set KEYS_REGENERATED=1
+    
+    REM Backup old database if exists
+    if exist moonbot_commander.db (
+        echo [WARNING] Found existing database with incompatible encryption keys
+        if exist moonbot_commander.db.old del moonbot_commander.db.old >nul 2>&1
+        ren moonbot_commander.db moonbot_commander.db.old >nul 2>&1
+        echo [OK] Old database backed up to moonbot_commander.db.old
+    )
+) else (
+    set KEYS_REGENERATED=0
+)
+
 python init_security.py
-echo [OK] Security keys generated
+echo [OK] Security keys initialized
+
+REM Verify keys are now valid
+python check_keys.py
+if !errorlevel! neq 0 (
+    echo [ERROR] Failed to generate valid security keys!
+    cd ..
+    pause
+    exit /b 1
+)
 
 REM Auto-configure CORS for server IP
 echo.
@@ -151,19 +181,6 @@ if defined SERVER_IP (
     )
 ) else (
     echo [WARNING] Could not detect server IP, CORS may need manual configuration
-)
-
-REM If new security keys were generated, delete old database (incompatible with new keys)
-if !NEW_ENV_CREATED! equ 1 (
-    if exist moonbot_commander.db (
-        echo.
-        echo [WARNING] Found existing database with OLD encryption keys
-        echo [ACTION] Renaming old database to moonbot_commander.db.old
-        if exist moonbot_commander.db.old del moonbot_commander.db.old >nul 2>&1
-        ren moonbot_commander.db moonbot_commander.db.old >nul 2>&1
-        echo [OK] Old database backed up and will be replaced with fresh one
-        echo.
-    )
 )
 
 echo.

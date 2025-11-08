@@ -20,6 +20,8 @@ def init_env_file():
     env_path = Path('.env')
     env_example_path = Path('.env.example')
     
+    keys_regenerated = False
+    
     # Read existing .env if exists
     existing_env = {}
     if env_path.exists():
@@ -32,17 +34,34 @@ def init_env_file():
     
     # Check if SECRET_KEY needs to be generated
     secret_key = existing_env.get('SECRET_KEY', '')
-    if not secret_key or secret_key == 'your-secret-key-change-this-in-production':
+    secret_key_is_valid = secret_key and len(secret_key) > 32 and secret_key not in [
+        'your-secret-key-change-this-in-production',
+        'change-me-to-random-secret-key-minimum-32-characters'
+    ]
+    
+    if not secret_key_is_valid:
         secret_key = generate_secret_key()
         print('[SECURITY] Generated new SECRET_KEY')
+        keys_regenerated = True
     else:
         print('[OK] SECRET_KEY already exists')
     
     # Check if ENCRYPTION_KEY needs to be generated
     encryption_key = existing_env.get('ENCRYPTION_KEY', '')
-    if not encryption_key:
+    encryption_key_is_valid = False
+    
+    if encryption_key and encryption_key not in ['change-me-to-fernet-encryption-key']:
+        # Validate that it's a proper Fernet key
+        try:
+            Fernet(encryption_key.encode())
+            encryption_key_is_valid = True
+        except Exception:
+            encryption_key_is_valid = False
+    
+    if not encryption_key_is_valid:
         encryption_key = generate_encryption_key()
         print('[SECURITY] Generated new ENCRYPTION_KEY')
+        keys_regenerated = True
     else:
         print('[OK] ENCRYPTION_KEY already exists')
     
@@ -63,12 +82,16 @@ CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     with open(env_path, 'w', encoding='utf-8') as f:
         f.write(env_content)
     
+    if keys_regenerated:
+        print('[WARNING] Security keys were regenerated!')
+        print('[ACTION] Old database is incompatible and should be deleted')
+    
     print('[OK] .env file updated')
     print()
     print('=' * 60)
     print('  IMPORTANT: Add .env to .gitignore!')
     print('=' * 60)
-    return secret_key, encryption_key
+    return keys_regenerated
 
 if __name__ == '__main__':
     print('=' * 60)

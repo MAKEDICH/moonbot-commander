@@ -36,31 +36,37 @@ echo.
 echo [3/4] Setting up Backend...
 cd backend
 
-set NEW_ENV_CREATED=0
-if not exist .env (
-    if exist .env.example copy .env.example .env >nul
-    set NEW_ENV_CREATED=1
-)
-
 echo Installing packages...
 python -m pip install --upgrade pip --quiet
 pip install -r requirements.txt --quiet
 echo [OK] Packages installed
 
 echo Initializing...
-python init_security.py
 
-REM If new security keys were generated, delete old database (incompatible with new keys)
-if !NEW_ENV_CREATED! equ 1 (
+REM Check if keys are valid before proceeding
+python check_keys.py >nul 2>&1
+if !errorlevel! neq 0 (
+    echo [WARNING] Security keys are invalid or missing
+    echo [ACTION] Regenerating security keys...
+    
+    REM Backup old database if exists
     if exist moonbot_commander.db (
-        echo.
-        echo [WARNING] Found existing database with OLD encryption keys
-        echo [ACTION] Renaming old database to moonbot_commander.db.old
+        echo [WARNING] Found existing database with incompatible encryption keys
         if exist moonbot_commander.db.old del moonbot_commander.db.old >nul 2>&1
         ren moonbot_commander.db moonbot_commander.db.old >nul 2>&1
-        echo [OK] Old database backed up and will be replaced with fresh one
-        echo.
+        echo [OK] Old database backed up to moonbot_commander.db.old
     )
+)
+
+python init_security.py
+
+REM Verify keys are now valid
+python check_keys.py
+if !errorlevel! neq 0 (
+    echo [ERROR] Failed to generate valid security keys!
+    cd ..
+    pause
+    exit /b 1
 )
 python migrate_add_password.py >nul 2>&1
 python migrate_add_recovery_codes.py >nul 2>&1
