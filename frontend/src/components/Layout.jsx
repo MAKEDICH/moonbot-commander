@@ -212,14 +212,16 @@ const Layout = () => {
               </div>
 
               <p className={styles.donateFooter}>
-                Ваша поддержка пойдёт на бургеры! ❤️<br />
+                Ваша поддержка пойдёт на развитие новых проектов<br />
                 <span 
                   className={`${styles.secretText} ${secretRevealed ? styles.revealed : ''}`}
                   onClick={() => setSecretRevealed(true)}
                   title="Нажми, чтобы узнать правду 👀"
                 >
-                  {secretRevealed ? '(или покупку новой квартиры)' : '█████████████████'}
+                  {secretRevealed ? 'или покупку бургеров 😄❤️' : '█████████████████'}
                 </span>
+                <br />
+                <span className={styles.trademark}>MAKEDICH tm</span>
               </p>
             </div>
           </div>
