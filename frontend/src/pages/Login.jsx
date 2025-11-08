@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { FiActivity, FiMail, FiLock, FiUser } from 'react-icons/fi';
 import PasswordInput from '../components/PasswordInput';
 import styles from './Auth.module.css';
+import moonbotIcon from '../assets/moonbot-icon.png';
 
 const Login = () => {
   const [username, setUsername] = useState('');
