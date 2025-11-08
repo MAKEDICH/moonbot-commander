@@ -40,7 +40,7 @@ const Layout = () => {
     { path: '/commands', icon: <FiCommand />, label: 'Команды' },
     { path: '/scheduled-commands', icon: <FiCalendar />, label: 'Отложенные' },
     { path: '/history', icon: <FiClock />, label: 'История' },
-    { path: '/trading/orders', icon: <FiTrendingUp />, label: 'Торговля' },
+    { path: '/trading/logs', icon: <FiTrendingUp />, label: 'Торговля' },
   ];
 
   // Закрытие меню при клике на ссылку (для мобильных)
