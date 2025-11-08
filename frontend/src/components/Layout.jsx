@@ -131,12 +131,11 @@ const Layout = () => {
             Поддержка проекта 💖
           </div>
           <div className={styles.supportWallet}>
-            <div className={styles.supportBadge}>USDT (BSC BEP20)</div>
-            <div className={styles.supportAddress}>0x0a5e8c59475469705a5ca1d34554e671fe247775</div>
+            <div className={styles.supportBadge}>EVM Networks</div>
+            <div className={styles.supportAddress}>0x374c083106189a364a3412dfb66297a4dc991af4</div>
           </div>
-          <div className={styles.supportWallet}>
-            <div className={styles.supportBadge}>USDT (TRC20)</div>
-            <div className={styles.supportAddress}>TGn7BSknJ3dFhutN3kXuMyCFjm37HeGdtL</div>
+          <div className={styles.supportNote}>
+            BSC, Ethereum, Polygon, Arbitrum и другие
           </div>
         </div>
 
@@ -194,33 +193,32 @@ const Layout = () => {
               <div className={styles.walletSection}>
                 <div className={styles.walletItem}>
                   <div className={styles.walletLabel}>
-                    <span className={styles.networkBadge}>USDT (BSC BEP20)</span>
+                    <span className={styles.networkBadge}>EVM Networks (одинадрес для всех сетей)</span>
                   </div>
                   <div className={styles.walletAddress}>
-                    <code>0x0a5e8c59475469705a5ca1d34554e671fe247775</code>
+                    <code>0x374c083106189a364a3412dfb66297a4dc991af4</code>
                     <button
                       className={styles.copyBtn}
-                      onClick={() => copyToClipboard('0x0a5e8c59475469705a5ca1d34554e671fe247775', 'bsc')}
+                      onClick={() => copyToClipboard('0x374c083106189a364a3412dfb66297a4dc991af4', 'evm')}
                       title="Копировать адрес"
                     >
-                      {copiedAddress === 'bsc' ? <FiCheck /> : <FiCopy />}
+                      {copiedAddress === 'evm' ? <FiCheck /> : <FiCopy />}
                     </button>
                   </div>
-                </div>
-
-                <div className={styles.walletItem}>
-                  <div className={styles.walletLabel}>
-                    <span className={styles.networkBadge}>USDT (TRC20)</span>
-                  </div>
-                  <div className={styles.walletAddress}>
-                    <code>TGn7BSknJ3dFhutN3kXuMyCFjm37HeGdtL</code>
-                    <button
-                      className={styles.copyBtn}
-                      onClick={() => copyToClipboard('TGn7BSknJ3dFhutN3kXuMyCFjm37HeGdtL', 'trc')}
-                      title="Копировать адрес"
-                    >
-                      {copiedAddress === 'trc' ? <FiCheck /> : <FiCopy />}
-                    </button>
+                  <div className={styles.networksList}>
+                    <p><strong>Поддерживаемые сети:</strong></p>
+                    <ul>
+                      <li><strong>BSC (BNB Smart Chain)</strong> - USDT (BEP20), USDC, BNB | Комиссия: ~$0.20 ⭐</li>
+                      <li><strong>Polygon</strong> - USDT, USDC, MATIC | Комиссия: ~$0.01</li>
+                      <li><strong>Arbitrum</strong> - USDT, USDC, ETH | Комиссия: ~$0.10</li>
+                      <li><strong>Optimism</strong> - USDT, USDC, ETH | Комиссия: ~$0.10</li>
+                      <li><strong>Base</strong> - USDT, USDC, ETH | Комиссия: ~$0.10</li>
+                      <li><strong>Ethereum</strong> - USDT (ERC20), USDC, ETH | Комиссия: ~$10-50</li>
+                      <li><strong>Avalanche C-Chain</strong> - USDT, USDC, AVAX | Комиссия: ~$0.50</li>
+                      <li><strong>Fantom</strong> - USDT, USDC, FTM | Комиссия: ~$0.05</li>
+                    </ul>
+                    <p className={styles.warningText}>⚠️ <strong>Важно:</strong> При отправке обязательно выберите правильную сеть! Один адрес работает во всех EVM-сетях, но токены отправленные не в ту сеть могут быть потеряны.</p>
+                    <p className={styles.recommendText}>💡 <strong>Рекомендуем:</strong> USDT через BSC (BEP20) - самые низкие комиссии и быстрое подтверждение.</p>
                   </div>
                 </div>
               </div>

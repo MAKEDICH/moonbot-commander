@@ -194,17 +194,26 @@ Contributions are welcome! Please:
 
 If you find this project useful and want to support its development, you can make a donation:
 
-### Cryptocurrency (USDT)
+### Cryptocurrency Donations
 
-**USDT (BSC BEP20):**
+**EVM-compatible Networks (one address for all networks):**
 ```
-0x0a5e8c59475469705a5ca1d34554e671fe247775
+0x374c083106189a364a3412dfb66297a4dc991af4
 ```
 
-**USDT (TRC20):**
-```
-TGn7BSknJ3dFhutN3kXuMyCFjm37HeGdtL
-```
+**Supported networks and tokens:**
+- **BSC (BNB Smart Chain)** - USDT (BEP20), USDC, BNB | Fee: ~$0.20
+- **Ethereum** - USDT (ERC20), USDC, ETH | Fee: ~$10-50
+- **Polygon** - USDT, USDC, MATIC | Fee: ~$0.01
+- **Arbitrum** - USDT, USDC, ETH | Fee: ~$0.10
+- **Optimism** - USDT, USDC, ETH | Fee: ~$0.10
+- **Base** - USDT, USDC, ETH | Fee: ~$0.10
+- **Avalanche C-Chain** - USDT, USDC, AVAX | Fee: ~$0.50
+- **Fantom** - USDT, USDC, FTM | Fee: ~$0.05
+
+⚠️ **Important:** When sending crypto, make sure to select the correct network! The same address works across all EVM networks, but tokens sent on the wrong network may be lost.
+
+💡 **Recommended for donations:** USDT on BSC (BEP20) - lowest fees and fastest confirmation.
 
 Your support helps maintain and improve MoonBot Commander. Thank you! 🙏
 
