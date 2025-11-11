@@ -27,16 +27,25 @@ def get_totp_uri(username, secret, issuer="MoonBot Commander"):
         issuer_name=issuer
     )
 
-def generate_qr_code(data):
+def generate_qr_code(username_or_data, secret=None, issuer="MoonBot Commander"):
     """
     Генерирует QR-код в формате base64
     
     Args:
-        data: данные для QR-кода (обычно URI)
+        username_or_data: имя пользователя (если указан secret) или URI напрямую
+        secret: TOTP секрет (опционально)
+        issuer: название приложения
         
     Returns:
         str: base64 закодированное изображение
     """
+    # Если передан secret, значит username_or_data это username
+    if secret:
+        data = get_totp_uri(username_or_data, secret, issuer)
+    else:
+        # Иначе username_or_data это уже готовый URI
+        data = username_or_data
+    
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
     qr.add_data(data)
     qr.make(fit=True)
@@ -68,6 +77,10 @@ def verify_totp_code(secret, code):
     totp = pyotp.TOTP(secret)
     # Проверяем текущий код + 1 предыдущий/следующий (для компенсации расхождения времени)
     return totp.verify(code, valid_window=1)
+
+
+
+
 
 
 

@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { authAPI } from '../api/api';
+import safeStorage from '../utils/safeStorage';
 
 const AuthContext = createContext(null);
 
@@ -14,7 +15,27 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(safeStorage.getItem('token'));  // ИСПРАВЛЕНО: Безопасное чтение
+
+  // РАЗМЫШЛЕНИЕ: logout должен быть useCallback, чтобы checkAuth мог на него ссылаться
+  const logout = useCallback(() => {
+    safeStorage.removeItem('token');  // ИСПРАВЛЕНО: Безопасное удаление
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  // РАЗМЫШЛЕНИЕ: checkAuth нужен useCallback для стабильной ссылки в useEffect
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await authAPI.me();
+      setUser(response.data);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      logout();  // Теперь logout стабилен благодаря useCallback
+    } finally {
+      setLoading(false);
+    }
+  }, [logout]);  // ИСПРАВЛЕНО: Добавлена зависимость
 
   useEffect(() => {
     if (token) {
@@ -22,19 +43,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, [token]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await authAPI.me();
-      setUser(response.data);
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [token, checkAuth]);  // ИСПРАВЛЕНО: Добавлена зависимость checkAuth
 
   const login = async (username, password) => {
     try {
@@ -50,7 +59,7 @@ export const AuthProvider = ({ children }) => {
         };
       }
       
-      localStorage.setItem('token', access_token);
+      safeStorage.setItem('token', access_token);  // ИСПРАВЛЕНО: Безопасное сохранение
       setToken(access_token);
       await checkAuth();
       return { success: true, requires2FA: false };
@@ -79,11 +88,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-  };
+  // РАЗМЫШЛЕНИЕ: logout уже определен выше через useCallback, убираем дубликат
 
   return (
     <AuthContext.Provider value={{ user, login, register, logout, loading, isAuthenticated: !!user }}>

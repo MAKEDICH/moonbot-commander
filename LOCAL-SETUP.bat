@@ -41,6 +41,24 @@ python -m pip install --upgrade pip --quiet
 pip install -r requirements.txt --quiet
 echo [OK] Packages installed
 
+echo Verifying WebSocket support...
+python -c "import websockets" >nul 2>&1
+if !errorlevel! neq 0 (
+    echo [WARNING] WebSocket library not found
+    echo [ACTION] Installing websockets...
+    pip install websockets --quiet
+    python -c "import websockets" >nul 2>&1
+    if !errorlevel! neq 0 (
+        echo [ERROR] Failed to install websockets
+        cd ..
+        pause
+        exit /b 1
+    )
+    echo [OK] WebSocket support added
+) else (
+    echo [OK] WebSocket support confirmed
+)
+
 echo Initializing...
 
 REM Check if keys are valid before proceeding
@@ -71,7 +89,6 @@ if !errorlevel! neq 0 (
 python migrate_add_password.py >nul 2>&1
 python migrate_add_recovery_codes.py >nul 2>&1
 python migrate_add_2fa.py >nul 2>&1
-python migrate_add_2fa_attempts.py >nul 2>&1
 python migrate_scheduled_commands_full.py >nul 2>&1
 python migrate_add_timezone.py >nul 2>&1
 python migrate_add_scheduler_settings.py >nul 2>&1

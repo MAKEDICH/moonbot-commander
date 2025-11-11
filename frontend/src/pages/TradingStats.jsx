@@ -115,6 +115,7 @@ const TradingStats = ({ autoRefresh, setAutoRefresh }) => {
     }
 
     // Создаем новый интервал если автообновление включено
+    // ИСПРАВЛЕНО: Убрали loadStats из dependencies для предотвращения утечек
     if (autoRefresh) {
       intervalRef.current = setInterval(() => {
         loadStats();
@@ -128,7 +129,7 @@ const TradingStats = ({ autoRefresh, setAutoRefresh }) => {
         intervalRef.current = null;
       }
     };
-  }, [autoRefresh, loadStats]);
+  }, [autoRefresh]); // Убрали loadStats из dependencies
 
   // Обработчики фильтров
   const handleServerChange = (serverId) => {

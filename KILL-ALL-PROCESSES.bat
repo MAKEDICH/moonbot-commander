@@ -88,6 +88,16 @@ if !errorlevel! equ 0 (
     taskkill /F /IM node.exe >nul 2>&1
 )
 
+REM Close CMD windows by window title
+echo   Closing MoonBot CMD windows...
+taskkill /F /FI "WINDOWTITLE eq MoonBot Backend*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq MoonBot Scheduler*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq MoonBot Frontend*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq MoonBot Commander Backend*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq MoonBot Commander v2.0 Backend*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq MoonBot Backend (v1.0)*" >nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq MoonBot Backend (v2.0)*" >nul 2>&1
+
 REM Wait a bit
 timeout /t 2 /nobreak >nul
 
@@ -198,6 +208,7 @@ if "!ALL_CLEAN!"=="1" (
     echo You can now safely run:
     echo   - LOCAL-START.bat
     echo   - SERVER-START.bat
+    echo   - START.bat
 ) else (
     echo [WARNING] Some processes or ports could not be cleared.
     echo.
@@ -216,6 +227,7 @@ echo What was done:
 echo   - Stopped Windows Services (if existed)
 echo   - Killed Python processes (!MAX_ATTEMPTS! attempts)
 echo   - Killed Node.js processes (!MAX_ATTEMPTS! attempts)
+echo   - Closed orphaned CMD windows (NEW!)
 echo   - Cleared ports 3000 and 8000
 echo   - Waited for TIME_WAIT to clear
 echo.

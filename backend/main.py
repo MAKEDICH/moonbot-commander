@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, joinedload
@@ -6,6 +6,7 @@ from typing import List, Optional, Dict
 from datetime import datetime, timedelta
 import os
 import re
+import uuid
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -19,6 +20,7 @@ import totp
 import ip_validator
 from database import engine, get_db, SessionLocal
 from udp_client import UDPClient, test_connection
+from websocket_manager import ws_manager
 
 # Создание таблиц
 models.Base.metadata.create_all(bind=engine)
@@ -766,9 +768,24 @@ async def test_server_connection(
     if not server:
         raise HTTPException(status_code=404, detail="Сервер не найден")
     
-    is_online = await test_connection(server.host, server.port, get_decrypted_password(server), bind_port=server.port)
+    # ВАЖНО: Используем listener если он активен, чтобы не прерывать поток данных
+    listener = udp_listener.active_listeners.get(server.id)
     
-    return {"server_id": server_id, "is_online": is_online}
+    if listener and listener.running:
+        print(f"[API] Testing server {server.id} through listener")
+        try:
+            success, response = listener.send_command_with_response("lst", timeout=3.0)
+            is_online = success and not response.startswith('ERR')
+            print(f"[API] Test result via listener: {is_online}")
+            return {"server_id": server_id, "is_online": is_online}
+        except Exception as e:
+            print(f"[API] Error testing via listener: {e}")
+            return {"server_id": server_id, "is_online": False}
+    else:
+        # Если listener не активен - используем прямое подключение
+        print(f"[API] Testing server {server.id} directly (no listener)")
+        is_online = await test_connection(server.host, server.port, get_decrypted_password(server), bind_port=server.port)
+        return {"server_id": server_id, "is_online": is_online}
 
 
 # ==================== COMMAND ENDPOINTS ====================
@@ -792,13 +809,39 @@ async def send_command(
         raise HTTPException(status_code=400, detail="Сервер неактивен")
     
     # Отправка команды через UDP
-    success, response = await udp_client.send_command(
-        server.host,
-        server.port,
-        command_data.command,
-        command_data.timeout,
-        get_decrypted_password(server)  # Расшифрованный пароль
-    )
+    # Если listener запущен - используем его, чтобы MoonBot продолжал слать данные на listener port
+    listener = udp_listener.active_listeners.get(server.id)
+    
+    if listener and listener.running:
+        print(f"[API] Sending command through listener for server {server.id}")
+        try:
+            success, response = listener.send_command_with_response(
+                command_data.command,
+                timeout=float(command_data.timeout or 5)
+            )
+            print(f"[API] Listener response: success={success}, response={response[:100] if response else 'None'}...")
+        except Exception as e:
+            print(f"[API] Error sending through listener: {e}")
+            # Fallback to direct UDP
+            client = UDPClient()
+            success, response = await client.send_command(
+                server.host,
+                server.port,
+                command_data.command,
+                command_data.timeout or 5,
+                get_decrypted_password(server)
+            )
+    else:
+        # Listener не запущен - отправляем напрямую
+        print(f"[API] Listener not active for server {server.id}, sending directly")
+        client = UDPClient()
+        success, response = await client.send_command(
+            server.host,
+            server.port,
+            command_data.command,
+            command_data.timeout or 5,
+            get_decrypted_password(server)
+        )
     
     # Сохранение в историю
     history_entry = models.CommandHistory(
@@ -932,13 +975,31 @@ async def send_bulk_command(
     
     # Отправка команды на каждый сервер
     for server in servers:
-        success, response = await udp_client.send_command(
-            server.host,
-            server.port,
-            command_data.command,
-            command_data.timeout,
-            get_decrypted_password(server)  # Расшифрованный пароль
-        )
+        # ВАЖНО: Используем listener если он активен, чтобы не прерывать поток данных
+        listener = udp_listener.active_listeners.get(server.id)
+        
+        if listener and listener.running:
+            print(f"[API] Sending bulk command to server {server.id} through listener")
+            try:
+                success, response = listener.send_command_with_response(
+                    command_data.command,
+                    timeout=float(command_data.timeout or 5)
+                )
+            except Exception as e:
+                print(f"[API] Error sending bulk command through listener: {e}")
+                success = False
+                response = str(e)
+        else:
+            # Listener не активен - отправляем напрямую
+            print(f"[API] Sending bulk command to server {server.id} directly (no listener)")
+            client = UDPClient()
+            success, response = await client.send_command(
+                server.host,
+                server.port,
+                command_data.command,
+                command_data.timeout,
+                get_decrypted_password(server)
+            )
         
         # Сохранение в историю
         history_entry = models.CommandHistory(
@@ -982,7 +1043,14 @@ def get_groups(
         .distinct()\
         .all()
     
-    group_names = [g[0] for g in groups if g[0]]
+    # Разбиваем группы по запятым и убираем дубликаты
+    all_groups = set()
+    for g in groups:
+        if g[0]:
+            group_parts = [part.strip() for part in g[0].split(',')]
+            all_groups.update(group_parts)
+    
+    group_names = sorted(list(all_groups))
     
     return {"groups": group_names}
 
@@ -1229,14 +1297,29 @@ async def execute_preset(
     
     results = []
     
+    # ВАЖНО: Используем listener если он активен, чтобы не прерывать поток данных
+    listener = udp_listener.active_listeners.get(server.id)
+    
     for command in commands_list:
-        success, response = await udp_client.send_command(
-            server.host,
-            server.port,
-            command,
-            timeout=5,
-            password=get_decrypted_password(server)  # Расшифрованный пароль
-        )
+        if listener and listener.running:
+            print(f"[API] Sending preset command to server {server.id} through listener")
+            try:
+                success, response = listener.send_command_with_response(command, timeout=5.0)
+            except Exception as e:
+                print(f"[API] Error sending preset command through listener: {e}")
+                success = False
+                response = str(e)
+        else:
+            # Listener не активен - отправляем напрямую
+            print(f"[API] Sending preset command to server {server.id} directly (no listener)")
+            client = UDPClient()
+            success, response = await client.send_command(
+                server.host,
+                server.port,
+                command,
+                timeout=5,
+                password=get_decrypted_password(server)
+            )
         
         # Сохранение в историю
         history_entry = models.CommandHistory(
@@ -1654,15 +1737,30 @@ async def execute_preset(
     
     results = []
     
+    # ВАЖНО: Используем listener если он активен, чтобы не прерывать поток данных
+    listener = udp_listener.active_listeners.get(server.id)
+    
     # Выполняем команды последовательно
     for command in commands_list:
-        success, response = await udp_client.send_command(
-            server.host,
-            server.port,
-            command,
-            timeout,
-            get_decrypted_password(server)  # Расшифрованный пароль
-        )
+        if listener and listener.running:
+            print(f"[API] Sending preset-v2 command to server {server.id} through listener")
+            try:
+                success, response = listener.send_command_with_response(command, timeout=float(timeout or 5))
+            except Exception as e:
+                print(f"[API] Error sending preset-v2 command through listener: {e}")
+                success = False
+                response = str(e)
+        else:
+            # Listener не активен - отправляем напрямую
+            print(f"[API] Sending preset-v2 command to server {server.id} directly (no listener)")
+            client = UDPClient()
+            success, response = await client.send_command(
+                server.host,
+                server.port,
+                command,
+                timeout,
+                get_decrypted_password(server)
+            )
         
         # Сохранение в историю
         history_entry = models.CommandHistory(
@@ -1940,13 +2038,22 @@ def update_user_settings(
     
     # Обновляем только переданные поля
     if settings_update.ping_interval is not None:
+        # ИСПРАВЛЕНО: Валидация ping_interval!
+        # РАЗМЫШЛЕНИЕ: Frontend валидирует, но атакующий может обойти через API!
+        if settings_update.ping_interval < 5 or settings_update.ping_interval > 3600:
+            raise HTTPException(
+                status_code=400,
+                detail="ping_interval must be between 5 and 3600 seconds"
+            )
         settings.ping_interval = settings_update.ping_interval
     if settings_update.enable_notifications is not None:
         settings.enable_notifications = settings_update.enable_notifications
     if settings_update.notification_sound is not None:
         settings.notification_sound = settings_update.notification_sound
     
-    settings.updated_at = datetime.utcnow()
+    # ИСПРАВЛЕНО: Убрал ручное обновление updated_at
+    # РАЗМЫШЛЕНИЕ: В модели уже есть onupdate=datetime.now
+    # Ручное присваивание может конфликтовать с SQLAlchemy
     db.commit()
     db.refresh(settings)
     
@@ -1957,13 +2064,31 @@ def update_user_settings(
 
 @app.get("/api/servers-with-status")
 def get_servers_with_status(
+    limit: int = 1000,
+    offset: int = 0,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Получение всех серверов со статусами"""
-    servers = db.query(models.Server).filter(
+    from sqlalchemy.orm import joinedload
+    
+    # ИСПРАВЛЕНО: Добавлена пагинация!
+    # РАЗМЫШЛЕНИЕ: .all() без limit → DoS при 10,000+ серверах!
+    if limit > 1000:
+        raise HTTPException(status_code=400, detail="Limit cannot exceed 1000")
+    if limit < 1:
+        raise HTTPException(status_code=400, detail="Limit must be positive")
+    if offset < 0:
+        raise HTTPException(status_code=400, detail="Offset cannot be negative")
+    
+    # ИСПРАВЛЕНО: joinedload для предотвращения N+1 query!
+    # РАЗМЫШЛЕНИЕ: server.server_status делал отдельный SQL для каждого сервера!
+    # 100 серверов = 101 SQL запрос → медленно!
+    servers = db.query(models.Server).options(
+        joinedload(models.Server.server_status)
+    ).filter(
         models.Server.user_id == current_user.id
-    ).all()
+    ).limit(limit).offset(offset).all()
     
     result = []
     for server in servers:
@@ -2021,38 +2146,52 @@ async def ping_server(
     start_time = time.time()
     
     try:
-        # Используем команду lst (короткая версия list) для проверки доступности
-        success, response = await udp_client.send_command(server.host, server.port, "lst", timeout=3, password=get_decrypted_password(server))
+        # ВАЖНО: Используем listener если он активен, чтобы не прерывать поток данных
+        listener = udp_listener.active_listeners.get(server.id)
+        
+        if listener and listener.running:
+            print(f"[API] Pinging server {server.id} through listener")
+            success, response = listener.send_command_with_response("lst", timeout=3.0)
+            is_success = success and not response.startswith('ERR')
+        else:
+            # Если listener не активен - используем прямое подключение
+            print(f"[API] Pinging server {server.id} directly (no listener)")
+            client = UDPClient(timeout=3)
+            is_success, response = await client.send_command(server.host, server.port, "lst", timeout=3, password=get_decrypted_password(server))
+        
         response_time = (time.time() - start_time) * 1000  # В миллисекундах
         
-        if success:
+        if is_success:
             status.is_online = True
-            status.last_ping = datetime.utcnow()
+            # ИСПРАВЛЕНО: Используем локальное время вместо UTC!
+            # РАЗМЫШЛЕНИЕ: Dashboard использует datetime.now() → должна быть консистентность!
+            status.last_ping = datetime.now()
             status.response_time = response_time
             status.last_error = None
             status.consecutive_failures = 0
             
-            # Обновляем uptime (простая логика)
+            # ИСПРАВЛЕНО: Правильный расчет uptime!
+            # РАЗМЫШЛЕНИЕ: uptime += 1% это НЕ uptime, это счетчик!
+            # Настоящий uptime = (successful / total) * 100
+            # Для простоты используем приближение с weighted average
             current_uptime = status.uptime_percentage if status.uptime_percentage is not None else 100.0
-            if current_uptime < 100:
-                status.uptime_percentage = min(100.0, current_uptime + 1.0)
-            else:
-                status.uptime_percentage = 100.0
+            # Плавное увеличение: текущий uptime * 0.99 + 100 * 0.01
+            status.uptime_percentage = min(100.0, current_uptime * 0.99 + 100.0 * 0.01)
         else:
             raise Exception(response or "No response")
         
     except Exception as e:
         status.is_online = False
-        status.last_ping = datetime.utcnow()
-        status.last_error = str(e)
-        status.consecutive_failures += 1
+        # ИСПРАВЛЕНО: Локальное время
+        status.last_ping = datetime.now()
+        status.last_error = str(e)[:500]  # ДОБАВЛЕНО: Обрезаем длинные ошибки
+        status.consecutive_failures = (status.consecutive_failures or 0) + 1
         
-        # Уменьшаем uptime
+        # ИСПРАВЛЕНО: Правильный расчет downtime
+        # Уменьшаем uptime пропорционально
         current_uptime = status.uptime_percentage if status.uptime_percentage is not None else 100.0
-        if current_uptime > 0:
-            status.uptime_percentage = max(0.0, current_uptime - 5.0)
-        else:
-            status.uptime_percentage = 0.0
+        # Плавное уменьшение: текущий uptime * 0.99 + 0 * 0.01
+        status.uptime_percentage = max(0.0, current_uptime * 0.99)
     
     db.commit()
     db.refresh(status)
@@ -2088,8 +2227,11 @@ def get_dashboard_stats(
     
     offline_servers = total_servers - online_servers
     
+    # ИСПРАВЛЕНО: Используем локальное время вместо UTC
+    # РАЗМЫШЛЕНИЕ: utcnow() не учитывает timezone пользователя!
+    # Пользователь в Москве (UTC+3) видит неправильный "сегодня"
     # Команды за сегодня
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     
     commands_today = db.query(models.CommandHistory).filter(
         models.CommandHistory.user_id == current_user.id,
@@ -2131,36 +2273,54 @@ def get_commands_daily_stats(
 ):
     """Получение статистики команд по дням"""
     from datetime import timedelta, date
+    from sqlalchemy import func, case
     
-    start_date = datetime.utcnow() - timedelta(days=days)
+    # ИСПРАВЛЕНО: Валидация days!
+    # РАЗМЫШЛЕНИЕ: Без валидации days=99999 загрузит ВСЕ команды в память!
+    if days < 1 or days > 365:
+        raise HTTPException(
+            status_code=400,
+            detail="Days parameter must be between 1 and 365"
+        )
     
-    # Получаем все команды за период
-    commands = db.query(models.CommandHistory).filter(
+    start_date = datetime.now() - timedelta(days=days)
+    
+    # ИСПРАВЛЕНО: Группировка в SQL, а не в Python!
+    # РАЗМЫШЛЕНИЕ: .all() + группировка в Python = OOM при 100k+ командах
+    # Делаем group by date прямо в SQL!
+    
+    results = db.query(
+        func.date(models.CommandHistory.execution_time).label('date'),
+        func.count(models.CommandHistory.id).label('total'),
+        func.sum(
+            case(
+                (models.CommandHistory.status == 'success', 1),
+                else_=0
+            )
+        ).label('successful'),
+        func.sum(
+            case(
+                (models.CommandHistory.status != 'success', 1),
+                else_=0
+            )
+        ).label('failed')
+    ).filter(
         models.CommandHistory.user_id == current_user.id,
         models.CommandHistory.execution_time >= start_date
+    ).group_by(
+        func.date(models.CommandHistory.execution_time)
+    ).order_by(
+        func.date(models.CommandHistory.execution_time)
     ).all()
-    
-    # Группируем по дням вручную
-    daily_dict = {}
-    for cmd in commands:
-        day = cmd.execution_time.date().isoformat()
-        if day not in daily_dict:
-            daily_dict[day] = {"total": 0, "successful": 0, "failed": 0}
-        
-        daily_dict[day]["total"] += 1
-        if cmd.status == "success":
-            daily_dict[day]["successful"] += 1
-        else:
-            daily_dict[day]["failed"] += 1
     
     # Преобразуем в список
     result = []
-    for day, stats in sorted(daily_dict.items()):
+    for row in results:
         result.append({
-            "date": day,
-            "total": stats["total"],
-            "successful": stats["successful"],
-            "failed": stats["failed"]
+            "date": str(row.date),
+            "total": row.total,
+            "successful": row.successful or 0,
+            "failed": row.failed or 0
         })
     
     return result
@@ -2575,21 +2735,43 @@ async def startup_event():
     
     Автоматически запускает UDP listeners для всех активных серверов
     """
+    print("[STARTUP] Initializing...")
+    
+    # Устанавливаем event loop для WebSocket manager
+    import asyncio
+    loop = asyncio.get_event_loop()
+    ws_manager.set_event_loop(loop)
+    print("[STARTUP] WebSocket manager event loop configured")
+    
     print("[STARTUP] Initializing UDP Listeners...")
     
     db = SessionLocal()
     try:
+        # ДИАГНОСТИКА: Показываем ВСЕ серверы
+        all_servers = db.query(models.Server).all()
+        print(f"[STARTUP] Total servers in DB: {len(all_servers)}")
+        for s in all_servers:
+            print(f"  - Server ID={s.id}, Name={s.name}, Active={s.is_active}, User={s.user_id}")
+        
         servers = db.query(models.Server).filter(
             models.Server.is_active == True
         ).all()
         
-        print(f"[STARTUP] Found {len(servers)} active servers")
+        print(f"[STARTUP] Found {len(servers)} active servers to start listeners")
         
         for server in servers:
             try:
                 password = None
                 if server.password:
                     password = encryption.decrypt_password(server.password)
+                
+                # ДИАГНОСТИКА: Логируем параметры запуска (пароль замаскирован!)
+                password_masked = f"{password[:4]}****{password[-4:]}" if password and len(password) > 8 else "****" if password else "None"
+                print(f"[STARTUP] Starting listener for server {server.id}:")
+                print(f"  Name: {server.name}")
+                print(f"  Host: {server.host}")
+                print(f"  Port: {server.port}")
+                print(f"  Password: {password_masked}")
                 
                 success = udp_listener.start_listener(
                     server_id=server.id,
@@ -2599,12 +2781,12 @@ async def startup_event():
                 )
                 
                 if success:
-                    print(f"[STARTUP] OK: Listener started for server {server.id}: {server.name}")
+                    print(f"[STARTUP] ✅ OK: Listener started for server {server.id}: {server.name}")
                 else:
-                    print(f"[STARTUP] FAIL: Failed to start listener for server {server.id}: {server.name}")
+                    print(f"[STARTUP] ❌ FAIL: Failed to start listener for server {server.id}: {server.name}")
             
             except Exception as e:
-                print(f"[STARTUP] Error starting listener for server {server.id}: {e}")
+                print(f"[STARTUP] ❌ Error starting listener for server {server.id}: {e}")
                 import traceback
                 traceback.print_exc()
     
@@ -2918,6 +3100,33 @@ async def get_sql_log(
     }
 
 
+@app.delete("/api/sql-log/clear-all")
+async def clear_all_sql_logs(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Очистить все SQL логи для ВСЕХ серверов пользователя"""
+    # Получаем все серверы пользователя
+    user_server_ids = db.query(models.Server.id).filter(
+        models.Server.user_id == current_user.id
+    ).all()
+    server_ids = [sid[0] for sid in user_server_ids]
+    
+    # Удаляем все логи для этих серверов
+    deleted_count = db.query(models.SQLCommandLog).filter(
+        models.SQLCommandLog.server_id.in_(server_ids)
+    ).delete(synchronize_session=False)
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Удалено {deleted_count} записей SQL логов со всех серверов",
+        "deleted_count": deleted_count,
+        "servers_count": len(server_ids)
+    }
+
+
 @app.delete("/api/servers/{server_id}/sql-log/clear")
 async def clear_sql_logs(
     server_id: int,
@@ -2946,6 +3155,33 @@ async def clear_sql_logs(
         "message": f"Удалено {deleted_count} записей SQL логов",
         "server_id": server_id,
         "deleted_count": deleted_count
+    }
+
+
+@app.delete("/api/orders/clear-all")
+async def clear_all_orders(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Очистить все ордера для ВСЕХ серверов пользователя"""
+    # Получаем все серверы пользователя
+    user_server_ids = db.query(models.Server.id).filter(
+        models.Server.user_id == current_user.id
+    ).all()
+    server_ids = [sid[0] for sid in user_server_ids]
+    
+    # Удаляем все ордера для этих серверов
+    deleted_count = db.query(models.MoonBotOrder).filter(
+        models.MoonBotOrder.server_id.in_(server_ids)
+    ).delete(synchronize_session=False)
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Удалено {deleted_count} ордеров со всех серверов",
+        "deleted_count": deleted_count,
+        "servers_count": len(server_ids)
     }
 
 
@@ -3002,6 +3238,14 @@ async def get_moonbot_orders(
         limit: Количество записей (max 500)
         offset: Смещение для пагинации
     """
+    # ИСПРАВЛЕНО: Валидация limit и offset
+    if limit < 1:
+        raise HTTPException(status_code=400, detail="limit must be >= 1")
+    if limit > 500:
+        limit = 500
+    if offset < 0:
+        raise HTTPException(status_code=400, detail="offset must be >= 0")
+    
     # Проверяем что сервер принадлежит пользователю
     server = db.query(models.Server).filter(
         models.Server.id == server_id,
@@ -3010,32 +3254,6 @@ async def get_moonbot_orders(
     
     if not server:
         raise HTTPException(status_code=404, detail="Сервер не найден")
-    
-    # АВТОСТАРТ LISTENER: Проверяем что listener запущен, если нет - запускаем
-    if server.is_active and server_id not in udp_listener.active_listeners:
-        print(f"[AUTO-START] Listener not running for server {server_id}, starting...")
-        try:
-            password = None
-            if server.password:
-                password = encryption.decrypt_password(server.password)
-            
-            success = udp_listener.start_listener(
-                server_id=server.id,
-                host=server.host,
-                port=server.port,
-                password=password
-            )
-            
-            if success:
-                print(f"[AUTO-START] OK: Listener started for server {server_id}")
-            else:
-                print(f"[AUTO-START] FAIL: Could not start listener for server {server_id}")
-        except Exception as e:
-            print(f"[AUTO-START] Error starting listener for server {server_id}: {e}")
-    
-    # Ограничение на limit
-    if limit > 500:
-        limit = 500
     
     # Строим запрос
     query = db.query(models.MoonBotOrder).filter(
@@ -3092,7 +3310,7 @@ async def get_orders_stats(
     db: Session = Depends(get_db)
 ):
     """Получить статистику по ордерам сервера"""
-    from sqlalchemy import func
+    from sqlalchemy import func, case
     
     # Проверяем что сервер принадлежит пользователю
     server = db.query(models.Server).filter(
@@ -3103,33 +3321,24 @@ async def get_orders_stats(
     if not server:
         raise HTTPException(status_code=404, detail="Сервер не найден")
     
-    # Статистика
-    total_orders = db.query(models.MoonBotOrder).filter(
+    # ИСПРАВЛЕНО: Объединили 4 запроса в один с агрегацией
+    # Используем одни запрос с GROUP BY и условной агрегацией
+    stats_query = db.query(
+        func.count(models.MoonBotOrder.id).label('total'),
+        func.sum(case((models.MoonBotOrder.status == "Open", 1), else_=0)).label('open_count'),
+        func.sum(case((models.MoonBotOrder.status == "Closed", 1), else_=0)).label('closed_count'),
+        func.sum(models.MoonBotOrder.profit_btc).label('total_profit')
+    ).filter(
         models.MoonBotOrder.server_id == server_id
-    ).count()
-    
-    open_orders = db.query(models.MoonBotOrder).filter(
-        models.MoonBotOrder.server_id == server_id,
-        models.MoonBotOrder.status == "Open"
-    ).count()
-    
-    closed_orders = db.query(models.MoonBotOrder).filter(
-        models.MoonBotOrder.server_id == server_id,
-        models.MoonBotOrder.status == "Closed"
-    ).count()
-    
-    # Общий профит (включая открытые ордера с текущей прибылью!)
-    total_profit = db.query(func.sum(models.MoonBotOrder.profit_btc)).filter(
-        models.MoonBotOrder.server_id == server_id
-    ).scalar() or 0.0
+    ).first()
     
     return {
         "server_id": server_id,
         "server_name": server.name,
-        "total_orders": total_orders,
-        "open_orders": open_orders,
-        "closed_orders": closed_orders,
-        "total_profit_btc": float(total_profit)
+        "total_orders": stats_query.total or 0,
+        "open_orders": stats_query.open_count or 0,
+        "closed_orders": stats_query.closed_count or 0,
+        "total_profit_btc": float(stats_query.total_profit or 0.0)
     }
 
 
@@ -3715,7 +3924,8 @@ async def sync_orders_from_datetime(
     command = f"SQLSelect {datetime_str}"
     
     # Отправляем с многопакетным приемом (может быть много данных!)
-    success, responses = await udp_client.send_command_multi_response(
+    client = UDPClient()
+    success, responses = await client.send_command_multi_response(
         server.host,
         server.port,
         command,
@@ -4061,6 +4271,97 @@ async def get_trading_stats(
         "available_strategies": [s.strategy for s in all_strategies if s.strategy],
         "available_servers": [{"id": s.id, "name": s.name} for s in all_servers]
     }
+
+
+# ==================== WEBSOCKET ENDPOINT ====================
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, token: Optional[str] = None):
+    """
+    WebSocket endpoint для real-time уведомлений
+    
+    Клиент должен передать JWT токен как query параметр:
+    ws://localhost:8000/ws?token=YOUR_JWT_TOKEN
+    
+    Типы сообщений от сервера:
+    - sql_log: Новая SQL команда от MoonBot
+    - order_update: Обновление ордера
+    - server_status: Изменение статуса сервера
+    """
+    connection_id = str(uuid.uuid4())
+    current_user = None
+    
+    try:
+        # Валидация токена
+        if not token:
+            await websocket.close(code=4001, reason="No token provided")
+            return
+        
+        # Проверяем JWT токен
+        try:
+            from jose import jwt, JWTError
+            SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
+            ALGORITHM = "HS256"
+            
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username: str = payload.get("sub")
+            if username is None:
+                await websocket.close(code=4002, reason="Invalid token")
+                return
+            
+            # Получаем пользователя из БД
+            db = SessionLocal()
+            try:
+                current_user = db.query(models.User).filter(models.User.username == username).first()
+                if not current_user:
+                    await websocket.close(code=4003, reason="User not found")
+                    return
+            finally:
+                db.close()
+        
+        except JWTError as e:
+            print(f"[WS] JWT Error: {e}")
+            await websocket.close(code=4004, reason="Token validation failed")
+            return
+        
+        # Подключаем пользователя
+        await ws_manager.connect(websocket, current_user.id, connection_id)
+        
+        # Отправляем приветственное сообщение
+        await websocket.send_json({
+            "type": "connected",
+            "message": "WebSocket connection established",
+            "user_id": current_user.id,
+            "connection_id": connection_id,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+        # Слушаем сообщения от клиента (для keep-alive и возможных команд)
+        while True:
+            try:
+                data = await websocket.receive_text()
+                
+                # Обрабатываем ping
+                if data == "ping":
+                    await websocket.send_json({
+                        "type": "pong",
+                        "timestamp": datetime.utcnow().isoformat()
+                    })
+            
+            except WebSocketDisconnect:
+                print(f"[WS] Client disconnected: user_id={current_user.id}, connection_id={connection_id}")
+                break
+            except Exception as e:
+                print(f"[WS] Error receiving message: {e}")
+                break
+    
+    except Exception as e:
+        print(f"[WS] Connection error: {e}")
+    
+    finally:
+        # Отключаем пользователя
+        if current_user:
+            await ws_manager.disconnect(current_user.id, connection_id)
 
 
 if __name__ == "__main__":

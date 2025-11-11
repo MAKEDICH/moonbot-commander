@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare } from 'react-icons/fi';
+import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare, FiMinusSquare } from 'react-icons/fi';
 import { serversAPI, commandsAPI, groupsAPI } from '../api/api';
 import styles from './Commands.module.css';
 
@@ -229,10 +229,55 @@ const Commands = () => {
     
     const matchesGroup = selectedGroup === 'all' || 
                         (!selectedGroup && !server.group_name) ||
-                        server.group_name === selectedGroup;
+                        (server.group_name && server.group_name.split(',').map(g => g.trim()).includes(selectedGroup));
     
     return matchesSearch && matchesGroup;
   });
+
+  // ИСПРАВЛЕНО: Группировка серверов для отображения
+  const groupedServers = () => {
+    const grouped = {};
+    
+    filteredServers.forEach(server => {
+      const groupName = server.group_name || '';
+      if (!grouped[groupName]) {
+        grouped[groupName] = [];
+      }
+      grouped[groupName].push(server);
+    });
+    
+    return grouped;
+  };
+
+  const serversGrouped = groupedServers();
+  const groupNames = Object.keys(serversGrouped).sort((a, b) => {
+    if (a === '') return -1; // "БЕЗ ГРУППЫ" первым
+    if (b === '') return 1;
+    return a.localeCompare(b);
+  });
+
+  // Проверка выбора всех серверов группы
+  const isGroupFullySelected = (groupName) => {
+    const groupServers = serversGrouped[groupName] || [];
+    return groupServers.length > 0 && groupServers.every(s => selectedServers.includes(s.id));
+  };
+
+  const isGroupPartiallySelected = (groupName) => {
+    const groupServers = serversGrouped[groupName] || [];
+    return groupServers.some(s => selectedServers.includes(s.id)) && !isGroupFullySelected(groupName);
+  };
+
+  // Переключение выбора всех серверов группы
+  const toggleGroupServersSelection = (groupName) => {
+    const groupServers = serversGrouped[groupName] || [];
+    const groupServerIds = groupServers.map(s => s.id);
+    
+    if (isGroupFullySelected(groupName)) {
+      setSelectedServers(prev => prev.filter(id => !groupServerIds.includes(id)));
+    } else {
+      setSelectedServers(prev => [...new Set([...prev, ...groupServerIds])]);
+    }
+  };
 
   // Переключение выбора одного сервера
   const toggleServerSelection = (serverId) => {
@@ -254,6 +299,35 @@ const Commands = () => {
   // Снять выбор со всех
   const deselectAll = () => {
     setSelectedServers([]);
+  };
+
+  // ИСПРАВЛЕНО: Функция для выбора/снятия выбора всех серверов группы по чекбоксу
+  const toggleGroupSelection = (groupValue) => {
+    let groupServers;
+    
+    if (groupValue === 'all') {
+      // Все сервера
+      groupServers = servers.map(s => s.id);
+    } else if (groupValue === '') {
+      // Без группы
+      groupServers = servers.filter(s => !s.group_name).map(s => s.id);
+    } else {
+      // Конкретная группа
+      groupServers = servers.filter(s => 
+        s.group_name && s.group_name.split(',').map(g => g.trim()).includes(groupValue)
+      ).map(s => s.id);
+    }
+    
+    // Проверяем, все ли сервера этой группы уже выбраны
+    const allSelected = groupServers.every(id => selectedServers.includes(id));
+    
+    if (allSelected) {
+      // Снять выбор с этой группы
+      setSelectedServers(prev => prev.filter(id => !groupServers.includes(id)));
+    } else {
+      // Выбрать все сервера этой группы
+      setSelectedServers(prev => [...new Set([...prev, ...groupServers])]);
+    }
   };
 
   // Обработчик конструктора команд
@@ -416,17 +490,98 @@ const Commands = () => {
           {/* Фильтр по группам */}
           {groups.length > 0 && (
             <div className={styles.groupFilter}>
-              <select 
-                value={selectedGroup} 
-                onChange={(e) => setSelectedGroup(e.target.value)}
-                className={styles.groupSelect}
-              >
-                <option value="all">Все группы</option>
-                <option value="">Без группы</option>
+              <label className={styles.groupFilterLabel}>Группы:</label>
+              <div className={styles.groupsList}>
+                {/* Все группы */}
+                <div 
+                  className={`${styles.groupItem} ${selectedGroup === 'all' ? styles.activeGroup : ''}`}
+                >
+                  <div 
+                    className={styles.groupCheckbox}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleGroupSelection('all');
+                    }}
+                    title="Выбрать/снять выбор всех серверов"
+                  >
+                    {(() => {
+                      const groupServers = servers.map(s => s.id);
+                      const allSelected = groupServers.every(id => selectedServers.includes(id));
+                      return allSelected ? (
+                        <FiCheckSquare className={styles.checkboxChecked} />
+                      ) : groupServers.some(id => selectedServers.includes(id)) ? (
+                        <FiMinusSquare className={styles.checkboxPartial} />
+                      ) : (
+                        <FiSquare className={styles.checkboxUnchecked} />
+                      );
+                    })()}
+                  </div>
+                  <span onClick={() => setSelectedGroup('all')}>
+                    Все группы
+                  </span>
+                </div>
+                
+                {/* БЕЗ ГРУППЫ */}
+                <div 
+                  className={`${styles.groupItem} ${selectedGroup === '' ? styles.activeGroup : ''}`}
+                >
+                  <div 
+                    className={styles.groupCheckbox}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleGroupSelection('');
+                    }}
+                    title="Выбрать/снять выбор всех серверов БЕЗ ГРУППЫ"
+                  >
+                    {(() => {
+                      const groupServers = servers.filter(s => !s.group_name).map(s => s.id);
+                      const allSelected = groupServers.length > 0 && groupServers.every(id => selectedServers.includes(id));
+                      return allSelected ? (
+                        <FiCheckSquare className={styles.checkboxChecked} />
+                      ) : groupServers.some(id => selectedServers.includes(id)) ? (
+                        <FiMinusSquare className={styles.checkboxPartial} />
+                      ) : (
+                        <FiSquare className={styles.checkboxUnchecked} />
+                      );
+                    })()}
+                  </div>
+                  <span onClick={() => setSelectedGroup('')}>
+                    БЕЗ ГРУППЫ ({servers.filter(s => !s.group_name).length})
+                  </span>
+                </div>
+                
+                {/* Остальные группы */}
                 {groups.map(group => (
-                  <option key={group} value={group}>{group}</option>
+                  <div 
+                    key={group}
+                    className={`${styles.groupItem} ${selectedGroup === group ? styles.activeGroup : ''}`}
+                  >
+                    <div 
+                      className={styles.groupCheckbox}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleGroupSelection(group);
+                      }}
+                      title={`Выбрать/снять выбор всех серверов группы "${group}"`}
+                    >
+                      {(() => {
+                        const groupServers = servers.filter(s => s.group_name === group).map(s => s.id);
+                        const allSelected = groupServers.length > 0 && groupServers.every(id => selectedServers.includes(id));
+                        return allSelected ? (
+                          <FiCheckSquare className={styles.checkboxChecked} />
+                        ) : groupServers.some(id => selectedServers.includes(id)) ? (
+                          <FiMinusSquare className={styles.checkboxPartial} />
+                        ) : (
+                          <FiSquare className={styles.checkboxUnchecked} />
+                        );
+                      })()}
+                    </div>
+                    <span onClick={() => setSelectedGroup(group)}>
+                      {group} ({servers.filter(s => s.group_name === group).length})
+                    </span>
+                  </div>
                 ))}
-              </select>
+              </div>
             </div>
           )}
 
@@ -436,8 +591,17 @@ const Commands = () => {
               onClick={selectAll} 
               className={styles.selectBtn}
               disabled={filteredServers.length === 0}
+              title={
+                selectedGroup === '' 
+                  ? 'Выбрать все сервера БЕЗ ГРУППЫ' 
+                  : selectedGroup === 'all'
+                  ? 'Выбрать все сервера'
+                  : `Выбрать все сервера из группы "${selectedGroup}"`
+              }
             >
+              {selectedGroup === '' && '☐ '}
               Выбрать все ({filteredServers.length})
+              {selectedGroup === '' && ' БЕЗ ГРУППЫ'}
             </button>
             <button 
               onClick={deselectAll} 
@@ -455,30 +619,62 @@ const Commands = () => {
                 {searchQuery ? 'Ничего не найдено' : 'Нет активных серверов'}
               </div>
             ) : (
-              filteredServers.map(server => (
-                <div 
-                  key={server.id} 
-                  className={`${styles.serverItem} ${selectedServers.includes(server.id) ? styles.selected : ''}`}
-                  onClick={() => toggleServerSelection(server.id)}
-                >
-                  <div className={styles.checkbox}>
-                    {selectedServers.includes(server.id) ? (
-                      <FiCheckSquare className={styles.checkboxChecked} />
-                    ) : (
-                      <FiSquare className={styles.checkboxUnchecked} />
-                    )}
-                  </div>
-                  <div className={styles.serverInfo}>
-                    <div className={styles.serverName}>{server.name}</div>
-                    <div className={styles.serverDetails}>
-                      {server.host}:{server.port}
-                      {server.group_name && (
-                        <span className={styles.serverGroup}> • {server.group_name}</span>
-                      )}
+              groupNames.map(groupName => {
+                const groupServers = serversGrouped[groupName];
+                const fullySelected = isGroupFullySelected(groupName);
+                const partiallySelected = isGroupPartiallySelected(groupName);
+                
+                return (
+                  <div key={groupName} className={styles.serverGroup}>
+                    {/* Заголовок группы с чекбоксом */}
+                    <div 
+                      className={styles.groupHeader}
+                      onClick={() => toggleGroupServersSelection(groupName)}
+                    >
+                      <div className={styles.groupCheckboxLarge}>
+                        {fullySelected ? (
+                          <FiCheckSquare className={styles.checkboxChecked} />
+                        ) : partiallySelected ? (
+                          <FiMinusSquare className={styles.checkboxPartial} />
+                        ) : (
+                          <FiSquare className={styles.checkboxUnchecked} />
+                        )}
+                      </div>
+                      <div className={styles.groupTitle}>
+                        {groupName === '' ? 'БЕЗ ГРУППЫ' : groupName}
+                        <span className={styles.groupCount}>
+                          ({selectedServers.filter(id => groupServers.find(s => s.id === id)).length}/{groupServers.length})
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Серверы группы */}
+                    <div className={styles.groupServers}>
+                      {groupServers.map(server => (
+                        <div 
+                          key={server.id} 
+                          className={`${styles.serverItem} ${selectedServers.includes(server.id) ? styles.selected : ''}`}
+                          onClick={() => toggleServerSelection(server.id)}
+                        >
+                          <div className={styles.checkbox}>
+                            {selectedServers.includes(server.id) ? (
+                              <FiCheckSquare className={styles.checkboxChecked} />
+                            ) : (
+                              <FiSquare className={styles.checkboxUnchecked} />
+                            )}
+                          </div>
+                          <div className={styles.serverInfo}>
+                            <div className={styles.serverName}>{server.name}</div>
+                            <div className={styles.serverDetails}>
+                              {server.host}:{server.port}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

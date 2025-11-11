@@ -1,23 +1,31 @@
 @echo off
 setlocal enabledelayedexpansion
 chcp 65001 > nul
-title MoonBot Commander - Local Start
+title MoonBot Commander - Smart Start (Auto Version Detection)
 color 0B
 
 echo.
 echo ============================================================
-echo       MoonBot Commander - Local Start
+echo       MoonBot Commander - Smart Start
 echo ============================================================
 echo.
 
+REM AUTO VERSION DETECTION: This script automatically detects the version
+REM - Checks for schema_versions table (v2.0 indicator)
+REM - If v2.0 - launches main_v2.py
+REM - If v1.0 - launches main.py
+REM - Fallback to main.py if detection fails
+
 REM Check if setup was executed
 if not exist "backend\main.py" (
-    echo [ERROR] Backend not found!
-    echo.
-    echo Please run LOCAL-SETUP.bat first
-    echo.
-    pause
-    exit /b 1
+    if not exist "backend\main_v2.py" (
+        echo [ERROR] Backend not found!
+        echo.
+        echo Please run LOCAL-SETUP.bat first
+        echo.
+        pause
+        exit /b 1
+    )
 )
 
 if not exist "backend\.env" (
@@ -29,56 +37,93 @@ if not exist "backend\.env" (
     exit /b 1
 )
 
-REM Security check: Verify .env keys are valid
+REM Security check
 cd backend
 python check_keys.py >nul 2>&1
 if !errorlevel! neq 0 (
     echo.
-    echo [WARNING] Security keys in .env are invalid or corrupted!
-    echo.
-    echo This may happen if:
-    echo   - .env file was manually edited incorrectly
-    echo   - ENCRYPTION_KEY is invalid or placeholder text
-    echo   - SECRET_KEY is too short or placeholder text
-    echo.
+    echo [WARNING] Security keys in .env are invalid!
     echo [ACTION] Auto-fixing security keys...
     echo.
     
-    REM Backup and delete old database
     if exist moonbot_commander.db (
         echo Backing up old database...
         if exist moonbot_commander.db.old del moonbot_commander.db.old >nul 2>&1
         ren moonbot_commander.db moonbot_commander.db.old >nul 2>&1
-        echo [OK] Old database backed up to moonbot_commander.db.old
+        echo [OK] Old database backed up
     )
     
-    REM Delete invalid .env
-    if exist .env (
-        echo Removing invalid .env file...
-        del .env >nul 2>&1
-        echo [OK] Invalid .env removed
-    )
-    
-    REM Generate new valid keys
-    echo Generating new security keys...
+    if exist .env del .env >nul 2>&1
     python init_security.py
     
-    REM Verify new keys are valid
     python check_keys.py >nul 2>&1
     if !errorlevel! neq 0 (
         echo [ERROR] Failed to generate valid security keys!
-        echo Please run LOCAL-SETUP.bat manually
         cd ..
         pause
         exit /b 1
     )
     
-    echo [OK] Security keys regenerated successfully
-    echo [INFO] You will need to register a new user (old database was incompatible)
-    echo.
-    echo [OK] Security fixed! Continuing startup...
+    echo [OK] Security keys regenerated
     echo.
 )
+
+REM Auto-detect application version
+echo [0/4] Detecting application version...
+echo.
+
+set APP_VERSION=unknown
+set MAIN_FILE=main.py
+
+REM Check for schema_versions table in database (v2.0 indicator)
+if exist "moonbot_commander.db" (
+    python -c "import sqlite3; conn = sqlite3.connect('moonbot_commander.db'); cursor = conn.cursor(); cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='schema_versions'\"); result = cursor.fetchone(); conn.close(); exit(0 if result else 1)" >nul 2>&1
+    
+    if !errorlevel! equ 0 (
+        set APP_VERSION=v2.0
+        if exist "main_v2.py" (
+            set MAIN_FILE=main_v2.py
+            echo [DETECTED] Version 2.0 - Using main_v2.py
+        ) else (
+            set MAIN_FILE=main.py
+            echo [DETECTED] Version 2.0 - Using main.py migrated
+        )
+    ) else (
+        set APP_VERSION=v1.0
+        set MAIN_FILE=main.py
+        echo [DETECTED] Version 1.0 - Using main.py
+    )
+) else (
+    REM No database - check which files exist
+    if exist "main_v2.py" (
+        set APP_VERSION=v2.0
+        set MAIN_FILE=main_v2.py
+        echo [DETECTED] Version 2.0 new install - Using main_v2.py
+    ) else (
+        set APP_VERSION=v1.0
+        set MAIN_FILE=main.py
+        echo [DETECTED] Version 1.0 new install - Using main.py
+    )
+)
+
+echo.
+echo Application Version: %APP_VERSION%
+echo Main File: %MAIN_FILE%
+echo.
+
+REM Verify main file exists
+if not exist "!MAIN_FILE!" (
+    color 0C
+    echo [ERROR] Main file not found: !MAIN_FILE!
+    echo.
+    echo Available files:
+    dir /b main*.py
+    echo.
+    cd ..
+    pause
+    exit /b 1
+)
+
 cd ..
 
 if not exist "frontend\package.json" (
@@ -91,10 +136,10 @@ if not exist "frontend\package.json" (
 )
 
 echo.
-echo [0/3] Cleaning up old processes...
+echo [1/4] Cleaning up old processes...
 echo.
 
-REM Check and kill old Python processes
+REM Check and kill old processes
 tasklist /FI "IMAGENAME eq python.exe" 2>nul | find /I "python.exe" >nul
 if !errorlevel! equ 0 (
     echo Stopping old Python processes...
@@ -104,7 +149,6 @@ if !errorlevel! equ 0 (
     echo   [INFO] No old Python processes
 )
 
-REM Check and kill old Node.js processes
 tasklist /FI "IMAGENAME eq node.exe" 2>nul | find /I "node.exe" >nul
 if !errorlevel! equ 0 (
     echo Stopping old Node.js processes...
@@ -128,21 +172,21 @@ echo.
 
 set "PROJECT_DIR=%CD%"
 
-echo [1/3] Starting Backend...
-start "MoonBot Backend" cmd /k "cd /d "%PROJECT_DIR%\backend" && python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+echo [2/4] Starting Backend %APP_VERSION%...
+start "MoonBot Backend %APP_VERSION%" cmd /k "cd /d "%PROJECT_DIR%\backend" && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000 --reload"
 timeout /t 3 /nobreak >nul
 
-echo [2/3] Starting Scheduler...
+echo [3/4] Starting Scheduler...
 start "MoonBot Scheduler" cmd /k "cd /d "%PROJECT_DIR%\backend" && python scheduler.py"
 timeout /t 2 /nobreak >nul
 
-echo [3/3] Starting Frontend...
+echo [4/4] Starting Frontend...
 start "MoonBot Frontend" cmd /k "cd /d "%PROJECT_DIR%\frontend" && npm run dev"
 timeout /t 5 /nobreak >nul
 
 echo.
 echo ============================================================
-echo            Application Started
+echo            Application Started %APP_VERSION%
 echo ============================================================
 echo.
 echo Frontend: http://localhost:3000
@@ -155,3 +199,4 @@ echo To stop: Close the 3 windows or use KILL-ALL-PROCESSES.bat
 echo.
 pause
 endlocal
+

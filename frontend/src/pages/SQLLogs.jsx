@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { FaDatabase, FaSearch, FaSync, FaFilter } from 'react-icons/fa';
 import styles from './SQLLogs.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
+import { sqlLogsAPI } from '../api/api';
+import wsService from '../services/websocket';
 
 const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
   const API_BASE_URL = getApiBaseUrl();
@@ -14,6 +16,8 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
   const [page, setPage] = useState(1);
   const [limit] = useState(50);
   const [searchTerm, setSearchTerm] = useState('');
+  // ИСПРАВЛЕНО: Добавлено недостающее состояние error
+  const [error, setError] = useState(null);
   const autoRefreshRef = useRef(null);
 
   // Восстановление настроек из localStorage при загрузке
@@ -47,7 +51,34 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
     };
   }, [selectedServer, page, servers]);
 
-  // Автообновление с использованием ref для предотвращения лишних пересозданий
+  // WebSocket подключение (всегда активно для real-time обновлений)
+  useEffect(() => {
+    if (!selectedServer || servers.length === 0) {
+      return;
+    }
+
+    // Подключаемся к WebSocket
+    wsService.connect();
+
+    // Подписываемся на события SQL логов
+    const unsubscribe = wsService.on('sql_log', (data) => {
+      console.log('[SQLLogs] WebSocket event received:', data);
+      
+      // Проверяем соответствует ли server_id выбранному серверу
+      if (selectedServer === 'all' || Number(selectedServer) === data.server_id) {
+        console.log('[SQLLogs] Refreshing logs due to WebSocket event');
+        // Обновляем логи без изменения страницы
+        fetchLogs(selectedServer, page);
+      }
+    });
+
+    // Cleanup
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedServer, page, servers.length]);
+
+  // Автообновление: Fallback polling если WebSocket не работает
   useEffect(() => {
     // Очищаем предыдущий интервал
     if (autoRefreshRef.current) {
@@ -55,22 +86,25 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
       autoRefreshRef.current = null;
     }
 
-    // Создаем новый интервал если включено автообновление
-    if (autoRefresh && selectedServer && servers.length > 0) {
-      const doRefresh = async () => {
-        await fetchLogs(selectedServer, page);
-      };
-      
-      autoRefreshRef.current = setInterval(doRefresh, 5000);
+    if (!autoRefresh || !selectedServer || servers.length === 0) {
+      return;
     }
 
-    // Cleanup при размонтировании
+    // Fallback: Polling каждые 30 секунд если WebSocket не подключен
+    const checkInterval = setInterval(() => {
+      if (!wsService.isConnected()) {
+        console.log('[SQLLogs] WebSocket not connected, using polling fallback');
+        fetchLogs(selectedServer, page);
+      }
+    }, 30000);
+
+    // Cleanup
     return () => {
-      if (autoRefreshRef.current) {
-        clearInterval(autoRefreshRef.current);
+      if (checkInterval) {
+        clearInterval(checkInterval);
       }
     };
-  }, [autoRefresh, selectedServer, page, servers]);
+  }, [autoRefresh, selectedServer, page, servers.length]);
 
   const fetchServers = async () => {
     try {
@@ -89,7 +123,9 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
       // Если есть сохраненный выбор, используем его, иначе загружаем данные для "all"
       const savedServer = localStorage.getItem('sqllogs_selectedServer') || 'all';
       if (serversData.length > 0) {
-        fetchLogs(savedServer);
+        console.log('[SQLLogs] Initial load for server:', savedServer);
+        // Передаем serversData напрямую, так как setServers обновляет state асинхронно
+        fetchLogsWithServers(savedServer, serversData);
       }
     } catch (error) {
       console.error('Error fetching servers:', error);
@@ -97,7 +133,14 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
   };
 
   const fetchLogs = async (serverId, pageNum = 1) => {
+    // Используем текущий state servers
+    return fetchLogsWithServers(serverId, servers, pageNum);
+  };
+
+  const fetchLogsWithServers = async (serverId, serversArray, pageNum = 1) => {
     if (!serverId) return;
+    
+    console.log('[SQLLogs] fetchLogsWithServers called:', { serverId, serversCount: serversArray.length, pageNum });
     
     setLoading(true);
     try {
@@ -107,10 +150,11 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
       if (serverId === 'all') {
         // Загрузка логов со всех серверов
         let allLogs = [];
+        const MAX_LOGS_PER_SERVER = 100;
         
-        for (const server of servers) {
+        for (const server of serversArray) {
           try {
-            const response = await axios.get(`${API_BASE_URL}/api/servers/${server.id}/sql-log?limit=1000&offset=0`, {
+            const response = await axios.get(`${API_BASE_URL}/api/servers/${server.id}/sql-log?limit=${MAX_LOGS_PER_SERVER}&offset=0`, {
               headers: { Authorization: `Bearer ${token}` }
             });
             
@@ -218,27 +262,23 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
   };
 
   const handleClearLogs = async () => {
-    if (selectedServer === 'all') {
-      alert('Выберите конкретный сервер для очистки логов');
-      return;
-    }
-
     const confirmed = window.confirm(
-      '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ SQL логи для этого сервера?\n\nЭто действие нельзя отменить!'
+      selectedServer === 'all'
+        ? '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ SQL логи со ВСЕХ серверов?\n\nЭто действие нельзя отменить!'
+        : '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ SQL логи для этого сервера?\n\nЭто действие нельзя отменить!'
     );
 
     if (!confirmed) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.delete(
-        `${API_BASE_URL}/api/servers/${selectedServer}/sql-log/clear`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      alert(`✅ Успешно удалено ${response.data.deleted_count} записей`);
+      // Используем разные endpoints в зависимости от выбора
+      if (selectedServer === 'all') {
+        const response = await sqlLogsAPI.clearAll();
+        alert(`✅ Успешно удалено ${response.data.deleted_count} записей со всех серверов`);
+      } else {
+        const response = await sqlLogsAPI.clearByServer(Number(selectedServer));
+        alert(`✅ Успешно удалено ${response.data.deleted_count} записей`);
+      }
       
       // Перезагружаем данные
       fetchLogs(selectedServer, 1);
@@ -259,10 +299,16 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
     // Сохранение в localStorage теперь происходит в Trading.jsx
   };
 
-  const filteredLogs = logs.filter(log => 
-    log.sql_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.command_id.toString().includes(searchTerm)
-  );
+  // ИСПРАВЛЕНО: Оптимизация фильтрации с помощью useMemo
+  const filteredLogs = useMemo(() => {
+    if (!searchTerm.trim()) return logs;
+    
+    const lowerSearch = searchTerm.toLowerCase();
+    return logs.filter(log => 
+      log.sql_text.toLowerCase().includes(lowerSearch) ||
+      log.command_id.toString().includes(searchTerm)
+    );
+  }, [logs, searchTerm]);
 
   const totalPages = Math.ceil(total / limit);
 
@@ -334,8 +380,8 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
           <button 
             onClick={handleClearLogs} 
             className={styles.clearBtn}
-            disabled={loading || selectedServer === 'all'}
-            title={selectedServer === 'all' ? 'Выберите конкретный сервер' : 'Очистить все логи'}
+            disabled={loading}
+            title={selectedServer === 'all' ? 'Очистить логи со всех серверов' : 'Очистить все логи сервера'}
           >
             🗑️ Очистить
           </button>

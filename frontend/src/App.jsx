@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import RecoveryCodes from './pages/RecoveryCodes';
@@ -76,14 +77,18 @@ function AppRoutes() {
 }
 
 function App() {
+  // РАЗМЫШЛЕНИЕ: ErrorBoundary должен обернуть ВСЕ приложение,
+  // чтобы любая ошибка в любом компоненте была поймана
   return (
-    <AuthProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <NetworkStatus />
-        <AppRoutes />
-        <InstallPWA />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <NetworkStatus />
+          <AppRoutes />
+          <InstallPWA />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

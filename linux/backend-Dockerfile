@@ -1,0 +1,27 @@
+# Backend Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend code
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Run migrations and start server
+CMD python init_security.py && \
+    python migrate_add_password.py 2>/dev/null || true && \
+    python migrate_add_recovery_codes.py 2>/dev/null || true && \
+    python migrate_add_2fa.py 2>/dev/null || true && \
+    python migrate_scheduled_commands_full.py 2>/dev/null || true && \
+    python migrate_add_timezone.py 2>/dev/null || true && \
+    python migrate_add_scheduler_settings.py 2>/dev/null || true && \
+    python migrate_add_display_time.py 2>/dev/null || true && \
+    python migrate_add_udp_listener.py 2>/dev/null || true && \
+    uvicorn main:app --host 0.0.0.0 --port 8000
+

@@ -233,6 +233,7 @@ const CommandsNew = () => {
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState('all');
   const [useBotname, setUseBotname] = useState(false);
+  const [clearAfterSend, setClearAfterSend] = useState(false);
 
   // Пользовательские быстрые команды
   const [quickCommands, setQuickCommands] = useState([]);
@@ -278,6 +279,12 @@ const CommandsNew = () => {
     loadQuickCommands();
     loadPresets();
     loadBotCommands();
+    
+    // Восстанавливаем состояние чекбокса "Очищать после отправки"
+    const savedClearAfterSend = localStorage.getItem('clearAfterSend');
+    if (savedClearAfterSend !== null) {
+      setClearAfterSend(savedClearAfterSend === 'true');
+    }
   }, []);
   
   // Закрытие автокомплита при клике вне его
@@ -517,6 +524,11 @@ const CommandsNew = () => {
         time: new Date().toLocaleString('ru-RU'),
         presetName: preset.name
       });
+      
+      // Очистить редактор команд если включена галка
+      if (clearAfterSend) {
+        setCommands('');
+      }
     } catch (error) {
       console.error('Ошибка выполнения пресета:', error);
     } finally {
@@ -656,7 +668,7 @@ const CommandsNew = () => {
     
     const matchesGroup = selectedGroup === 'all' || 
                         (!selectedGroup && !server.group_name) ||
-                        server.group_name === selectedGroup;
+                        (server.group_name && server.group_name.split(',').map(g => g.trim()).includes(selectedGroup));
     
     return matchesSearch && matchesGroup;
   });
@@ -681,7 +693,9 @@ const CommandsNew = () => {
   };
   
   const selectAllInGroup = (groupName) => {
-    const groupServers = servers.filter(s => s.group_name === groupName).map(s => s.id);
+    const groupServers = servers.filter(s => 
+      s.group_name && s.group_name.split(',').map(g => g.trim()).includes(groupName)
+    ).map(s => s.id);
     setSelectedServers(prev => [...new Set([...prev, ...groupServers])]);
   };
   
@@ -705,19 +719,29 @@ const CommandsNew = () => {
   };
   
   const isGroupFullySelected = (groupName) => {
-    const groupServers = servers.filter(s => s.group_name === groupName);
+    // ИСПРАВЛЕНО: Правильная фильтрация для "БЕЗ ГРУППЫ"
+    const groupServers = groupName === ''
+      ? servers.filter(s => !s.group_name)
+      : servers.filter(s => s.group_name && s.group_name.split(',').map(g => g.trim()).includes(groupName));
     return groupServers.length > 0 && groupServers.every(s => selectedServers.includes(s.id));
   };
   
   const isGroupPartiallySelected = (groupName) => {
-    const groupServers = servers.filter(s => s.group_name === groupName);
+    // ИСПРАВЛЕНО: Правильная фильтрация для "БЕЗ ГРУППЫ"
+    const groupServers = groupName === ''
+      ? servers.filter(s => !s.group_name)
+      : servers.filter(s => s.group_name && s.group_name.split(',').map(g => g.trim()).includes(groupName));
     const selectedInGroup = groupServers.filter(s => selectedServers.includes(s.id));
     return selectedInGroup.length > 0 && selectedInGroup.length < groupServers.length;
   };
   
   const toggleGroupSelection = (groupName) => {
-    const groupServers = servers.filter(s => s.group_name === groupName).map(s => s.id);
-    const allSelected = groupServers.every(id => selectedServers.includes(id));
+    // ИСПРАВЛЕНО: Правильная фильтрация для "БЕЗ ГРУППЫ" (пустая строка)
+    const groupServers = groupName === '' 
+      ? servers.filter(s => !s.group_name).map(s => s.id)
+      : servers.filter(s => s.group_name && s.group_name.split(',').map(g => g.trim()).includes(groupName)).map(s => s.id);
+    
+    const allSelected = groupServers.length > 0 && groupServers.every(id => selectedServers.includes(id));
     
     if (allSelected) {
       // Убрать все серверы группы
@@ -741,7 +765,8 @@ const CommandsNew = () => {
     const grouped = {};
     
     filteredServers.forEach(server => {
-      const group = server.group_name || 'Без группы';
+      // ИСПРАВЛЕНО: Используем пустую строку вместо текста "Без группы"
+      const group = server.group_name || '';
       if (!grouped[group]) {
         grouped[group] = [];
       }
@@ -826,6 +851,11 @@ const CommandsNew = () => {
         time: new Date().toLocaleString('ru-RU'),
         bulk: true
       });
+      
+      // Очистить редактор команд если включена галка
+      if (clearAfterSend) {
+        setCommands('');
+      }
       
     } catch (error) {
       setResponse({
@@ -941,7 +971,7 @@ const CommandsNew = () => {
                     className={styles.checkboxInput}
                   />
                   <span className={styles.checkboxLabel}>
-                    <strong>{groupName}</strong> <span className={styles.checkboxCount}>({selectedCount}/{groupServers.length})</span>
+                    <strong>{groupName === '' ? 'БЕЗ ГРУППЫ' : groupName}</strong> <span className={styles.checkboxCount}>({selectedCount}/{groupServers.length})</span>
                   </span>
                 </label>
 
@@ -1133,15 +1163,30 @@ const CommandsNew = () => {
           <div className={styles.formGroup}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                 <label>Редактор команд (каждая с новой строки)</label>
-                <button
-                  type="button"
-                  onClick={() => setCommands('')}
-                  className={styles.clearBtn}
-                  title="Очистить редактор"
-                  disabled={loading || !commands.trim()}
-                >
-                  <FiX /> Очистить
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={clearAfterSend}
+                      onChange={(e) => {
+                        const newValue = e.target.checked;
+                        setClearAfterSend(newValue);
+                        localStorage.setItem('clearAfterSend', newValue.toString());
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>Очищать после отправки</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setCommands('')}
+                    className={styles.clearBtn}
+                    title="Очистить редактор"
+                    disabled={loading || !commands.trim()}
+                  >
+                    <FiX /> Очистить
+                  </button>
+                </div>
               </div>
             <textarea
                 value={commands}
