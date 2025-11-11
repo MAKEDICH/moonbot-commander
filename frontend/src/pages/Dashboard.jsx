@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { dashboardAPI, serverStatusAPI, userSettingsAPI } from '../api/api';
 import styles from './Dashboard.module.css';
-import { FiServer, FiActivity, FiCheckCircle, FiXCircle, FiClock, FiTrendingUp, FiSettings, FiAlertCircle, FiPlay, FiPause, FiRefreshCw } from 'react-icons/fi';
+import { FiServer, FiActivity, FiCheckCircle, FiXCircle, FiClock, FiTrendingUp, FiSettings, FiAlertCircle, FiPlay, FiPause, FiRefreshCw, FiGrid, FiList } from 'react-icons/fi';
 import moonbotIcon from '../assets/moonbot-icon.png';
 
 const Dashboard = () => {
@@ -16,6 +16,14 @@ const Dashboard = () => {
   const [autoPingEnabled, setAutoPingEnabled] = useState(false);
   const [testingServers, setTestingServers] = useState(new Set());
   const intervalRef = useRef(null);
+  
+  // ДОБАВЛЕНО: State для toast-уведомлений
+  const [toast, setToast] = useState(null);
+  
+  // ДОБАВЛЕНО: Переключатель вида (полный/компактный)
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem('dashboardViewMode') || 'full';
+  });
 
   useEffect(() => {
     loadDashboardData();
@@ -31,6 +39,9 @@ const Dashboard = () => {
       return;
     }
 
+    // ИСПРАВЛЕНО: Удалили serversWithStatus из зависимостей!
+    // РАЗМЫШЛЕНИЕ: serversWithStatus меняется при каждом ping →
+    // это вызывало бесконечный loop: ping → update state → useEffect → ping
     // Автоматический пинг серверов по интервалу
     intervalRef.current = setInterval(() => {
       pingAllServers();
@@ -41,24 +52,68 @@ const Dashboard = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [settings, autoPingEnabled, serversWithStatus]);
+  }, [settings, autoPingEnabled]);  // ИСПРАВЛЕНО: Без serversWithStatus!
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, serversRes, dailyRes, uptimeRes] = await Promise.all([
+      
+      // ИСПРАВЛЕНО: Promise.allSettled вместо Promise.all!
+      // РАЗМЫШЛЕНИЕ: Если dailyRes упадет → весь Dashboard упадет!
+      // allSettled продолжает работать даже если один запрос упал
+      const [statsRes, serversRes, dailyRes, uptimeRes] = await Promise.allSettled([
         dashboardAPI.getStats(),
         serverStatusAPI.getAllWithStatus(),
         dashboardAPI.getCommandsDaily(7),
         dashboardAPI.getServerUptime()
       ]);
 
-      setStats(statsRes.data);
-      setServersWithStatus(serversRes.data);
-      setCommandsDaily(dailyRes.data);
-      setServerUptime(uptimeRes.data);
+      // Обрабатываем результаты с проверкой статуса
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value.data);
+      } else {
+        console.error('Failed to load stats:', statsRes.reason);
+        // Устанавливаем дефолтные значения если не загрузилось
+        setStats({
+          total_servers: 0,
+          total_commands_all_time: 0,
+          total_commands_today: 0,
+          successful_commands_today: 0,
+          avg_response_time: null
+        });
+      }
+
+      if (serversRes.status === 'fulfilled') {
+        setServersWithStatus(serversRes.value.data);
+      } else {
+        console.error('Failed to load servers:', serversRes.reason);
+        setServersWithStatus([]);
+      }
+
+      if (dailyRes.status === 'fulfilled') {
+        setCommandsDaily(dailyRes.value.data);
+      } else {
+        console.error('Failed to load daily commands:', dailyRes.reason);
+        setCommandsDaily([]);
+      }
+
+      if (uptimeRes.status === 'fulfilled') {
+        setServerUptime(uptimeRes.value.data);
+      } else {
+        console.error('Failed to load uptime:', uptimeRes.reason);
+        setServerUptime([]);
+      }
     } catch (error) {
       console.error('Ошибка загрузки дашборда:', error);
+      // Устанавливаем минимальные значения чтобы Dashboard не упал полностью
+      setStats({
+        total_servers: 0,
+        total_commands_all_time: 0,
+        total_commands_today: 0,
+        successful_commands_today: 0,
+        avg_response_time: null
+      });
+      setServersWithStatus([]);
     } finally {
       setLoading(false);
     }
@@ -103,11 +158,29 @@ const Dashboard = () => {
       });
     }
     
-    // Звуковое уведомление
+    // ИСПРАВЛЕНО: Очищаем Audio после проигрывания
+    // РАЗМЫШЛЕНИЕ: Audio объекты не очищаются автоматически!
+    // При частых уведомлениях → memory leak
     if (settings?.notification_sound) {
       const audio = new Audio('/notification.mp3');
-      audio.play().catch(() => {});
+      audio.play()
+        .then(() => {
+          // Очищаем после проигрывания
+          audio.src = '';
+          audio.remove();
+        })
+        .catch(() => {
+          // Очищаем даже при ошибке
+          audio.src = '';
+          audio.remove();
+        });
     }
+  };
+
+  // ДОБАВЛЕНО: Функция для показа Toast вместо alert()
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const handleSaveSettings = async () => {
@@ -115,10 +188,12 @@ const Dashboard = () => {
       await userSettingsAPI.update({ ping_interval: pingInterval });
       await loadSettings();
       setShowSettings(false);
-      alert('Настройки сохранены!');
+      // ИСПРАВЛЕНО: Toast вместо alert()!
+      showToast('Настройки сохранены!', 'success');
     } catch (error) {
       console.error('Ошибка сохранения настроек:', error);
-      alert('Ошибка сохранения настроек');
+      // ИСПРАВЛЕНО: Toast вместо alert()!
+      showToast('Ошибка сохранения настроек', 'error');
     }
   };
 
@@ -141,9 +216,13 @@ const Dashboard = () => {
       // Обновляем общую статистику
       const statsRes = await dashboardAPI.getStats();
       setStats(statsRes.data);
+      
+      // ДОБАВЛЕНО: Toast уведомление
+      showToast('Сервер проверен!', 'success');
     } catch (error) {
       console.error('Ошибка теста сервера:', error);
-      alert('Ошибка при проверке сервера');
+      // ИСПРАВЛЕНО: Toast вместо alert()!
+      showToast('Ошибка при проверке сервера', 'error');
     } finally {
       setTestingServers(prev => {
         const newSet = new Set(prev);
@@ -155,6 +234,13 @@ const Dashboard = () => {
 
   const toggleAutoPing = () => {
     setAutoPingEnabled(prev => !prev);
+  };
+
+  // ДОБАВЛЕНО: Функция переключения вида
+  const toggleViewMode = () => {
+    const newMode = viewMode === 'full' ? 'compact' : 'full';
+    setViewMode(newMode);
+    localStorage.setItem('dashboardViewMode', newMode);
   };
 
   if (loading || !stats) {
@@ -178,10 +264,10 @@ const Dashboard = () => {
             <img src={moonbotIcon} alt="Moonbot" />
           </div>
           <div className={styles.moonbotText}>
-            <h3>Powered by <span className={styles.moonbotHighlight}>Moonbot</span></h3>
+            <h3>Developed for <span className={styles.moonbotHighlight}>Moonbot</span></h3>
             <p>
-              Этот проект создан благодаря мощному торговому терминалу{' '}
-              <strong>Moonbot</strong> — лучшему решению для криптотрейдинга
+              Этот проект предназначен для работы с терминалами{' '}
+              <strong>Moonbot</strong> - лучшему решению для криптотрейдинга
             </p>
           </div>
           <a 
@@ -190,7 +276,7 @@ const Dashboard = () => {
             rel="noopener noreferrer"
             className={styles.moonbotLink}
           >
-            Посетить официальный сайт →
+            Посетить сайт Moonbot
           </a>
         </div>
       </div>
@@ -281,6 +367,13 @@ const Dashboard = () => {
           <h2><FiServer /> Статус серверов</h2>
           <div className={styles.sectionControls}>
             <button 
+              onClick={toggleViewMode} 
+              className={styles.viewToggleBtn}
+              title={viewMode === 'full' ? 'Переключить на компактный вид' : 'Переключить на полный вид'}
+            >
+              {viewMode === 'full' ? <><FiList /> Компактный вид</> : <><FiGrid /> Полный вид</>}
+            </button>
+            <button 
               onClick={toggleAutoPing} 
               className={`${styles.autoPingBtn} ${autoPingEnabled ? styles.active : ''}`}
               title={autoPingEnabled ? 'Автопроверка включена' : 'Автопроверка выключена'}
@@ -290,29 +383,31 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
-        <div className={styles.serversGrid}>
+        <div className={`${styles.serversGrid} ${viewMode === 'compact' ? styles.compactView : ''}`}>
           {serversWithStatus.map(server => {
             const status = server.status;
             const isOnline = status?.is_online || false;
             const isTesting = testingServers.has(server.id);
             
             return (
-              <div key={server.id} className={`${styles.serverCard} ${isOnline ? styles.online : styles.offline}`}>
+              <div key={server.id} className={`${styles.serverCard} ${isOnline ? styles.online : styles.offline} ${viewMode === 'compact' ? styles.compact : ''}`}>
                 <div className={styles.serverHeader}>
                   <div className={styles.serverName}>
                     {isOnline ? <FiCheckCircle /> : <FiXCircle />}
                     {server.name}
                   </div>
                   <div className={styles.serverHeaderRight}>
-                    <button
-                      onClick={() => handleTestServer(server.id)}
-                      disabled={isTesting}
-                      className={styles.testBtn}
-                      title="Проверить сервер"
-                    >
-                      <FiRefreshCw className={isTesting ? styles.spinning : ''} />
-                      {isTesting ? 'Тест...' : 'Тест'}
-                    </button>
+                    {viewMode === 'full' && (
+                      <button
+                        onClick={() => handleTestServer(server.id)}
+                        disabled={isTesting}
+                        className={styles.testBtn}
+                        title="Проверить сервер"
+                      >
+                        <FiRefreshCw className={isTesting ? styles.spinning : ''} />
+                        {isTesting ? 'Тест...' : 'Тест'}
+                      </button>
+                    )}
                     <div className={`${styles.serverStatus} ${isOnline ? styles.statusOnline : styles.statusOffline}`}>
                       {isOnline ? 'ONLINE' : 'OFFLINE'}
                     </div>
@@ -323,33 +418,29 @@ const Dashboard = () => {
                     <span>IP:</span>
                     <span>{server.host}:{server.port}</span>
                   </div>
-                  {server.group_name && (
+                  {viewMode === 'full' && server.group_name && (
                     <div className={styles.serverDetail}>
                       <span>Группа:</span>
                       <span>{server.group_name}</span>
                     </div>
                   )}
-                  {status?.response_time && (
-                    <div className={styles.serverDetail}>
-                      <span>Отклик:</span>
-                      <span>{status.response_time.toFixed(0)}ms</span>
-                    </div>
-                  )}
-                  {status?.uptime_percentage !== undefined && (
-                    <div className={styles.serverDetail}>
-                      <span>Uptime:</span>
-                      <span>{status.uptime_percentage.toFixed(1)}%</span>
-                    </div>
-                  )}
-                  {status?.last_ping && (
+                  {viewMode === 'full' && status?.last_ping && (
                     <div className={styles.serverDetail}>
                       <span>Последняя проверка:</span>
                       <span>{new Date(status.last_ping).toLocaleTimeString()}</span>
                     </div>
                   )}
-                  {status?.last_error && !isOnline && (
+                  {viewMode === 'full' && status?.last_error && !isOnline && (
                     <div className={styles.serverError}>
                       <FiAlertCircle /> {status.last_error}
+                    </div>
+                  )}
+                  {viewMode === 'compact' && (
+                    <div className={styles.compactInfo}>
+                      {server.group_name && <span className={styles.compactGroup}>{server.group_name}</span>}
+                      {status?.last_ping && (
+                        <span className={styles.compactTime}>{new Date(status.last_ping).toLocaleTimeString()}</span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -383,7 +474,40 @@ const Dashboard = () => {
                   min="5"
                   max="3600"
                   value={pingInterval}
-                  onChange={(e) => setPingInterval(parseInt(e.target.value))}
+                  onChange={(e) => {
+                    // FIXED: Allow free editing, no validation during typing
+                    // User can delete all digits, type any number, etc.
+                    const value = e.target.value;
+                    
+                    if (value === '' || value === null || value === undefined) {
+                      // Allow empty field during editing
+                      setPingInterval('');
+                    } else {
+                      const parsed = parseInt(value);
+                      if (!isNaN(parsed)) {
+                        // Accept any number during typing, validate only on blur
+                        setPingInterval(parsed);
+                      }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Final validation when user finishes editing
+                    const value = e.target.value;
+                    
+                    if (value === '' || value === null || value === undefined) {
+                      // Empty field -> set to minimum (5)
+                      setPingInterval(5);
+                      return;
+                    }
+                    
+                    const parsed = parseInt(value);
+                    if (isNaN(parsed) || parsed < 5) {
+                      setPingInterval(5); // Below minimum -> set to minimum (5)
+                    } else if (parsed > 3600) {
+                      setPingInterval(3600); // Above maximum -> clamp to max
+                    }
+                    // If 5-3600, keep as is
+                  }}
                   className={styles.input}
                 />
                 <small>От 5 до 3600 секунд</small>
@@ -398,6 +522,13 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* ДОБАВЛЕНО: Toast notification component */}
+      {toast && (
+        <div className={`${styles.toast} ${styles[toast.type]}`}>
+          {toast.message}
         </div>
       )}
     </div>

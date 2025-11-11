@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: moonbot-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - moonbot-db:/app
+    environment:
+      - DATABASE_URL=sqlite:///./moonbot_commander.db
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: moonbot-scheduler
+    volumes:
+      - ./backend:/app
+      - moonbot-db:/app
+    command: python scheduler.py
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: moonbot-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+
+volumes:
+  moonbot-db:
+    driver: local
+
+networks:
+  moonbot-network:
+    driver: bridge
+

@@ -67,14 +67,24 @@ class TwoFactorRecovery(BaseModel):
     new_password: str = Field(..., min_length=6)
 
 
+class TwoFactorLogin(BaseModel):
+    """Вход с двухфакторной аутентификацией"""
+    username: str = Field(..., min_length=3)
+    password: str = Field(..., min_length=1)
+    totp_code: str = Field(..., min_length=6, max_length=6)
+
+
 # Server Schemas
 class ServerBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     host: str = Field(..., min_length=1, max_length=255)
     port: int = Field(..., ge=1, le=65535)
     password: Optional[str] = None  # UDP пароль для HMAC-SHA256
-    description: Optional[str] = None
-    group_name: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=500)  # ИСПРАВЛЕНО: Ограничение длины
+    group_name: Optional[str] = Field(None, max_length=200)  # Группы через запятую
+    
+    # РАЗМЫШЛЕНИЕ: Валидация host должна быть, но @validator требует Pydantic v1 syntax
+    # В Pydantic v2 используется @field_validator
 
 
 class ServerCreate(ServerBase):
@@ -86,8 +96,8 @@ class ServerUpdate(BaseModel):
     host: Optional[str] = Field(None, min_length=1, max_length=255)
     port: Optional[int] = Field(None, ge=1, le=65535)
     password: Optional[str] = None  # UDP пароль
-    description: Optional[str] = None
-    group_name: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=500)  # ИСПРАВЛЕНО: Ограничение длины
+    group_name: Optional[str] = Field(None, max_length=200)  # Группы через запятую
     is_active: Optional[bool] = None
 
 
@@ -210,13 +220,19 @@ class BotCommand(BaseModel):
 
 # User Settings Schemas
 class UserSettingsBase(BaseModel):
-    ping_interval: int = Field(default=30, ge=5, le=300)  # От 5 до 300 секунд
+    # FIXED: Increased max to 3600 (1 hour) to match UserSettingsUpdate
+    # REASONING: le=300 (5 min) was causing validation errors on GET response!
+    # When ping_interval=3060 in DB, GET /api/user/settings would fail with 500
+    ping_interval: int = Field(default=30, ge=5, le=3600)  # From 5 to 3600 seconds
     enable_notifications: bool = True
     notification_sound: bool = True
 
 
 class UserSettingsUpdate(BaseModel):
-    ping_interval: Optional[int] = Field(None, ge=5, le=300)
+    # ИСПРАВЛЕНО: Увеличен максимум до 3600 (1 час)
+    # РАЗМЫШЛЕНИЕ: le=300 (5 мин) слишком мало для автопроверки!
+    # Пользователь может хотеть проверять раз в час
+    ping_interval: Optional[int] = Field(None, ge=5, le=3600)
     enable_notifications: Optional[bool] = None
     notification_sound: Optional[bool] = None
 
@@ -356,5 +372,51 @@ class SchedulerSettingsUpdate(BaseModel):
 # System Reset Schema
 class SystemResetRequest(BaseModel):
     code: str = Field(..., description="Код доступа для сброса системы")
+
+
+# ==================== V2.0 SCHEMAS ====================
+
+# Алиасы для совместимости с роутерами v2.0
+UserResponse = User  # Используем существующий класс User
+CommandExecute = CommandRequest  # Алиас для CommandRequest
+
+
+class ServerResponse(BaseModel):
+    """Ответ с информацией о сервере"""
+    id: int
+    name: str
+    host: str
+    port: int
+    description: Optional[str] = None
+    group_name: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    user_id: int
+    
+    class Config:
+        from_attributes = True
+
+
+class CommandExecutionResponse(BaseModel):
+    """Результат выполнения команды"""
+    success: bool
+    response: Optional[str] = None
+    execution_time: float  # в миллисекундах
+    history_id: int
+
+
+class CommandHistoryResponse(BaseModel):
+    """История команд"""
+    id: int
+    command: str
+    response: Optional[str] = None
+    status: str
+    execution_time: datetime
+    response_time_ms: Optional[float] = None
+    server_id: int
+    
+    class Config:
+        from_attributes = True
 
 

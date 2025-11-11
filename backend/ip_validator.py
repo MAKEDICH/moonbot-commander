@@ -5,41 +5,42 @@ import ipaddress
 import socket
 from typing import Tuple
 
-def validate_host(host: str) -> Tuple[bool, str]:
+def validate_host(host: str, allow_private: bool = True) -> Tuple[bool, str]:
     """
     Валидация хоста для предотвращения SSRF атак
     
     Args:
         host: IP адрес или hostname
+        allow_private: Разрешить приватные IP (192.168.x.x, 10.x.x.x) - для локальных серверов
         
     Returns:
         (is_valid, error_message)
     """
-    # Запрещенные hostname patterns
+    # Запрещенные hostname patterns (всегда блокируем localhost)
     forbidden_hosts = [
         'localhost',
         '127.0.0.1',
         '0.0.0.0',
         '::1',
-        'local',
     ]
     
     host_lower = host.lower().strip()
     
     # Проверка на запрещенные hostname
     if host_lower in forbidden_hosts:
-        return False, "Локальные адреса запрещены (защита от SSRF)"
+        return False, "Локальные loopback адреса запрещены"
     
     # Попытка распарсить как IP адрес
     try:
         ip = ipaddress.ip_address(host)
         
-        # Блокируем private/loopback/link-local адреса
-        if ip.is_private:
-            return False, "Приватные IP адреса запрещены (10.x.x.x, 192.168.x.x, 172.16-31.x.x)"
-        
+        # Блокируем loopback (127.0.0.1) ВСЕГДА
         if ip.is_loopback:
             return False, "Loopback адреса запрещены (127.0.0.1, ::1)"
+        
+        # Приватные IP (192.168.x.x, 10.x.x.x) - разрешаем по умолчанию для локальных серверов
+        if ip.is_private and not allow_private:
+            return False, "Приватные IP адреса запрещены (10.x.x.x, 192.168.x.x, 172.16-31.x.x)"
         
         if ip.is_link_local:
             return False, "Link-local адреса запрещены (169.254.x.x)"
@@ -69,7 +70,7 @@ def validate_host(host: str) -> Tuple[bool, str]:
             resolved_ip = socket.gethostbyname(host)
             
             # Рекурсивно проверяем resolved IP
-            return validate_host(resolved_ip)
+            return validate_host(resolved_ip, allow_private)
             
         except socket.gaierror:
             return False, f"Не удалось разрешить hostname: {host}"
@@ -99,6 +100,10 @@ def validate_port(port: int) -> Tuple[bool, str]:
         return False, "Системные порты (< 1024) запрещены для безопасности"
     
     return True, ""
+
+
+
+
 
 
 

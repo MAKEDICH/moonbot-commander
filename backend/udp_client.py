@@ -10,6 +10,9 @@ from udp_pool import udp_socket_pool
 class UDPClient:
     """UDP клиент для отправки команд и получения ответов"""
     
+    MAX_UDP_SIZE = 65507  # Максимальный размер UDP пакета
+    MAX_COMMAND_SIZE = 60000  # Ограничение команды с запасом для HMAC
+    
     def __init__(self, timeout: int = 5):
         self.timeout = timeout
     
@@ -53,6 +56,10 @@ class UDPClient:
         if timeout is None:
             timeout = self.timeout
         
+        # Валидация размера команды
+        if len(command) > self.MAX_COMMAND_SIZE:
+            return False, f"Команда слишком большая: {len(command)} байт (макс {self.MAX_COMMAND_SIZE})"
+        
         sock = None
         use_pool = bind_port is not None
         
@@ -75,19 +82,31 @@ class UDPClient:
             # Кодируем команду в UTF-8
             encoded_message = message.encode('utf-8')
             
+            # Финальная проверка размера
+            if len(encoded_message) > self.MAX_UDP_SIZE:
+                if use_pool:
+                    udp_socket_pool.return_socket(bind_port)
+                else:
+                    sock.close()
+                return False, f"Сообщение слишком большое после кодирования: {len(encoded_message)} байт"
+            
             # Отправляем команду
             sock.sendto(encoded_message, (host, port))
             
             # Получаем ответ
             try:
                 data, _ = sock.recvfrom(204800)  # Буфер 200KB
-                response = data.decode('utf-8')
+                response = data.decode('utf-8', errors='replace')  # Используем 'replace' для битых символов
                 
                 # Возвращаем сокет в пул или закрываем
                 if use_pool:
                     udp_socket_pool.return_socket(bind_port)
                 else:
                     sock.close()
+                
+                # Проверяем на ошибки MoonBot
+                if response.startswith('ERR'):
+                    return False, response
                 
                 return True, response
             except socket.timeout:
@@ -98,16 +117,26 @@ class UDPClient:
                 return False, "Timeout: не получен ответ от сервера"
             
         except socket.gaierror:
-            if sock and not use_pool:
-                sock.close()
+            # ИСПРАВЛЕНО: Возвращаем сокет в пул если был использован
+            if sock:
+                if use_pool:
+                    udp_socket_pool.return_socket(bind_port)
+                else:
+                    sock.close()
             return False, f"Ошибка: Не удалось разрешить имя хоста '{host}'"
         except ConnectionRefusedError:
-            if sock and not use_pool:
-                sock.close()
+            if sock:
+                if use_pool:
+                    udp_socket_pool.return_socket(bind_port)
+                else:
+                    sock.close()
             return False, f"Ошибка: Соединение отклонено {host}:{port}"
         except Exception as e:
-            if sock and not use_pool:
-                sock.close()
+            if sock:
+                if use_pool:
+                    udp_socket_pool.return_socket(bind_port)
+                else:
+                    sock.close()
             return False, f"Ошибка: {str(e)}"
     
     async def send_command(self, host: str, port: int, command: str, timeout: Optional[int] = None, password: Optional[str] = None, bind_port: Optional[int] = None) -> Tuple[bool, str]:
@@ -128,6 +157,11 @@ class UDPClient:
         if timeout is None:
             timeout = self.timeout
         
+        # Валидация размера команды
+        if len(command) > self.MAX_COMMAND_SIZE:
+            return False, f"Команда слишком большая: {len(command)} байт (макс {self.MAX_COMMAND_SIZE})"
+        
+        sock = None
         try:
             # Создаем UDP сокет
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -146,28 +180,73 @@ class UDPClient:
                 message = command
             
             # Кодируем команду в UTF-8
-            encoded_message = message.encode('utf-8')
+            try:
+                encoded_message = message.encode('utf-8')
+            except UnicodeEncodeError as e:
+                if sock:
+                    sock.close()
+                return False, f"Ошибка кодирования команды: {str(e)}"
+            
+            # Финальная проверка размера
+            if len(encoded_message) > self.MAX_UDP_SIZE:
+                sock.close()
+                return False, f"Сообщение слишком большое: {len(encoded_message)} байт (макс {self.MAX_UDP_SIZE})"
+            
+            # ДИАГНОСТИКА: Логируем отправку
+            if password:
+                password_masked = f"{password[:4]}****{password[-4:]}" if len(password) > 8 else "****"
+                hmac_hash = self.generate_hmac(command, password)
+                print(f"[UDP-CLIENT] 📤 Sending to {host}:{port}")
+                print(f"  Command: {command}")
+                print(f"  Password: {password_masked}")
+                print(f"  HMAC: {hmac_hash[:16]}...")
+            else:
+                print(f"[UDP-CLIENT] 📤 Sending to {host}:{port} (no password)")
+                print(f"  Command: {command}")
             
             # Отправляем команду
             sock.sendto(encoded_message, (host, port))
             
             # Получаем ответ (SQL отчеты от MoonBot могут быть большими)
             try:
-                data, _ = sock.recvfrom(204800)  # Буфер 200KB для больших SQL отчетов
-                response = data.decode('utf-8')
+                data, (response_addr, response_port) = sock.recvfrom(204800)  # Буфер 200KB для больших SQL отчетов
+                response = data.decode('utf-8', errors='replace')  # ИСПРАВЛЕНО: errors='replace'
+                
+                # ДИАГНОСТИКА: Логируем ответ
+                print(f"[UDP-CLIENT] 📥 Received from {response_addr}:{response_port}")
+                print(f"  Response: {response[:100]}...")
+                
                 sock.close()
+                
+                # Проверяем на ошибки MoonBot
+                if response.startswith('ERR'):
+                    print(f"[UDP-CLIENT] ❌ ERROR from MoonBot: {response}")
+                    return False, response
+                
+                print(f"[UDP-CLIENT] ✅ SUCCESS")
                 return True, response
             except socket.timeout:
                 sock.close()
                 return False, "Timeout: не получен ответ от сервера"
+            except UnicodeDecodeError as e:
+                sock.close()
+                return False, f"Ошибка декодирования ответа: {str(e)}"
             
         except socket.gaierror as e:
+            if sock:
+                sock.close()
             return False, f"Ошибка DNS: {str(e)}"
         except ConnectionRefusedError:
+            if sock:
+                sock.close()
             return False, "Соединение отклонено: проверьте адрес и порт сервера"
         except OSError as e:
+            if sock:
+                sock.close()
             return False, f"Сетевая ошибка: {str(e)}"
         except Exception as e:
+            if sock:
+                sock.close()
             return False, f"Неизвестная ошибка: {str(e)}"
     
     async def send_command_multi_response(
@@ -244,6 +323,11 @@ class UDPClient:
             if responses:
                 # Объединяем все пакеты через перенос строки
                 full_response = "\n".join(responses)
+                
+                # Проверяем на ошибки MoonBot
+                if full_response.startswith('ERR'):
+                    return False, full_response
+                
                 return True, full_response
             else:
                 return False, "Timeout: не получен ответ от сервера"
@@ -322,6 +406,11 @@ class UDPClient:
             
             if responses:
                 full_response = "\n".join(responses)
+                
+                # Проверяем на ошибки MoonBot
+                if full_response.startswith('ERR'):
+                    return False, full_response
+                
                 return True, full_response
             else:
                 return False, "Timeout: не получен ответ от сервера"

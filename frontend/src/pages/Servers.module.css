@@ -10,6 +10,32 @@
   gap: 20px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.viewToggleBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(138, 101, 255, 0.1) 0%, rgba(138, 101, 255, 0.2) 100%);
+  border: 1px solid #8a65ff;
+  color: #8a65ff;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.viewToggleBtn:hover {
+  background: #8a65ff;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(138, 101, 255, 0.4);
+}
+
 .title {
   font-size: 32px;
   font-weight: 700;
@@ -41,20 +67,24 @@
 
 .serverGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  /* COMPACT: Reduced card size from 300px to 250px for more cards per row */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  /* COMPACT: Reduced gap from 24px to 16px */
+  gap: 16px;
 }
 
 .serverCard {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  padding: 24px;
+  /* COMPACT: Reduced padding from 24px to 16px */
+  padding: 16px;
   transition: var(--transition);
 }
 
 .serverCard:hover {
-  transform: translateY(-4px);
+  /* COMPACT: Reduced hover effect from -4px to -2px */
+  transform: translateY(-2px);
   box-shadow: var(--shadow);
 }
 
@@ -62,18 +92,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  /* COMPACT: Reduced margin from 16px to 12px */
+  margin-bottom: 12px;
 }
 
 .serverIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  /* COMPACT: Reduced icon size from 48px to 36px */
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   background: var(--bg-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  /* COMPACT: Reduced font size from 24px to 18px */
+  font-size: 18px;
   color: var(--accent-primary);
 }
 
@@ -81,10 +114,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  /* COMPACT: Reduced badge size from 32px to 24px */
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  font-size: 16px;
+  /* COMPACT: Reduced font size from 16px to 14px */
+  font-size: 14px;
 }
 
 .statusBadge.active {
@@ -98,28 +133,53 @@
 }
 
 .serverName {
-  font-size: 20px;
+  /* COMPACT: Reduced font size from 20px to 16px */
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  /* COMPACT: Reduced margin from 8px to 6px */
+  margin-bottom: 6px;
 }
 
 .serverAddress {
-  font-size: 14px;
+  /* COMPACT: Reduced font size from 14px to 12px */
+  font-size: 12px;
   color: var(--text-secondary);
   font-family: 'Courier New', monospace;
-  padding: 6px 12px;
+  /* COMPACT: Reduced padding from 6px 12px to 4px 8px */
+  padding: 4px 8px;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 4px;
   display: inline-block;
-  margin-bottom: 12px;
+  /* COMPACT: Reduced margin from 12px to 8px */
+  margin-bottom: 8px;
 }
 
 .serverDescription {
-  font-size: 14px;
+  /* COMPACT: Reduced font size from 14px to 12px */
+  font-size: 12px;
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 16px;
+  line-height: 1.4;
+  /* COMPACT: Reduced margin from 16px to 12px */
+  margin-bottom: 12px;
+}
+
+.groupBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.groupBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(0, 245, 255, 0.1);
+  color: var(--accent-primary);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 245, 255, 0.3);
 }
 
 /* UDP Listener Section */
@@ -417,6 +477,106 @@
   color: var(--text-secondary);
 }
 
+/* Group Selector Styles */
+.groupSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.groupCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.groupCheckbox:hover {
+  background: var(--bg-hover);
+}
+
+.groupCheckbox input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+.groupCheckbox span {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.newGroupInput {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.newGroupInput input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.selectedGroups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.selectedGroupBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0, 245, 255, 0.15);
+  color: var(--accent-primary);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 245, 255, 0.3);
+}
+
+.removeGroupBtn {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.removeGroupBtn:hover {
+  background: rgba(255, 0, 85, 0.2);
+  color: var(--error);
+}
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
@@ -433,6 +593,116 @@
 
   .modalContent {
     padding: 24px;
+  }
+}
+
+/* === COMPACT VIEW STYLES === */
+/* Компактный вид серверов */
+.serverGrid.compactView {
+  /* В компактном виде карточки меньше */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.serverCard.compact {
+  /* Уменьшенные отступы */
+  padding: 12px;
+}
+
+.serverCard.compact .serverHeader {
+  margin-bottom: 8px;
+}
+
+.serverCard.compact .serverIcon {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+
+.serverCard.compact .statusBadge {
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+}
+
+.serverCard.compact .serverName {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.serverCard.compact .serverAddress {
+  font-size: 11px;
+  padding: 3px 6px;
+  margin-bottom: 6px;
+}
+
+.serverCard.compact .serverDescription {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.serverCard.compact .groupBadges {
+  margin-bottom: 8px;
+  gap: 4px;
+}
+
+.serverCard.compact .groupBadge {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.serverCard.compact .listenerSection {
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.serverCard.compact .serverActions {
+  padding-top: 10px;
+  gap: 6px;
+}
+
+.serverCard.compact .actionBtn {
+  padding: 8px;
+  font-size: 12px;
+}
+
+/* Компактный вид UDP Listener */
+.compactListener {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.compactListenerText {
+  color: var(--text-secondary);
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+  .headerActions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .viewToggleBtn,
+  .addBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .serverGrid.compactView {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .serverCard.compact {
+    padding: 10px;
   }
 }
 

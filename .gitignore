@@ -1,12 +1,15 @@
-# ==================== БЕЗОПАСНОСТЬ ====================
-# ВАЖНО: .env содержит секретные ключи и НЕ должен быть в Git!
-# При установке они генерируются автоматически через init_security.py
+# ==================== КРИТИЧЕСКИ ВАЖНЫЕ ====================
+# ВАЖНО: .env содержит секретные ключи и НЕ должен попасть в Git!
+# Если случайно закоммитили - используйте git-filter-repo или BFG
 
-# ENVIRONMENT FILES - СЕКРЕТНЫЕ КЛЮЧИ!
+# ENVIRONMENT FILES - Секретные ключи!
 backend/.env
+frontend/.env
 .env
+.env.local
+.env.*.local
 
-# DATABASE - БАЗА ДАННЫХ ПОЛЬЗОВАТЕЛЯ!
+# DATABASE - База данных пользователей!
 backend/*.db
 backend/*.db-*
 *.db
@@ -17,13 +20,19 @@ backend/*.db-*
 *.sqlite3
 *.backup
 
-# ЛОГИ - МОГУТ СОДЕРЖАТЬ ЧУВСТВИТЕЛЬНУЮ ИНФУ
+# BACKUPS - Резервные копии БД
+backend/backups/
+backups/
+
+# ЛОГИ - Могут содержать чувствительную информацию
 *.log
 backend/*.log
 backend/backend.log
 backend/backend-error.log
 backend/scheduler.log
 backend_crash.log
+frontend/vite.log
+moonbot_commander.log
 
 # ВРЕМЕННЫЕ ФАЙЛЫ PYTHON
 __pycache__/
@@ -35,20 +44,26 @@ __pycache__/
 dist/
 build/
 *.egg
+.pytest_cache/
 
-# ВИРТУАЛЬНОЕ ОКРУЖЕНИЕ
+# ВИРТУАЛЬНЫЕ ОКРУЖЕНИЯ
 venv/
 env/
 ENV/
 .venv
+backend/venv/
+backend/env/
 
-# NODE_MODULES - ОГРОМНАЯ ПАПКА!
+# NODE_MODULES - ОГРОМНАЯ папка!
 frontend/node_modules/
 node_modules/
 
 # PRODUCTION BUILD FRONTEND
 frontend/dist/
 frontend/build/
+
+# ALEMBIC VERSIONS (опционально - зависит от workflow)
+# backend/alembic/versions/*.py
 
 # NSSM (Windows Service Manager)
 nssm.exe
@@ -61,27 +76,65 @@ nssm/
 *.swo
 *~
 .DS_Store
+*.sublime-project
+*.sublime-workspace
 
 # WINDOWS
 Thumbs.db
 desktop.ini
 $RECYCLE.BIN/
+*.lnk
+
+# LINUX/MAC
+.Trash-*/
+.nfs*
 
 # ВРЕМЕННЫЕ ФАЙЛЫ
 *.tmp
 *.temp
 *.bak
-*.backup
 
 # ЛОГИ CLEANUP
 AUDIT-UNUSED-FILES.txt
 PROJECT-MAP.txt
 CLEANUP-UNUSED-FILES.bat
 
-# БАТНИКИ ДЛЯ ТЕСТОВ (если есть)
+# ТЕСТОВЫЕ ФАЙЛЫ (можно удалить)
 TEST-*.bat
 DEBUG-*.bat
 TEMP-*.bat
+test_*.py
 
-# PACKAGE LOCK (можно не коммитить)
-frontend/package-lock.json
+# ВРЕМЕННЫЕ HELPER ФАЙЛЫ
+DOWNLOAD-UPDATE.bat
+UPDATE-ASCII.bat
+UPDATE-backup.bat
+convert.ps1
+
+# PACKAGE LOCK (можно не коммитить в монорепо)
+# frontend/package-lock.json
+# frontend/yarn.lock
+
+# COVERAGE REPORTS
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# MYPY
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ПРОФИЛИРОВАНИЕ
+*.prof
+*.lprof
+
+# CERTIFICATES (если используются)
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx

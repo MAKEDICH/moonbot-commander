@@ -73,10 +73,13 @@ def execute_scheduled_command(command: models.ScheduledCommand, db: Session):
             raise Exception("No servers found")
         
         commands_list = [cmd.strip() for cmd in command.commands.split('\n') if cmd.strip()]
-        udp_client = UDPClient(timeout=5)
         
         for server in servers:
             password = encryption.decrypt_password(server.password)
+            
+            # ВАЖНО: Проверяем, есть ли активный listener для этого сервера
+            import udp_listener
+            listener = udp_listener.active_listeners.get(server.id)
             
             for cmd in commands_list:
                 if command.use_botname:
@@ -84,13 +87,26 @@ def execute_scheduled_command(command: models.ScheduledCommand, db: Session):
                 else:
                     full_cmd = cmd
                 
-                success, response = udp_client.send_command_sync(
-                    command=full_cmd,
-                    host=server.host,
-                    port=server.port,
-                    password=password,
-                    bind_port=server.port
-                )
+                # Если listener активен - используем его для отправки
+                if listener and listener.running:
+                    print(f"[SCHEDULER] Sending command to server {server.id} through listener")
+                    try:
+                        success, response = listener.send_command_with_response(full_cmd, timeout=5.0)
+                    except Exception as e:
+                        print(f"[SCHEDULER] Error sending through listener: {e}")
+                        success = False
+                        response = str(e)
+                else:
+                    # Listener не активен - используем прямое подключение
+                    print(f"[SCHEDULER] Sending command to server {server.id} directly (no listener)")
+                    udp_client = UDPClient(timeout=5)
+                    success, response = udp_client.send_command_sync(
+                        command=full_cmd,
+                        host=server.host,
+                        port=server.port,
+                        password=password,
+                        bind_port=server.port
+                    )
                 
                 # Сохраняем в историю
                 history_entry = models.CommandHistory(

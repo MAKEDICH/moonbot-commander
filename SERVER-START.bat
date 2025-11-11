@@ -74,7 +74,7 @@ if !errorlevel! neq 0 (
     )
     
     echo [OK] Security keys regenerated successfully
-    echo [INFO] You will need to register a new user (old database was incompatible)
+    echo [INFO] You will need to register a new user - old database was incompatible
     echo.
     
     REM Auto-configure CORS for server IP
@@ -100,6 +100,66 @@ if !errorlevel! neq 0 (
 )
 cd ..
 
+REM Auto-detect application version
+cd backend
+
+echo [0/4] Detecting application version...
+echo.
+
+set APP_VERSION=unknown
+set MAIN_FILE=main.py
+
+REM Check for schema_versions table in database (v2.0 indicator)
+if exist "moonbot_commander.db" (
+    python -c "import sqlite3; conn = sqlite3.connect('moonbot_commander.db'); cursor = conn.cursor(); cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='schema_versions'\"); result = cursor.fetchone(); conn.close(); exit(0 if result else 1)" >nul 2>&1
+    
+    if !errorlevel! equ 0 (
+        set APP_VERSION=v2.0
+        if exist "main_v2.py" (
+            set MAIN_FILE=main_v2.py
+            echo [DETECTED] Version 2.0 - Using main_v2.py
+        ) else (
+            set MAIN_FILE=main.py
+            echo [DETECTED] Version 2.0 - Using main.py migrated
+        )
+    ) else (
+        set APP_VERSION=v1.0
+        set MAIN_FILE=main.py
+        echo [DETECTED] Version 1.0 - Using main.py
+    )
+) else (
+    REM No database - check which files exist
+    if exist "main_v2.py" (
+        set APP_VERSION=v2.0
+        set MAIN_FILE=main_v2.py
+        echo [DETECTED] Version 2.0 new install - Using main_v2.py
+    ) else (
+        set APP_VERSION=v1.0
+        set MAIN_FILE=main.py
+        echo [DETECTED] Version 1.0 new install - Using main.py
+    )
+)
+
+echo.
+echo Application Version: %APP_VERSION%
+echo Main File: %MAIN_FILE%
+echo.
+
+REM Verify main file exists
+if not exist "!MAIN_FILE!" (
+    color 0C
+    echo [ERROR] Main file not found: !MAIN_FILE!
+    echo.
+    echo Available files:
+    dir /b main*.py
+    echo.
+    cd ..
+    pause
+    exit /b 1
+)
+
+cd ..
+
 if not exist "frontend\dist\index.html" (
     echo [ERROR] Frontend dist not found!
     echo.
@@ -113,7 +173,7 @@ echo Starting all services in separate windows for monitoring...
 echo.
 
 REM Kill old processes
-echo [0/3] Cleaning up old processes...
+echo [1/4] Cleaning up old processes...
 echo.
 
 REM Stop services if exist
@@ -138,61 +198,71 @@ if !errorlevel! equ 0 (
     echo   [OK] Frontend service stopped
 )
 
-REM Kill remaining processes
+REM Kill old Python processes
 tasklist /FI "IMAGENAME eq python.exe" 2>nul | find /I "python.exe" >nul
 if !errorlevel! equ 0 (
     echo Stopping old Python processes...
     taskkill /F /IM python.exe >nul 2>&1
-    taskkill /F /IM pythonw.exe >nul 2>&1
     echo   [OK] Python processes stopped
+) else (
+    echo   [INFO] No old Python processes
 )
 
+REM Kill old Node.js processes
 tasklist /FI "IMAGENAME eq node.exe" 2>nul | find /I "node.exe" >nul
 if !errorlevel! equ 0 (
     echo Stopping old Node.js processes...
     taskkill /F /IM node.exe >nul 2>&1
     echo   [OK] Node.js processes stopped
+) else (
+    echo   [INFO] No old Node.js processes
 )
 
 timeout /t 2 /nobreak >nul
 echo [OK] Cleanup complete
 echo.
 
-REM Get current directory
+echo Starting services in separate windows...
+echo.
+
 set "PROJECT_DIR=%CD%"
 
-echo [1/3] Starting Backend...
-start "MoonBot Backend [DO NOT CLOSE]" cmd /k "cd /d "%PROJECT_DIR%\backend" && echo Starting Backend on 0.0.0.0:8000... && python -m uvicorn main:app --host 0.0.0.0 --port 8000"
+echo [2/4] Starting Backend %APP_VERSION%...
+start "MoonBot Backend %APP_VERSION% [DO NOT CLOSE]" cmd /k "cd /d "%PROJECT_DIR%\backend" && echo Starting Backend on port 8000... && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000"
+timeout /t 5 /nobreak >nul
+
+echo [3/4] Starting Scheduler...
+start "MoonBot Scheduler [DO NOT CLOSE]" cmd /k "cd /d "%PROJECT_DIR%\backend" && echo Starting Scheduler... && python scheduler.py"
 timeout /t 3 /nobreak >nul
 
-echo [2/3] Starting Scheduler...
-start "MoonBot Scheduler [DO NOT CLOSE]" cmd /k "cd /d "%PROJECT_DIR%\backend" && echo Starting Scheduler... && python scheduler.py"
-timeout /t 2 /nobreak >nul
-
-echo [3/3] Starting Frontend (Production)...
+echo [4/4] Starting Frontend...
 start "MoonBot Frontend [DO NOT CLOSE]" cmd /k "cd /d "%PROJECT_DIR%\frontend\dist" && echo Starting Frontend on port 3000... && npx serve -s . -l 3000"
 timeout /t 5 /nobreak >nul
 
 echo.
 echo ============================================================
-echo [OK] All services started in separate windows!
+echo            Application Started %APP_VERSION%
 echo ============================================================
 echo.
-echo You should see 3 new windows:
-echo   1. MoonBot Backend [DO NOT CLOSE]
-echo   2. MoonBot Scheduler [DO NOT CLOSE]
-echo   3. MoonBot Frontend [DO NOT CLOSE]
-echo.
 
-REM Get IP address
+REM Get server IP
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /C:"IPv4"') do (
-    set IP=%%a
-    goto showip
+    set SERVER_IP=%%a
+    goto ip_found_end
 )
-:showip
+:ip_found_end
+set SERVER_IP=%SERVER_IP: =%
 
-echo Open in browser:
-echo   http://%IP::=%:3000
+if defined SERVER_IP (
+    echo Access from network: http://!SERVER_IP!:3000
+    echo Backend API:         http://!SERVER_IP!:8000
+    echo API Docs:            http://!SERVER_IP!:8000/docs
+) else (
+    echo Access locally:      http://localhost:3000
+    echo Backend API:         http://localhost:8000
+    echo API Docs:            http://localhost:8000/docs
+)
+
 echo.
 echo [!] Do not close the 3 CMD windows
 echo.

@@ -69,6 +69,33 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+/* ИСПРАВЛЕНО: Добавлены стили для заголовка группы с чекбоксом */
+.groupTitleWithCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.groupCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.groupCheckbox:hover {
+  transform: scale(1.1);
+}
+
+.checkIcon {
+  color: var(--accent-primary);
+  font-size: 20px;
+}
+
 .groupHeader h3 {
   font-size: 18px;
   font-weight: 600;
@@ -135,10 +162,27 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   transition: var(--transition);
+  gap: 12px;
 }
 
 .serverItem:hover {
   background: var(--bg-hover);
+}
+
+/* ИСПРАВЛЕНО: Добавлены стили для чекбоксов серверов */
+.serverCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.serverCheckbox:hover {
+  transform: scale(1.15);
 }
 
 .serverInfo {
@@ -170,12 +214,79 @@
   border-radius: 6px;
   color: var(--text-secondary);
   transition: var(--transition);
+  flex-shrink: 0;
 }
 
 .smallBtn:hover {
   background: var(--bg-secondary);
   border-color: var(--accent-primary);
   color: var(--accent-primary);
+  transform: scale(1.1);
+}
+
+.serverActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.selectAllBtn {
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.selectAllBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.serverSelectList {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+}
+
+.serverSelectItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.serverSelectItem:last-child {
+  border-bottom: none;
+}
+
+.serverSelectItem:hover {
+  background: var(--bg-hover);
+}
+
+.serverSelectItem.selected {
+  background: rgba(0, 245, 255, 0.1);
+  border-left: 3px solid var(--accent-primary);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--accent-primary);
+  font-size: 18px;
 }
 
 .addToGroupBtn {
@@ -282,6 +393,32 @@
   color: var(--text-muted);
   margin-top: 8px;
   margin-bottom: 4px;
+}
+
+/* ИСПРАВЛЕНО: Добавлены стили для контейнера "Выбрать все" */
+.selectAllContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.selectAllBtn {
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.selectAllBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .input {
@@ -448,6 +585,10 @@
     transform: translateY(0);
   }
 }
+
+
+
+
 
 
 

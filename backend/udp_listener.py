@@ -13,6 +13,8 @@ import socket
 import threading
 import time
 import re
+import asyncio
+import queue
 from datetime import datetime
 from typing import Optional, Dict
 from sqlalchemy.orm import Session
@@ -59,6 +61,10 @@ class UDPListener:
         self.thread = None
         self.messages_received = 0
         self.last_error = None
+        
+        # Queue для ответов на команды (чтобы не конфликтовать с основным циклом)
+        self.command_response_queue = queue.Queue()
+        self.waiting_for_response = False
     
     def start(self):
         """Запустить listener в отдельном потоке"""
@@ -126,15 +132,17 @@ class UDPListener:
             print(f"[UDP-LISTENER-{self.server_id}] Listening on EPHEMERAL port {local_addr[1]} (local: {local_addr})")
             print(f"[UDP-LISTENER-{self.server_id}] Will send initial command to {self.host}:{self.port}")
             
-            # ОТПРАВЛЯЕМ ТОЛЬКО ОДНУ КОМАНДУ LST - ЭТОГО ДОСТАТОЧНО!
+            # ОТПРАВЛЯЕМ ТОЛЬКО ОДНУ КОМАНДУ LST
             self._send_command_from_listener("lst")
-            print(f"[UDP-LISTENER-{self.server_id}] Command 'lst' sent, now listening for all data from MoonBot...")
+            print(f"[UDP-LISTENER-{self.server_id}] Initial 'lst' sent, now listening for all data from MoonBot...")
             
             # СЛУШАЕМ НА ЭТОМ ЖЕ СОКЕТЕ
             while self.running:
                 try:
                     # Получаем данные (блокирующий вызов с timeout)
-                    data, (addr, port) = self.sock.recvfrom(204800)  # Буфер 200KB для больших SQL отчетов
+                    data, addr_tuple = self.sock.recvfrom(204800)  # Буфер 200KB для больших SQL отчетов
+                    addr = addr_tuple[0]  # IP адрес
+                    port = addr_tuple[1]  # Порт
                     
                     # Декодируем
                     try:
@@ -205,8 +213,19 @@ class UDPListener:
                 )
                 hmac_hex = h.hexdigest()
                 payload = f"{hmac_hex} {command}"
+                
+                # ДИАГНОСТИКА: Логируем отправку (пароль замаскирован!)
+                password_masked = f"{self.password[:4]}****{self.password[-4:]}" if len(self.password) > 8 else "****"
+                print(f"[UDP-LISTENER-{self.server_id}] 📤 Sending command from listener:")
+                print(f"  Command: {command}")
+                print(f"  Target: {self.host}:{self.port}")
+                print(f"  Password: {password_masked}")
+                print(f"  HMAC: {hmac_hex[:16]}...")
             else:
                 payload = command
+                print(f"[UDP-LISTENER-{self.server_id}] 📤 Sending command (no password):")
+                print(f"  Command: {command}")
+                print(f"  Target: {self.host}:{self.port}")
             
             # Отправляем через listener сокет
             if self.sock:
@@ -214,9 +233,9 @@ class UDPListener:
                     payload.encode('utf-8'),
                     (self.host, self.port)
                 )
-                print(f"[UDP-LISTENER-{self.server_id}] Sent command '{command}' to {self.host}:{self.port}")
+                print(f"[UDP-LISTENER-{self.server_id}] ✅ Command sent successfully")
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] Failed to send command: {e}")
+            print(f"[UDP-LISTENER-{self.server_id}] ❌ Failed to send command: {e}")
     
     def send_command(self, command: str):
         """
@@ -224,6 +243,86 @@ class UDPListener:
         (для использования из API)
         """
         self._send_command_from_listener(command)
+    
+    def send_command_with_response(self, command: str, timeout: float = 3.0) -> tuple[bool, str]:
+        """
+        Отправка команды через listener socket и ожидание ответа через queue
+        
+        Args:
+            command: Команда для отправки
+            timeout: Таймаут ожидания ответа в секундах
+            
+        Returns:
+            tuple[bool, str]: (успех, ответ от MoonBot)
+        """
+        try:
+            import hmac
+            import hashlib
+            
+            if not self.sock:
+                return False, "Listener socket не создан"
+            
+            # Очищаем старые ответы
+            while not self.command_response_queue.empty():
+                try:
+                    self.command_response_queue.get_nowait()
+                except queue.Empty:
+                    break
+            
+            # Устанавливаем флаг что ждём ответ
+            self.waiting_for_response = True
+            
+            # Вычисляем HMAC если есть пароль
+            if self.password:
+                h = hmac.new(
+                    self.password.encode('utf-8'),
+                    command.encode('utf-8'),
+                    hashlib.sha256
+                )
+                hmac_hex = h.hexdigest()
+                payload = f"{hmac_hex} {command}"
+                
+                password_masked = f"{self.password[:4]}****{self.password[-4:]}" if len(self.password) > 8 else "****"
+                print(f"[UDP-LISTENER-{self.server_id}] 📤 Sending command with response:")
+                print(f"  Command: {command}")
+                print(f"  Target: {self.host}:{self.port}")
+                print(f"  Password: {password_masked}")
+                print(f"  HMAC: {hmac_hex[:16]}...")
+            else:
+                payload = command
+                print(f"[UDP-LISTENER-{self.server_id}] 📤 Sending command with response (no password):")
+                print(f"  Command: {command}")
+                print(f"  Target: {self.host}:{self.port}")
+            
+            # Отправляем команду
+            self.sock.sendto(
+                payload.encode('utf-8'),
+                (self.host, self.port)
+            )
+            print(f"[UDP-LISTENER-{self.server_id}] ✅ Command sent, waiting for response in queue...")
+            
+            # Ждём ответ из queue (listener положит его туда)
+            try:
+                response = self.command_response_queue.get(timeout=timeout)
+                print(f"[UDP-LISTENER-{self.server_id}] 📥 Response received from queue: {response[:100]}...")
+                
+                # Проверяем на ошибки MoonBot
+                if response.startswith('ERR'):
+                    return False, response
+                
+                return True, response
+                
+            except queue.Empty:
+                print(f"[UDP-LISTENER-{self.server_id}] ⏱️ Timeout waiting for response in queue")
+                return False, "Timeout: не получен ответ от сервера"
+            finally:
+                self.waiting_for_response = False
+                
+        except Exception as e:
+            print(f"[UDP-LISTENER-{self.server_id}] ❌ Failed to send command with response: {e}")
+            self.waiting_for_response = False
+            return False, f"Ошибка: {str(e)}"
+    
     
     def _process_message(self, message: str, addr: str, port: int):
         """
@@ -236,6 +335,32 @@ class UDPListener:
         """
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
         
+        # Проверяем источник сообщения - только IP
+        # Порт НЕ проверяем жестко, так как MoonBot может отправлять с разных портов
+        if addr != self.host:
+            print(f"[UDP-LISTENER-{self.server_id}] ⚠️ WARNING: Received message from WRONG HOST!")
+            print(f"[UDP-LISTENER-{self.server_id}]   Expected: {self.host}:{self.port}")
+            print(f"[UDP-LISTENER-{self.server_id}]   Got from: {addr}:{port}")
+            print(f"[UDP-LISTENER-{self.server_id}]   Message: {message[:100]}...")
+            # НЕ обрабатываем сообщения от других хостов!
+            return
+        
+        # Логируем если порт не совпадает, но ВСЁ РАВНО ОБРАБАТЫВАЕМ
+        if port != self.port:
+            print(f"[UDP-LISTENER-{self.server_id}] ℹ️ INFO: Received from unexpected port {port} (expected {self.port}), but processing anyway")
+            print(f"[UDP-LISTENER-{self.server_id}]   From: {addr}:{port}")
+            print(f"[UDP-LISTENER-{self.server_id}]   Message: {message[:100]}...")
+        
+        # Логируем ПРАВИЛЬНЫЕ сообщения
+        print(f"[UDP-LISTENER-{self.server_id}] ✅ {timestamp} [{addr}:{port}] -> {message[:100]}...")
+        
+        # ВАЖНО: Если ждём ответ на команду - кладём в queue и НЕ обрабатываем дальше
+        if self.waiting_for_response:
+            print(f"[UDP-LISTENER-{self.server_id}] 📦 Putting response into queue for API")
+            self.command_response_queue.put(message)
+            # НЕ обрабатываем это сообщение как SQL/lst - это ответ на команду
+            return
+        
         # Проверяем это SQL команда?
         if "[SQLCommand" in message:
             # SQL команда от MoonBot
@@ -245,8 +370,8 @@ class UDPListener:
             # Ответ на lst - парсим количество открытых ордеров
             self._process_lst_response(message)
         else:
-            # Обычное сообщение (логируем коротко)
-            print(f"[UDP-LISTENER-{self.server_id}] {timestamp} [{addr}:{port}] -> {message[:100]}...")
+            # Обычное сообщение (уже залогировали выше)
+            pass
     
     def _process_lst_response(self, message: str):
         """
@@ -388,11 +513,42 @@ class UDPListener:
                 )
                 db.add(sql_log)
                 
+                # Получаем user_id сервера для WebSocket уведомления
+                server = db.query(models.Server).filter(models.Server.id == self.server_id).first()
+                user_id = server.user_id if server else None
+                
                 # Пытаемся распарсить и обработать Orders
                 if "Orders" in sql_body:
                     self._parse_and_save_order(db, sql_body, command_id)
                 
                 db.commit()
+                
+                # Отправляем WebSocket уведомления (thread-safe)
+                if user_id:
+                    from websocket_manager import notify_sql_log_sync, notify_order_update_sync
+                    
+                    print(f"[UDP-LISTENER-{self.server_id}] 📤 Sending WebSocket notification to user_id={user_id}")
+                    
+                    # Формируем данные для SQL лога
+                    log_data = {
+                        "id": sql_log.id,
+                        "server_id": sql_log.server_id,
+                        "command_id": sql_log.command_id,
+                        "sql_text": sql_log.sql_text[:500],
+                        "received_at": sql_log.received_at.isoformat() if sql_log.received_at else None,
+                        "processed": sql_log.processed
+                    }
+                    
+                    # Отправляем уведомление о SQL логе
+                    notify_sql_log_sync(user_id, self.server_id, log_data)
+                    print(f"[UDP-LISTENER-{self.server_id}] ✅ SQL log notification sent")
+                    
+                    # Если это ордер - отправляем дополнительное уведомление
+                    if "Orders" in sql_body:
+                        notify_order_update_sync(user_id, self.server_id)
+                        print(f"[UDP-LISTENER-{self.server_id}] ✅ Order update notification sent")
+                else:
+                    print(f"[UDP-LISTENER-{self.server_id}] ⚠️ No user_id found, cannot send WebSocket notification")
                 
             except Exception as e:
                 print(f"[UDP-LISTENER-{self.server_id}] DB Error: {e}")

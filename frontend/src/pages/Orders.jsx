@@ -3,6 +3,8 @@ import axios from 'axios';
 import { FaChartLine, FaSync, FaFilter, FaCheckCircle, FaTimesCircle, FaCoins } from 'react-icons/fa';
 import styles from './Orders.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
+import { ordersAPI } from '../api/api';
+import wsService from '../services/websocket';
 
 const Orders = ({ autoRefresh, setAutoRefresh }) => {
   const API_BASE_URL = getApiBaseUrl();
@@ -16,6 +18,8 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
   const [limit] = useState(30);
   const [statusFilter, setStatusFilter] = useState('');
   const [symbolFilter, setSymbolFilter] = useState('');
+  // ИСПРАВЛЕНО: Добавлено недостающее состояние error
+  const [error, setError] = useState(null);
   const autoRefreshRef = useRef(null);
 
   // Восстановление настроек из localStorage при загрузке
@@ -49,7 +53,35 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     };
   }, [selectedServer, page, statusFilter, symbolFilter, servers]);
 
-  // Автообновление с использованием ref для предотвращения лишних пересозданий
+  // WebSocket подключение (всегда активно для real-time обновлений)
+  useEffect(() => {
+    if (!selectedServer || servers.length === 0) {
+      return;
+    }
+
+    // Подключаемся к WebSocket
+    wsService.connect();
+
+    // Подписываемся на события обновления ордеров
+    const unsubscribe = wsService.on('order_update', (data) => {
+      console.log('[Orders] WebSocket event received:', data);
+      
+      // Проверяем соответствует ли server_id выбранному серверу
+      if (selectedServer === 'all' || Number(selectedServer) === data.server_id) {
+        console.log('[Orders] Refreshing orders due to WebSocket event');
+        // Обновляем ордера и статистику
+        fetchOrders(selectedServer, page, statusFilter, symbolFilter);
+        fetchStats(selectedServer);
+      }
+    });
+
+    // Cleanup
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedServer, page, statusFilter, symbolFilter, servers.length]);
+
+  // Автообновление: Fallback polling если WebSocket не работает
   useEffect(() => {
     // Очищаем предыдущий интервал
     if (autoRefreshRef.current) {
@@ -57,23 +89,26 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
       autoRefreshRef.current = null;
     }
 
-    // Создаем новый интервал если включено автообновление
-    if (autoRefresh && selectedServer && servers.length > 0) {
-      const doRefresh = async () => {
-        await fetchOrders(selectedServer, page, statusFilter, symbolFilter);
-        await fetchStats(selectedServer);
-      };
-      
-      autoRefreshRef.current = setInterval(doRefresh, 5000);
+    if (!autoRefresh || !selectedServer || servers.length === 0) {
+      return;
     }
 
-    // Cleanup при размонтировании
+    // Fallback: Polling каждые 30 секунд если WebSocket не подключен
+    const checkInterval = setInterval(() => {
+      if (!wsService.isConnected()) {
+        console.log('[Orders] WebSocket not connected, using polling fallback');
+        fetchOrders(selectedServer, page, statusFilter, symbolFilter);
+        fetchStats(selectedServer);
+      }
+    }, 30000);
+
+    // Cleanup
     return () => {
-      if (autoRefreshRef.current) {
-        clearInterval(autoRefreshRef.current);
+      if (checkInterval) {
+        clearInterval(checkInterval);
       }
     };
-  }, [autoRefresh, selectedServer, page, statusFilter, symbolFilter, servers]);
+  }, [autoRefresh, selectedServer, page, statusFilter, symbolFilter, servers.length]);
 
   const fetchServers = async () => {
     try {
@@ -99,8 +134,10 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
       // Если есть сохраненный выбор, используем его, иначе загружаем данные для "all"
       const savedServer = localStorage.getItem('orders_selectedServer') || 'all';
       if (serversData.length > 0) {
-        fetchOrders(savedServer);
-        fetchStats(savedServer);
+        console.log('[Orders] Initial load for server:', savedServer);
+        // Передаем serversData напрямую, так как setServers обновляет state асинхронно
+        fetchOrdersWithServers(savedServer, serversData);
+        fetchStatsWithServers(savedServer, serversData);
       }
     } catch (error) {
       console.error('Error fetching servers:', error);
@@ -108,7 +145,14 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
   };
 
   const fetchOrders = async (serverId, pageNum = 1, status = '', symbol = '') => {
+    // Используем текущий state servers
+    return fetchOrdersWithServers(serverId, servers, pageNum, status, symbol);
+  };
+
+  const fetchOrdersWithServers = async (serverId, serversArray, pageNum = 1, status = '', symbol = '') => {
     if (!serverId) return;
+    
+    console.log('[Orders] fetchOrdersWithServers called:', { serverId, serversCount: serversArray.length, pageNum, status, symbol });
     
     setLoading(true);
     try {
@@ -119,10 +163,11 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
         // Загрузка ордеров со всех серверов
         let allOrders = [];
         let totalCount = 0;
+        const MAX_ORDERS_PER_SERVER = 100;
         
-        for (const server of servers) {
+        for (const server of serversArray) {
           try {
-            let url = `${API_BASE_URL}/api/servers/${server.id}/orders?limit=1000&offset=0`;
+            let url = `${API_BASE_URL}/api/servers/${server.id}/orders?limit=${MAX_ORDERS_PER_SERVER}&offset=0`;
             if (status) url += `&status=${status}`;
             if (symbol) url += `&symbol=${symbol}`;
             
@@ -168,6 +213,11 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
   };
 
   const fetchStats = async (serverId) => {
+    // Используем текущий state servers
+    return fetchStatsWithServers(serverId, servers);
+  };
+
+  const fetchStatsWithServers = async (serverId, serversArray) => {
     if (!serverId) return;
     
     try {
@@ -180,7 +230,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
         let closedOrders = 0;
         let totalProfit = 0;
         
-        for (const server of servers) {
+        for (const server of serversArray) {
           try {
             const response = await axios.get(
               `${API_BASE_URL}/api/servers/${server.id}/orders/stats`,
@@ -295,27 +345,23 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
   };
 
   const handleClearOrders = async () => {
-    if (selectedServer === 'all') {
-      alert('Выберите конкретный сервер для очистки ордеров');
-      return;
-    }
-
     const confirmed = window.confirm(
-      '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ ордера для этого сервера?\n\nЭто действие нельзя отменить!'
+      selectedServer === 'all'
+        ? '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ ордера со ВСЕХ серверов?\n\nЭто действие нельзя отменить!'
+        : '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ ордера для этого сервера?\n\nЭто действие нельзя отменить!'
     );
 
     if (!confirmed) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.delete(
-        `${API_BASE_URL}/api/servers/${selectedServer}/orders/clear`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      alert(`✅ Успешно удалено ${response.data.deleted_count} ордеров`);
+      // Используем разные endpoints в зависимости от выбора
+      if (selectedServer === 'all') {
+        const response = await ordersAPI.clearAll();
+        alert(`✅ Успешно удалено ${response.data.deleted_count} ордеров со всех серверов`);
+      } else {
+        const response = await ordersAPI.clearByServer(Number(selectedServer));
+        alert(`✅ Успешно удалено ${response.data.deleted_count} ордеров`);
+      }
       
       // Перезагружаем данные
       fetchOrders(selectedServer, 1, statusFilter, symbolFilter);
@@ -364,6 +410,14 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
 
   return (
     <div className={styles.container}>
+      {/* ИСПРАВЛЕНО: Добавлено отображение ошибок */}
+      {error && (
+        <div className={styles.errorBanner}>
+          ⚠️ {error}
+          <button onClick={() => setError(null)} className={styles.closeError}>×</button>
+        </div>
+      )}
+      
       <div className={styles.header}>
         <div className={styles.titleSection}>
           <FaChartLine className={styles.icon} />
@@ -405,8 +459,8 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
           <button 
             onClick={handleClearOrders} 
             className={styles.clearBtn}
-            disabled={loading || selectedServer === 'all'}
-            title={selectedServer === 'all' ? 'Выберите конкретный сервер' : 'Очистить все ордера'}
+            disabled={loading}
+            title={selectedServer === 'all' ? 'Очистить ордера со всех серверов' : 'Очистить все ордера сервера'}
           >
             🗑️
           </button>

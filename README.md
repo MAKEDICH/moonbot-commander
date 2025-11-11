@@ -30,9 +30,35 @@ Moonbot Trading Bots
 
 - **Python 3.11+**
 - **Node.js 18+**
-- **Windows Server 2016+** or **Windows 10/11**
+- **Windows 10/11 / Linux / macOS**
 
-### Local Installation
+### 🐳 Docker Installation (Recommended - Works on All Platforms)
+
+1. **Clone repository:**
+```bash
+git clone https://github.com/MAKEDICH/moonbot-commander.git
+cd moonbot-commander
+```
+
+2. **Start with Docker:**
+```bash
+chmod +x docker-start.sh
+./docker-start.sh
+```
+
+3. **Open browser:**
+```
+http://localhost:3000
+```
+
+4. **To stop:**
+```bash
+./docker-stop.sh
+```
+
+### 🪟 Windows Installation
+
+#### Local Development
 
 1. **Clone repository:**
 ```bash
@@ -48,6 +74,8 @@ LOCAL-SETUP.bat
 3. **Start application:**
 ```batch
 LOCAL-START.bat
+# or use smart start:
+START.bat
 ```
 
 4. **Open browser:**
@@ -55,7 +83,7 @@ LOCAL-START.bat
 http://localhost:3000
 ```
 
-### Server Installation
+#### Production Server
 
 1. **Run setup as Administrator:**
 ```batch
@@ -72,32 +100,99 @@ SERVER-START.bat
 http://YOUR_SERVER_IP:3000
 ```
 
+### 🐧 Linux Installation
+
+#### Local (Development)
+
+1. **Clone repository:**
+```bash
+git clone https://github.com/MAKEDICH/moonbot-commander.git
+cd moonbot-commander
+```
+
+2. **Make scripts executable:**
+```bash
+chmod +x *.sh
+```
+
+3. **Run setup:**
+```bash
+./local-setup.sh
+```
+
+4. **Start application:**
+```bash
+./local-start.sh
+```
+
+5. **Open browser:**
+```
+http://localhost:3000
+```
+
+#### Server (Production)
+
+1. **Run setup as root:**
+```bash
+sudo ./server-setup.sh
+```
+
+2. **Start services:**
+```bash
+sudo ./server-start.sh
+```
+
+3. **Access via:**
+```
+http://YOUR_SERVER_IP:3000
+```
+
 ## 📦 Project Structure
 
 ```
 moonbot-commander/
-├── backend/                 # FastAPI backend
-│   ├── main.py             # Main API endpoints
-│   ├── udp_listener.py     # UDP protocol handler
-│   ├── models.py           # Database models
-│   ├── schemas.py          # Pydantic schemas
-│   ├── auth.py             # Authentication logic
-│   └── requirements.txt    # Python dependencies
+├── backend/                   # FastAPI backend
+│   ├── main.py               # Main API endpoints
+│   ├── udp_listener.py       # UDP protocol handler
+│   ├── models.py             # Database models
+│   ├── schemas.py            # Pydantic schemas
+│   ├── auth.py               # Authentication logic
+│   ├── requirements.txt      # Python dependencies
+│   └── Dockerfile            # Docker config
 │
-├── frontend/               # React frontend
+├── frontend/                 # React frontend
 │   ├── src/
-│   │   ├── pages/         # Page components
-│   │   ├── components/    # Reusable components
-│   │   └── utils/         # Helper functions
-│   ├── package.json       # Node dependencies
-│   └── vite.config.js     # Vite configuration
+│   │   ├── pages/           # Page components
+│   │   ├── components/      # Reusable components
+│   │   └── utils/           # Helper functions
+│   ├── package.json         # Node dependencies
+│   ├── vite.config.js       # Vite configuration
+│   └── Dockerfile           # Docker config
 │
-├── LOCAL-SETUP.bat        # Local setup script
-├── LOCAL-START.bat        # Local start script
-├── SERVER-SETUP.bat       # Server setup script
-├── SERVER-START.bat       # Server start script
-├── KILL-ALL-PROCESSES.bat # Emergency stop all
-└── README.md              # This file
+├── Windows Scripts:
+│   ├── LOCAL-SETUP.bat      # Local setup
+│   ├── LOCAL-START.bat      # Local start (dev mode)
+│   ├── START.bat            # Smart start (auto version detection)
+│   ├── SERVER-SETUP.bat     # Server setup (+ NSSM, Firewall)
+│   ├── SERVER-START.bat     # Server start (production)
+│   ├── UPDATE.bat           # Auto-update system
+│   ├── ROLLBACK.bat         # Rollback to previous version
+│   └── KILL-ALL-PROCESSES.bat
+│
+├── Linux Scripts:
+│   ├── local-setup.sh       # Local setup
+│   ├── local-start.sh       # Local start
+│   ├── server-setup.sh      # Server setup
+│   ├── server-start.sh      # Server start
+│   ├── start.sh             # Smart start
+│   └── kill-all-processes.sh
+│
+├── Docker:
+│   ├── docker-compose.yml   # Docker compose
+│   ├── docker-start.sh      # Start containers
+│   └── docker-stop.sh       # Stop containers
+│
+└── README.md                # This file
 ```
 
 ## 🔧 Configuration
@@ -159,11 +254,25 @@ For 500+ bots, use distributed architecture:
 ## 🐛 Troubleshooting
 
 ### Ports are busy
+
+**Windows:**
 ```batch
 KILL-ALL-PROCESSES.bat
 ```
 
+**Linux:**
+```bash
+./kill-all-processes.sh
+```
+
+**Docker:**
+```bash
+./docker-stop.sh
+```
+
 ### Frontend not loading
+
+**Windows:**
 ```batch
 cd frontend
 rmdir /s /q dist
@@ -171,10 +280,39 @@ rmdir /s /q .vite
 npm run build
 ```
 
+**Linux:**
+```bash
+cd frontend
+rm -rf dist .vite
+npm run build
+```
+
+**Docker:**
+```bash
+docker-compose down
+docker-compose up -d --build
+```
+
 ### Backend errors
-Check logs:
+
+**Windows:**
 ```batch
 type backend\backend-error.log
+```
+
+**Linux (native):**
+```bash
+tail -f logs/backend.log
+```
+
+**Linux (systemd):**
+```bash
+sudo journalctl -u moonbot-backend -f
+```
+
+**Docker:**
+```bash
+docker-compose logs backend -f
 ```
 
 ## 📝 License
