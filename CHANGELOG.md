@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.0.3] - 2025-11-16
+
+### Fixed
+- 🐛 **Critical: Fixed WinError 10038 in SERVER mode** - Implemented GlobalUDPSocket
+  - Multiple servers can now run simultaneously on the same machine
+  - One shared UDP socket (port 2500) for all MoonBot servers
+  - Automatic packet routing by IP address
+  - Eliminates "socket is not a socket" errors
+- 🔧 Fixed UDP listener initialization in SERVER mode
+- 🚀 Improved performance with single socket architecture
+
+### Changed
+- 🏗️ Refactored UDPListener to support both LOCAL and SERVER modes
+- 📡 Added GlobalUDPSocket class for centralized UDP management
+- 🔄 Updated start_listener/stop_listener functions for dual-mode support
+
+### Technical Details
+- LOCAL mode: Each server uses ephemeral ports with keep-alive (for NAT traversal)
+- SERVER mode: All servers share one socket on port 2500 (no keep-alive needed)
+- Automatic mode detection via MOONBOT_MODE environment variable
+
+---
+
 ## [1.1.0] - 2024-11-11
 
 ### Added

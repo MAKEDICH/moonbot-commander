@@ -26,6 +26,9 @@ import udp_protocol
 # Глобальный словарь активных listeners
 active_listeners: Dict[int, 'UDPListener'] = {}
 
+# Глобальный UDP сокет для SERVER режима (один сокет для всех серверов)
+global_udp_socket = None
+
 
 class UDPListener:
     """
@@ -42,7 +45,8 @@ class UDPListener:
         port: int,
         password: Optional[str] = None,
         local_port: int = 0,
-        keepalive_enabled: bool = True
+        keepalive_enabled: bool = True,
+        global_socket: Optional['GlobalUDPSocket'] = None
     ):
         """
         Args:
@@ -52,11 +56,13 @@ class UDPListener:
             password: Пароль для HMAC (расшифрованный)
             local_port: Локальный порт для привязки (0 = эфемерный)
             keepalive_enabled: Включен ли keep-alive
+            global_socket: Глобальный сокет (для SERVER режима)
         """
         self.server_id = server_id
         self.host = host
         self.port = port
         self.password = password
+        self.global_socket = global_socket
         
         # АВТООПРЕДЕЛЕНИЕ РЕЖИМА из переменной окружения
         import os
@@ -66,16 +72,19 @@ class UDPListener:
             # ЛОКАЛКА: эфемерный порт + keep-alive обязательно
             self.local_port = 0  # Эфемерный порт (система выберет случайный)
             self.keepalive_enabled = True  # Keep-alive ОБЯЗАТЕЛЬНО
+            self.use_global_socket = False
             print(f"[UDP-LISTENER-{self.server_id}] 🏠 MODE: LOCAL (ephemeral port + keep-alive)")
         elif moonbot_mode == 'server':
-            # СЕРВЕР: фиксированный порт + без keep-alive
-            self.local_port = self.port  # Фиксированный порт
+            # СЕРВЕР: использует глобальный сокет + без keep-alive
+            self.local_port = 0  # Не используется (используется глобальный сокет)
             self.keepalive_enabled = False  # Keep-alive ОТКЛЮЧЁН
-            print(f"[UDP-LISTENER-{self.server_id}] 🖥️  MODE: SERVER (fixed port, no keep-alive)")
+            self.use_global_socket = True
+            print(f"[UDP-LISTENER-{self.server_id}] 🖥️  MODE: SERVER (global socket, no keep-alive)")
         else:
             # АВТОМАТИЧЕСКИЙ РЕЖИМ (по параметрам)
             self.local_port = local_port
             self.keepalive_enabled = keepalive_enabled
+            self.use_global_socket = False
             print(f"[UDP-LISTENER-{self.server_id}] 🤖 MODE: AUTO (local_port={local_port}, keepalive={keepalive_enabled})")
         
         self.running = False
@@ -101,6 +110,16 @@ class UDPListener:
             return False
         
         self.running = True
+        
+        # В SERVER режиме не создаем свой поток - используем глобальный сокет
+        if self.use_global_socket:
+            # Обновляем статус в БД
+            self._update_status(is_running=True, started_at=datetime.utcnow())
+            
+            print(f"[UDP-LISTENER-{self.server_id}] Started (using global socket) for {self.host}:{self.port}")
+            return True
+        
+        # В LOCAL/AUTO режиме - создаем свой поток с собственным сокетом
         self.thread = threading.Thread(
             target=self._listen_loop,
             daemon=True,
@@ -281,6 +300,21 @@ class UDPListener:
             import hmac
             import hashlib
             
+            # В SERVER режиме используем глобальный сокет
+            if self.use_global_socket and self.global_socket:
+                success = self.global_socket.send_command(
+                    command=command,
+                    target_host=self.host,
+                    target_port=self.port,
+                    password=self.password
+                )
+                if success:
+                    print(f"[UDP-LISTENER-{self.server_id}] ✅ Command sent via global socket")
+                else:
+                    print(f"[UDP-LISTENER-{self.server_id}] ❌ Failed to send via global socket")
+                return
+            
+            # В LOCAL/AUTO режиме используем свой сокет
             # Вычисляем HMAC если есть пароль
             if self.password:
                 h = hmac.new(
@@ -336,8 +370,17 @@ class UDPListener:
             import hmac
             import hashlib
             
-            if not self.sock:
-                return False, "Listener socket не создан"
+            # Проверка сокета - в SERVER режиме проверяем глобальный, в LOCAL - свой
+            if self.use_global_socket:
+                if not self.global_socket:
+                    return False, "Global socket не инициализирован"
+                if not self.global_socket.running:
+                    return False, "Global socket не запущен"
+                if not self.global_socket.sock:
+                    return False, "Global socket не создан"
+            else:
+                if not self.sock:
+                    return False, "Listener socket не создан"
             
             # Очищаем старые ответы
             while not self.command_response_queue.empty():
@@ -371,11 +414,18 @@ class UDPListener:
                 print(f"  Command: {command}")
                 print(f"  Target: {self.host}:{self.port}")
             
-            # Отправляем команду
-            self.sock.sendto(
-                payload.encode('utf-8'),
-                (self.host, self.port)
-            )
+            # Отправляем команду - через глобальный или свой сокет
+            if self.use_global_socket and self.global_socket:
+                self.global_socket.sock.sendto(
+                    payload.encode('utf-8'),
+                    (self.host, self.port)
+                )
+            else:
+                self.sock.sendto(
+                    payload.encode('utf-8'),
+                    (self.host, self.port)
+                )
+            
             print(f"[UDP-LISTENER-{self.server_id}] ✅ Command sent, waiting for response in queue...")
             
             # Ждём ответ из queue (listener положит его туда)
@@ -1448,6 +1498,210 @@ class UDPListener:
             db.close()
 
 
+# ==================== GLOBAL UDP SOCKET (для SERVER режима) ====================
+
+class GlobalUDPSocket:
+    """
+    Глобальный UDP сокет для SERVER режима
+    
+    Один сокет на фиксированном порту (2500) обслуживает все MoonBot серверы.
+    Роутит входящие пакеты по IP адресу в соответствующий UDPListener.
+    """
+    
+    def __init__(self, port: int = 2500):
+        """
+        Args:
+            port: UDP порт для прослушивания (по умолчанию 2500)
+        """
+        self.port = port
+        self.sock = None
+        self.running = False
+        self.thread = None
+        
+        # Маппинг IP адресов на listeners: {ip: UDPListener}
+        self.ip_to_listener: Dict[str, 'UDPListener'] = {}
+        
+        # Счетчики
+        self.total_packets = 0
+        self.last_error = None
+    
+    def register_listener(self, listener: 'UDPListener'):
+        """
+        Зарегистрировать listener для определенного IP
+        
+        Args:
+            listener: UDPListener экземпляр
+        """
+        self.ip_to_listener[listener.host] = listener
+        print(f"[GLOBAL-UDP] Registered listener for {listener.host} (server_id={listener.server_id})")
+    
+    def unregister_listener(self, listener: 'UDPListener'):
+        """
+        Отменить регистрацию listener
+        
+        Args:
+            listener: UDPListener экземпляр
+        """
+        if listener.host in self.ip_to_listener:
+            del self.ip_to_listener[listener.host]
+            print(f"[GLOBAL-UDP] Unregistered listener for {listener.host} (server_id={listener.server_id})")
+    
+    def start(self):
+        """Запустить глобальный UDP сокет"""
+        if self.running:
+            print(f"[GLOBAL-UDP] Already running on port {self.port}")
+            return True
+        
+        try:
+            # Создаем UDP сокет
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            
+            # Привязываемся к фиксированному порту
+            self.sock.bind(("", self.port))
+            self.sock.settimeout(1.0)
+            
+            print(f"[GLOBAL-UDP] 🎯 Bound to port {self.port}")
+            
+            # Запускаем поток прослушивания
+            self.running = True
+            self.thread = threading.Thread(
+                target=self._listen_loop,
+                daemon=True,
+                name="GlobalUDPSocket"
+            )
+            self.thread.start()
+            
+            print(f"[GLOBAL-UDP] ✅ Started successfully on port {self.port}")
+            return True
+            
+        except Exception as e:
+            print(f"[GLOBAL-UDP] ❌ Failed to start: {e}")
+            self.last_error = str(e)
+            self.running = False
+            if self.sock:
+                try:
+                    self.sock.close()
+                except:
+                    pass
+            return False
+    
+    def stop(self):
+        """Остановить глобальный UDP сокет"""
+        if not self.running:
+            return False
+        
+        print(f"[GLOBAL-UDP] Stopping...")
+        
+        self.running = False
+        
+        # Закрываем сокет
+        if self.sock:
+            try:
+                self.sock.close()
+            except:
+                pass
+        
+        # Ждем завершения потока
+        if self.thread and self.thread.is_alive():
+            self.thread.join(timeout=5)
+        
+        print(f"[GLOBAL-UDP] Stopped")
+        return True
+    
+    def _listen_loop(self):
+        """Основной цикл прослушивания"""
+        print(f"[GLOBAL-UDP] Listen loop started")
+        
+        try:
+            while self.running:
+                try:
+                    # Получаем пакет
+                    data, addr_tuple = self.sock.recvfrom(204800)  # 200KB буфер
+                    source_ip = addr_tuple[0]
+                    source_port = addr_tuple[1]
+                    
+                    self.total_packets += 1
+                    
+                    # Ищем listener по IP адресу
+                    if source_ip in self.ip_to_listener:
+                        listener = self.ip_to_listener[source_ip]
+                        
+                        # Передаем пакет в listener для обработки
+                        try:
+                            listener._process_message(data, source_ip, source_port)
+                        except Exception as e:
+                            print(f"[GLOBAL-UDP] Error processing packet from {source_ip}: {e}")
+                    else:
+                        # Пакет от неизвестного IP (возможно новый сервер или атака)
+                        print(f"[GLOBAL-UDP] ⚠️ Received packet from unknown IP: {source_ip}")
+                        print(f"[GLOBAL-UDP]   Known IPs: {list(self.ip_to_listener.keys())}")
+                
+                except socket.timeout:
+                    # Timeout - это нормально, продолжаем
+                    continue
+                
+                except Exception as e:
+                    if self.running:  # Логируем только если не останавливаемся
+                        print(f"[GLOBAL-UDP] Receive error: {e}")
+                        self.last_error = str(e)
+                        time.sleep(1)
+        
+        except Exception as e:
+            print(f"[GLOBAL-UDP] Fatal error: {e}")
+            self.last_error = str(e)
+        
+        finally:
+            if self.sock:
+                self.sock.close()
+            print(f"[GLOBAL-UDP] Listen loop ended (total packets: {self.total_packets})")
+    
+    def send_command(self, command: str, target_host: str, target_port: int, password: Optional[str] = None) -> bool:
+        """
+        Отправить команду через глобальный сокет
+        
+        Args:
+            command: Команда для отправки
+            target_host: IP адрес MoonBot
+            target_port: UDP порт MoonBot
+            password: Пароль для HMAC (опционально)
+        
+        Returns:
+            bool: True если отправка успешна
+        """
+        try:
+            if not self.sock:
+                print(f"[GLOBAL-UDP] ❌ Socket not initialized")
+                return False
+            
+            import hmac
+            import hashlib
+            
+            # Вычисляем HMAC если есть пароль
+            if password:
+                h = hmac.new(
+                    password.encode('utf-8'),
+                    command.encode('utf-8'),
+                    hashlib.sha256
+                )
+                hmac_hex = h.hexdigest()
+                payload = f"{hmac_hex} {command}"
+            else:
+                payload = command
+            
+            # Отправляем через глобальный сокет
+            self.sock.sendto(
+                payload.encode('utf-8'),
+                (target_host, target_port)
+            )
+            
+            return True
+            
+        except Exception as e:
+            print(f"[GLOBAL-UDP] ❌ Failed to send command: {e}")
+            return False
+
+
 # ==================== УПРАВЛЕНИЕ LISTENERS ====================
 
 def start_listener(server_id: int, host: str, port: int, password: Optional[str] = None, keepalive_enabled: bool = True) -> bool:
@@ -1464,7 +1718,7 @@ def start_listener(server_id: int, host: str, port: int, password: Optional[str]
     Returns:
         bool: True если успешно запущен
     """
-    global active_listeners
+    global active_listeners, global_udp_socket
     
     # Проверяем что не запущен уже
     if server_id in active_listeners:
@@ -1475,23 +1729,77 @@ def start_listener(server_id: int, host: str, port: int, password: Optional[str]
         # Если есть но не running - удаляем старый
         del active_listeners[server_id]
     
-    # Создаем новый listener
-    listener = UDPListener(
-        server_id=server_id,
-        host=host,
-        port=port,
-        password=password,
-        keepalive_enabled=keepalive_enabled
-    )
+    # Определяем режим работы
+    import os
+    moonbot_mode = os.environ.get('MOONBOT_MODE', '').lower().strip()
     
-    # Запускаем
-    success = listener.start()
+    # В SERVER режиме используем глобальный сокет
+    if moonbot_mode == 'server':
+        # Создаем глобальный сокет если еще не создан ИЛИ если не запущен
+        if global_udp_socket is None or not global_udp_socket.running:
+            # Если объект существует но сокет не запущен - обнуляем
+            if global_udp_socket and not global_udp_socket.running:
+                print(f"[UDP-LISTENER] ⚠️ Previous global socket failed, recreating...")
+                global_udp_socket = None
+            
+            print(f"[UDP-LISTENER] Creating global UDP socket on port 2500...")
+            global_udp_socket = GlobalUDPSocket(port=2500)
+            success = global_udp_socket.start()
+            
+            if not success:
+                print(f"[UDP-LISTENER] ❌ Failed to start global socket")
+                # Обнуляем объект чтобы следующий сервер мог попробовать снова
+                global_udp_socket = None
+                return False
+        
+        # Проверяем что глобальный сокет действительно работает
+        if not global_udp_socket or not global_udp_socket.running or not global_udp_socket.sock:
+            print(f"[UDP-LISTENER] ❌ Global socket is not running properly")
+            return False
+        
+        # Создаем listener с ссылкой на глобальный сокет
+        listener = UDPListener(
+            server_id=server_id,
+            host=host,
+            port=port,
+            password=password,
+            keepalive_enabled=keepalive_enabled,
+            global_socket=global_udp_socket
+        )
+        
+        # Регистрируем listener в глобальном сокете
+        global_udp_socket.register_listener(listener)
+        
+        # Запускаем listener (он не создаст свой сокет в SERVER режиме)
+        success = listener.start()
+        
+        if success:
+            active_listeners[server_id] = listener
+            print(f"[UDP-LISTENER] ✅ Registered server {server_id} ({host}) with global socket")
+            return True
+        else:
+            global_udp_socket.unregister_listener(listener)
+            return False
     
-    if success:
-        active_listeners[server_id] = listener
-        return True
+    # В LOCAL/AUTO режиме - создаем независимый listener с собственным сокетом
     else:
-        return False
+        listener = UDPListener(
+            server_id=server_id,
+            host=host,
+            port=port,
+            password=password,
+            keepalive_enabled=keepalive_enabled,
+            global_socket=None
+        )
+        
+        # Запускаем
+        success = listener.start()
+        
+        if success:
+            active_listeners[server_id] = listener
+            return True
+        else:
+            return False
 
 
 def stop_listener(server_id: int) -> bool:
@@ -1504,13 +1812,18 @@ def stop_listener(server_id: int) -> bool:
     Returns:
         bool: True если успешно остановлен
     """
-    global active_listeners
+    global active_listeners, global_udp_socket
     
     if server_id not in active_listeners:
         print(f"[UDP-LISTENER] No active listener for server {server_id}")
         return False
     
     listener = active_listeners[server_id]
+    
+    # Если использует глобальный сокет - отменяем регистрацию
+    if listener.use_global_socket and global_udp_socket:
+        global_udp_socket.unregister_listener(listener)
+    
     success = listener.stop()
     
     if success:
@@ -1547,12 +1860,18 @@ def get_listener_status(server_id: int) -> Dict:
 
 def stop_all_listeners():
     """Остановить все активные listeners"""
-    global active_listeners
+    global active_listeners, global_udp_socket
     
     print("[UDP-LISTENER] Stopping all listeners...")
     
     for server_id in list(active_listeners.keys()):
         stop_listener(server_id)
+    
+    # Останавливаем глобальный сокет если он был создан
+    if global_udp_socket:
+        print("[UDP-LISTENER] Stopping global UDP socket...")
+        global_udp_socket.stop()
+        global_udp_socket = None
     
     print("[UDP-LISTENER] All listeners stopped")
 
