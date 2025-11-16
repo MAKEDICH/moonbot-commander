@@ -416,7 +416,7 @@ if !errorlevel! neq 0 (
     echo   [OK] WebSocket support confirmed
 )
 
-REM Run migrations
+REM Run migrations (all in order)
 python migrate_add_password.py >nul 2>&1
 python migrate_add_recovery_codes.py >nul 2>&1
 python migrate_add_2fa.py >nul 2>&1
@@ -425,6 +425,11 @@ python migrate_add_timezone.py >nul 2>&1
 python migrate_add_scheduler_settings.py >nul 2>&1
 python migrate_add_display_time.py >nul 2>&1
 python migrate_add_udp_listener.py >nul 2>&1
+python migrate_add_keepalive.py >nul 2>&1
+python migrate_add_balance_and_strategies.py >nul 2>&1
+python migrate_add_cleanup_settings.py >nul 2>&1
+python migrate_cleanup_settings_v2.py >nul 2>&1
+python migrate_moonbot_orders_extended.py >nul 2>&1
 echo   [OK] Database migrations completed
 
 cd ..\frontend
