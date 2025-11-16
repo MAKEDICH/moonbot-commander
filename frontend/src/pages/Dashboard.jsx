@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { dashboardAPI, serverStatusAPI, userSettingsAPI } from '../api/api';
 import styles from './Dashboard.module.css';
-import { FiServer, FiActivity, FiCheckCircle, FiXCircle, FiClock, FiTrendingUp, FiSettings, FiAlertCircle, FiPlay, FiPause, FiRefreshCw, FiGrid, FiList } from 'react-icons/fi';
+import { FiServer, FiActivity, FiCheckCircle, FiXCircle, FiClock, FiTrendingUp, FiSettings, FiAlertCircle, FiPlay, FiPause, FiRefreshCw, FiGrid, FiList, FiTrash2 } from 'react-icons/fi';
 import moonbotIcon from '../assets/moonbot-icon.png';
+import Cleanup from './Cleanup';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
@@ -19,6 +20,9 @@ const Dashboard = () => {
   
   // ДОБАВЛЕНО: State для toast-уведомлений
   const [toast, setToast] = useState(null);
+  
+  // ДОБАВЛЕНО: State для модального окна очистки
+  const [showCleanupModal, setShowCleanupModal] = useState(false);
   
   // ДОБАВЛЕНО: Переключатель вида (полный/компактный)
   const [viewMode, setViewMode] = useState(() => {
@@ -283,9 +287,14 @@ const Dashboard = () => {
 
       <div className={styles.header}>
         <h1><FiActivity /> Дашборд</h1>
+        <div className={styles.headerActions}>
+          <button onClick={() => setShowCleanupModal(true)} className={styles.cleanupBtn} title="Управление очисткой данных">
+            <FiTrash2 /> Очистка
+          </button>
         <button onClick={() => setShowSettings(true)} className={styles.settingsBtn}>
           <FiSettings /> Настройки
         </button>
+        </div>
       </div>
 
       {/* Статистические карточки */}
@@ -520,6 +529,21 @@ const Dashboard = () => {
               <button onClick={() => setShowSettings(false)} className={styles.cancelBtn}>
                 Отмена
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Модальное окно очистки */}
+      {showCleanupModal && (
+        <div className={styles.modal} onClick={() => setShowCleanupModal(false)}>
+          <div className={styles.modalContentLarge} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2><FiTrash2 /> Управление очисткой данных</h2>
+              <button onClick={() => setShowCleanupModal(false)} className={styles.closeBtn}>×</button>
+            </div>
+            <div className={styles.cleanupContainer}>
+              <Cleanup />
             </div>
           </div>
         </div>

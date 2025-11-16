@@ -7,6 +7,7 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
 .header .icon {
@@ -18,6 +19,26 @@
   font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
+  flex: 1;
+}
+
+.strategyCommanderButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #9945FF, #7928CA);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  transition: var(--transition);
+  margin-left: auto;
+}
+
+.strategyCommanderButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.4);
 }
 
 .content {

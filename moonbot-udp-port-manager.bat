@@ -200,14 +200,33 @@ echo Открываем UDP порт %port% (правило: %rulename%)...
 echo.
 
 REM Удаляем старое правило если есть
-netsh advfirewall firewall delete rule name="%rulename%" >nul 2>&1
+netsh advfirewall firewall delete rule name="%rulename%-IN" >nul 2>&1
+netsh advfirewall firewall delete rule name="%rulename%-OUT" >nul 2>&1
 
-REM Создаём новое правило
-netsh advfirewall firewall add rule name="%rulename%" dir=in action=allow protocol=UDP localport=%port% >nul
+REM Создаём новые правила (входящий и исходящий)
+echo Создаём правило IN...
+netsh advfirewall firewall add rule name="%rulename%-IN" dir=in action=allow protocol=UDP localport=%port%
+
+if %errorlevel% neq 0 (
+    echo ❌ Ошибка при создании правила IN!
+    pause
+    goto MENU
+)
+
+echo Создаём правило OUT...
+netsh advfirewall firewall add rule name="%rulename%-OUT" dir=out action=allow protocol=UDP localport=%port%
+
+if %errorlevel% neq 0 (
+    echo ❌ Ошибка при создании правила OUT!
+    pause
+    goto MENU
+)
 
 if %errorlevel% equ 0 (
     echo ✓ Порт UDP %port% успешно открыт!
-    echo ✓ Правило: %rulename%
+    echo ✓ Правила созданы:
+    echo   - %rulename%-IN (входящий)
+    echo   - %rulename%-OUT (исходящий)
     echo.
     echo Теперь вы можете:
     echo   1. В MoonBot: Настройки → Специальные → Remote → UDP Commands Port = %port%

@@ -21,6 +21,7 @@ import ip_validator
 from database import engine, get_db, SessionLocal
 from udp_client import UDPClient, test_connection
 from websocket_manager import ws_manager
+from api.routers import cleanup, strategies
 
 # Создание таблиц
 models.Base.metadata.create_all(bind=engine)
@@ -167,6 +168,11 @@ def api_system_reset(
         traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Ошибка при сбросе системы: {str(e)}")
+
+
+# Подключение роутеров для cleanup и strategies
+app.include_router(cleanup.router, prefix="/api/cleanup", tags=["cleanup"])
+app.include_router(strategies.router, prefix="/api/strategies", tags=["strategies"])
 
 
 # ==================== AUTH ENDPOINTS ====================
@@ -597,6 +603,38 @@ def get_servers(
     return servers
 
 
+@app.get("/api/servers/balances")
+def get_server_balances(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Получить балансы всех серверов пользователя"""
+    servers = db.query(models.Server).filter(
+        models.Server.user_id == current_user.id
+    ).all()
+    
+    result = []
+    for server in servers:
+        # Получаем последний баланс для сервера
+        balance = db.query(models.ServerBalance).filter(
+            models.ServerBalance.server_id == server.id
+        ).first()
+        
+        result.append({
+            "server_id": server.id,
+            "server_name": server.name,
+            "host": server.host,
+            "port": server.port,
+            "is_active": server.is_active,
+            "bot_name": balance.bot_name if balance else None,
+            "available": float(balance.available) if balance and balance.available else 0.0,
+            "total": float(balance.total) if balance and balance.total else 0.0,
+            "updated_at": balance.updated_at.isoformat() if balance and balance.updated_at else None,
+        })
+    
+    return result
+
+
 @app.get("/api/servers/{server_id}", response_model=schemas.Server)
 def get_server(
     server_id: int,
@@ -657,7 +695,8 @@ def create_server(
                 server_id=new_server.id,
                 host=new_server.host,
                 port=new_server.port,
-                password=password
+                password=password,
+                keepalive_enabled=new_server.keepalive_enabled
             )
             
             if success:
@@ -690,9 +729,12 @@ def update_server(
     # Запоминаем старое состояние is_active
     old_is_active = server.is_active
     
-    # Шифруем пароль если он обновляется
+    # Шифруем пароль если он обновляется И он НЕ зашифрован
     if 'password' in update_data and update_data['password']:
-        update_data['password'] = encryption.encrypt_password(update_data['password'])
+        # Проверяем, не зашифрован ли уже пароль (Fernet signature начинается с gAAAAA)
+        if not update_data['password'].startswith('gAAAAA'):
+            update_data['password'] = encryption.encrypt_password(update_data['password'])
+        # Если пароль уже зашифрован, оставляем как есть
     for field, value in update_data.items():
         setattr(server, field, value)
     
@@ -713,7 +755,8 @@ def update_server(
                     server_id=server.id,
                     host=server.host,
                     port=server.port,
-                    password=password
+                    password=password,
+                    keepalive_enabled=server.keepalive_enabled
                 )
                 
                 if success:
@@ -2777,7 +2820,8 @@ async def startup_event():
                     server_id=server.id,
                     host=server.host,
                     port=server.port,
-                    password=password
+                    password=password,
+                    keepalive_enabled=server.keepalive_enabled
                 )
                 
                 if success:
@@ -3223,6 +3267,7 @@ async def get_moonbot_orders(
     server_id: int,
     status: Optional[str] = None,
     symbol: Optional[str] = None,
+    emulator: Optional[str] = None,  # "true", "false", "all" или None (по умолчанию все)
     limit: int = 100,
     offset: int = 0,
     current_user: models.User = Depends(get_current_user),
@@ -3235,6 +3280,7 @@ async def get_moonbot_orders(
         server_id: ID сервера
         status: Фильтр по статусу (Open, Closed, Cancelled)
         symbol: Фильтр по тикеру (BTC, ETH...)
+        emulator: Фильтр по эмулятору ("true" - только эмуляторные, "false" - только реальные, "all" или None - все)
         limit: Количество записей (max 500)
         offset: Смещение для пагинации
     """
@@ -3266,6 +3312,11 @@ async def get_moonbot_orders(
     if symbol:
         query = query.filter(models.MoonBotOrder.symbol == symbol.upper())
     
+    # Фильтр по эмулятору
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        query = query.filter(models.MoonBotOrder.is_emulator == is_emulator)
+    
     # Получаем ордера
     orders = query.order_by(
         models.MoonBotOrder.updated_at.desc()
@@ -3296,7 +3347,22 @@ async def get_moonbot_orders(
                 "opened_at": order.opened_at,
                 "closed_at": order.closed_at,
                 "created_at": order.created_at,
-                "updated_at": order.updated_at
+                "updated_at": order.updated_at,
+                # Новые расширенные поля
+                "is_emulator": order.is_emulator,
+                "signal_type": order.signal_type,
+                "base_currency": order.base_currency,
+                "safety_orders_used": order.safety_orders_used,
+                "latency": order.latency,
+                "ping": order.ping,
+                "task_id": order.task_id,
+                "exchange_1h_delta": order.exchange_1h_delta,
+                "exchange_24h_delta": order.exchange_24h_delta,
+                "bought_so": order.bought_so,
+                "btc_in_delta": order.btc_in_delta,
+                "price_blow": order.price_blow,
+                "daily_vol": order.daily_vol,
+                "ex_order_id": order.ex_order_id,
             }
             for order in orders
         ]
@@ -3511,11 +3577,15 @@ async def get_profit_chart_all_servers(
 @app.get("/api/servers/{server_id}/strategies/comparison")
 async def get_strategies_comparison(
     server_id: int,
+    emulator: Optional[str] = None,  # "true", "false" или None (все)
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Получить сравнительную статистику по стратегиям для конкретного сервера
+    
+    Параметры:
+    - emulator: "true" для эмулятора, "false" для реальных, None для всех
     """
     from sqlalchemy import func
     
@@ -3529,9 +3599,16 @@ async def get_strategies_comparison(
         raise HTTPException(status_code=404, detail="Сервер не найден")
     
     # Получаем все ордера с группировкой по стратегиям
-    orders = db.query(models.MoonBotOrder).filter(
+    query = db.query(models.MoonBotOrder).filter(
         models.MoonBotOrder.server_id == server_id
-    ).all()
+    )
+    
+    # Фильтр по эмулятору
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        query = query.filter(models.MoonBotOrder.is_emulator == is_emulator)
+    
+    orders = query.all()
     
     # Группируем данные по стратегиям
     strategies_data = {}
@@ -3615,11 +3692,15 @@ async def get_strategies_comparison(
 
 @app.get("/api/strategies/comparison-all")
 async def get_strategies_comparison_all(
+    emulator: Optional[str] = None,  # "true", "false" или None (все)
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Получить сравнительную статистику по стратегиям со всех серверов пользователя
+    
+    Параметры:
+    - emulator: "true" для эмулятора, "false" для реальных, None для всех
     """
     from sqlalchemy import func
     
@@ -3634,9 +3715,16 @@ async def get_strategies_comparison_all(
     server_ids = [s.id for s in user_servers]
     
     # Получаем все ордера со всех серверов
-    orders = db.query(models.MoonBotOrder).filter(
+    query = db.query(models.MoonBotOrder).filter(
         models.MoonBotOrder.server_id.in_(server_ids)
-    ).all()
+    )
+    
+    # Фильтр по эмулятору
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        query = query.filter(models.MoonBotOrder.is_emulator == is_emulator)
+    
+    orders = query.all()
     
     # Группируем данные по стратегиям (аналогично выше)
     strategies_data = {}
@@ -3712,11 +3800,15 @@ async def get_strategies_comparison_all(
 @app.get("/api/servers/{server_id}/heatmap")
 async def get_activity_heatmap(
     server_id: int,
+    emulator: Optional[str] = None,  # "true", "false" или None (все)
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Получить данные для heatmap активности бота (час дня x день недели)
+    
+    Параметры:
+    - emulator: "true" для эмулятора, "false" для реальных, None для всех
     """
     from datetime import datetime
     
@@ -3730,11 +3822,18 @@ async def get_activity_heatmap(
         raise HTTPException(status_code=404, detail="Сервер не найден")
     
     # Получаем все закрытые ордера
-    orders = db.query(models.MoonBotOrder).filter(
+    query = db.query(models.MoonBotOrder).filter(
         models.MoonBotOrder.server_id == server_id,
         models.MoonBotOrder.status == "Closed",
         models.MoonBotOrder.closed_at.isnot(None)
-    ).all()
+    )
+    
+    # Фильтр по эмулятору
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        query = query.filter(models.MoonBotOrder.is_emulator == is_emulator)
+    
+    orders = query.all()
     
     # Создаём матрицу: день недели (0-6) x час (0-23)
     # Значение = суммарная прибыль за этот период
@@ -3783,11 +3882,15 @@ async def get_activity_heatmap(
 
 @app.get("/api/heatmap-all")
 async def get_activity_heatmap_all(
+    emulator: Optional[str] = None,  # "true", "false" или None (все)
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Получить данные для heatmap активности со всех серверов пользователя
+    
+    Параметры:
+    - emulator: "true" для эмулятора, "false" для реальных, None для всех
     """
     from datetime import datetime
     
@@ -3802,11 +3905,18 @@ async def get_activity_heatmap_all(
     server_ids = [s.id for s in user_servers]
     
     # Получаем все закрытые ордера со всех серверов
-    orders = db.query(models.MoonBotOrder).filter(
+    query = db.query(models.MoonBotOrder).filter(
         models.MoonBotOrder.server_id.in_(server_ids),
         models.MoonBotOrder.status == "Closed",
         models.MoonBotOrder.closed_at.isnot(None)
-    ).all()
+    )
+    
+    # Фильтр по эмулятору
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        query = query.filter(models.MoonBotOrder.is_emulator == is_emulator)
+    
+    orders = query.all()
     
     # Создаём матрицу
     heatmap_data = {}
@@ -4041,6 +4151,10 @@ async def sync_missing_data(
 async def get_trading_stats(
     server_ids: Optional[str] = None,  # "all" или "1,2,3"
     strategies: Optional[str] = None,  # "all" или "Strategy1,Strategy2"
+    emulator: Optional[str] = None,  # "true", "false" или None (все)
+    time_period: Optional[str] = None,  # "today", "week", "month", "all", "custom"
+    date_from: Optional[str] = None,  # "YYYY-MM-DD" для custom периода
+    date_to: Optional[str] = None,  # "YYYY-MM-DD" для custom периода
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -4050,6 +4164,10 @@ async def get_trading_stats(
     Параметры:
     - server_ids: "all" для всех серверов, или "1,2,3" для конкретных
     - strategies: "all" для всех стратегий, или "Strategy1,Strategy2" для конкретных
+    - emulator: "true" для эмулятора, "false" для реальных, None для всех
+    - time_period: "today", "week", "month", "all", "custom" для фильтрации по времени
+    - date_from: начальная дата для кастомного периода (YYYY-MM-DD)
+    - date_to: конечная дата для кастомного периода (YYYY-MM-DD)
     """
     from sqlalchemy import func, and_, or_
     
@@ -4074,15 +4192,45 @@ async def get_trading_stats(
         strategy_list = [s.strip() for s in strategies.split(',')]
         base_query = base_query.filter(models.MoonBotOrder.strategy.in_(strategy_list))
     
+    # Фильтр по эмулятору
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        base_query = base_query.filter(models.MoonBotOrder.is_emulator == is_emulator)
+    
+    # Фильтр по времени
+    from datetime import datetime, timedelta
+    now = datetime.now()  # Определяем сразу, используется в нескольких местах
+    
+    if time_period:
+        if time_period == "today":
+            start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            base_query = base_query.filter(models.MoonBotOrder.opened_at >= start_of_day)
+        elif time_period == "week":
+            start_of_week = now - timedelta(days=7)
+            base_query = base_query.filter(models.MoonBotOrder.opened_at >= start_of_week)
+        elif time_period == "month":
+            start_of_month = now - timedelta(days=30)
+            base_query = base_query.filter(models.MoonBotOrder.opened_at >= start_of_month)
+        elif time_period == "custom":
+            # Кастомный период
+            if date_from and date_to:
+                try:
+                    from_date = datetime.strptime(date_from, "%Y-%m-%d")
+                    to_date = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+                    base_query = base_query.filter(
+                        models.MoonBotOrder.opened_at >= from_date,
+                        models.MoonBotOrder.opened_at <= to_date
+                    )
+                except ValueError:
+                    raise HTTPException(status_code=400, detail="Неверный формат даты. Используйте YYYY-MM-DD")
+    
     # Общая статистика
     total_orders = base_query.count()
     open_orders = base_query.filter(models.MoonBotOrder.status == "Open").count()
     closed_orders = base_query.filter(models.MoonBotOrder.status == "Closed").count()
     
-    # Прибыль
-    total_profit = db.query(func.sum(models.MoonBotOrder.profit_btc)).filter(
-        models.MoonBotOrder.id.in_([o.id for o in base_query.all()])
-    ).scalar() or 0.0
+    # Прибыль (используем subquery вместо материализации)
+    total_profit = base_query.with_entities(func.sum(models.MoonBotOrder.profit_btc)).scalar() or 0.0
     
     # Средняя прибыль на сделку
     avg_profit = total_profit / total_orders if total_orders > 0 else 0.0
@@ -4093,6 +4241,79 @@ async def get_trading_stats(
     
     # Винрейт
     winrate = (profitable_count / total_orders * 100) if total_orders > 0 else 0.0
+    
+    # ===== РАСШИРЕННЫЕ МЕТРИКИ =====
+    
+    # Profit Factor (отношение прибыли к убыткам)
+    total_wins = base_query.filter(models.MoonBotOrder.profit_btc > 0).with_entities(
+        func.sum(models.MoonBotOrder.profit_btc)
+    ).scalar() or 0.0
+    total_losses = abs(base_query.filter(models.MoonBotOrder.profit_btc < 0).with_entities(
+        func.sum(models.MoonBotOrder.profit_btc)
+    ).scalar() or 0.0)
+    
+    profit_factor = (total_wins / total_losses) if total_losses > 0 else (999.99 if total_wins > 0 else 0.0)
+    
+    # Max Drawdown (максимальная просадка)
+    closed_orders_list = base_query.filter(
+        models.MoonBotOrder.status == "Closed"
+    ).order_by(models.MoonBotOrder.closed_at.asc()).all()
+    
+    cumulative_profit = 0.0
+    peak_profit = 0.0
+    max_drawdown = 0.0
+    
+    for order in closed_orders_list:
+        cumulative_profit += (order.profit_btc or 0.0)
+        if cumulative_profit > peak_profit:
+            peak_profit = cumulative_profit
+        drawdown = peak_profit - cumulative_profit
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
+    
+    # Средняя длительность сделки (в часах)
+    closed_with_times = base_query.filter(
+        models.MoonBotOrder.status == "Closed",
+        models.MoonBotOrder.opened_at.isnot(None),
+        models.MoonBotOrder.closed_at.isnot(None)
+    ).all()
+    
+    if closed_with_times:
+        total_duration_seconds = sum([
+            (order.closed_at - order.opened_at).total_seconds()
+            for order in closed_with_times
+        ])
+        avg_duration_hours = (total_duration_seconds / len(closed_with_times)) / 3600
+    else:
+        avg_duration_hours = 0.0
+    
+    # ROI (Return on Investment) - упрощённая версия
+    total_spent = base_query.with_entities(func.sum(models.MoonBotOrder.spent_btc)).scalar() or 0.0
+    
+    roi = ((total_profit / total_spent) * 100) if total_spent > 0 else 0.0
+    
+    # Серии побед и поражений
+    all_orders_sorted = base_query.filter(
+        models.MoonBotOrder.status == "Closed"
+    ).order_by(models.MoonBotOrder.closed_at.asc()).all()
+    
+    current_win_streak = 0
+    current_loss_streak = 0
+    max_win_streak = 0
+    max_loss_streak = 0
+    
+    for order in all_orders_sorted:
+        profit = order.profit_btc or 0.0
+        if profit > 0:
+            current_win_streak += 1
+            current_loss_streak = 0
+            if current_win_streak > max_win_streak:
+                max_win_streak = current_win_streak
+        elif profit < 0:
+            current_loss_streak += 1
+            current_win_streak = 0
+            if current_loss_streak > max_loss_streak:
+                max_loss_streak = current_loss_streak
     
     # Статистика по стратегиям
     strategy_stats = db.query(
@@ -4118,6 +4339,10 @@ async def get_trading_stats(
     if strategies and strategies != "all":
         strategy_list = [s.strip() for s in strategies.split(',')]
         strategy_stats = strategy_stats.filter(models.MoonBotOrder.strategy.in_(strategy_list))
+    
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        strategy_stats = strategy_stats.filter(models.MoonBotOrder.is_emulator == is_emulator)
     
     strategy_stats = strategy_stats.group_by(models.MoonBotOrder.strategy).all()
     
@@ -4206,6 +4431,185 @@ async def get_trading_stats(
         models.Server.is_active == True
     ).all()
     
+    # ===== ГРАФИК ПРИБЫЛИ ПО ВРЕМЕНИ =====
+    # Получаем закрытые ордера с группировкой по дате
+    profit_by_date = db.query(
+        func.date(models.MoonBotOrder.closed_at).label('date'),
+        func.sum(models.MoonBotOrder.profit_btc).label('profit')
+    ).join(
+        models.Server,
+        models.MoonBotOrder.server_id == models.Server.id
+    ).filter(
+        models.Server.user_id == current_user.id,
+        models.MoonBotOrder.status == "Closed",
+        models.MoonBotOrder.closed_at.isnot(None)
+    )
+    
+    # Применяем те же фильтры
+    if server_ids and server_ids != "all":
+        try:
+            server_id_list = [int(sid.strip()) for sid in server_ids.split(',')]
+            profit_by_date = profit_by_date.filter(models.MoonBotOrder.server_id.in_(server_id_list))
+        except:
+            pass
+    
+    if strategies and strategies != "all":
+        strategy_list = [s.strip() for s in strategies.split(',')]
+        profit_by_date = profit_by_date.filter(models.MoonBotOrder.strategy.in_(strategy_list))
+    
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        profit_by_date = profit_by_date.filter(models.MoonBotOrder.is_emulator == is_emulator)
+    
+    if time_period:
+        if time_period == "today":
+            start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            profit_by_date = profit_by_date.filter(models.MoonBotOrder.closed_at >= start_of_day)
+        elif time_period == "week":
+            start_of_week = now - timedelta(days=7)
+            profit_by_date = profit_by_date.filter(models.MoonBotOrder.closed_at >= start_of_week)
+        elif time_period == "month":
+            start_of_month = now - timedelta(days=30)
+            profit_by_date = profit_by_date.filter(models.MoonBotOrder.closed_at >= start_of_month)
+    
+    profit_by_date = profit_by_date.group_by(func.date(models.MoonBotOrder.closed_at)).order_by('date').all()
+    
+    # Вычисляем накопительную прибыль
+    cumulative_profit = 0.0
+    profit_timeline = []
+    for item in profit_by_date:
+        cumulative_profit += float(item.profit or 0.0)
+        profit_timeline.append({
+            "date": str(item.date),
+            "daily_profit": round(float(item.profit or 0.0), 2),
+            "cumulative_profit": round(cumulative_profit, 2)
+        })
+    
+    # ===== ВИНРЕЙТ ПО ДНЯМ =====
+    from sqlalchemy import case  # Добавляем импорт case
+    
+    winrate_by_date = db.query(
+        func.date(models.MoonBotOrder.closed_at).label('date'),
+        func.count(models.MoonBotOrder.id).label('total'),
+        func.sum(case((models.MoonBotOrder.profit_btc > 0, 1), else_=0)).label('wins')
+    ).join(
+        models.Server,
+        models.MoonBotOrder.server_id == models.Server.id
+    ).filter(
+        models.Server.user_id == current_user.id,
+        models.MoonBotOrder.status == "Closed",
+        models.MoonBotOrder.closed_at.isnot(None)
+    )
+    
+    # Применяем фильтры
+    if server_ids and server_ids != "all":
+        try:
+            server_id_list = [int(sid.strip()) for sid in server_ids.split(',')]
+            winrate_by_date = winrate_by_date.filter(models.MoonBotOrder.server_id.in_(server_id_list))
+        except:
+            pass
+    
+    if strategies and strategies != "all":
+        strategy_list = [s.strip() for s in strategies.split(',')]
+        winrate_by_date = winrate_by_date.filter(models.MoonBotOrder.strategy.in_(strategy_list))
+    
+    if emulator and emulator.lower() in ['true', 'false']:
+        is_emulator = emulator.lower() == 'true'
+        winrate_by_date = winrate_by_date.filter(models.MoonBotOrder.is_emulator == is_emulator)
+    
+    if time_period:
+        if time_period == "today":
+            start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            winrate_by_date = winrate_by_date.filter(models.MoonBotOrder.closed_at >= start_of_day)
+        elif time_period == "week":
+            start_of_week = now - timedelta(days=7)
+            winrate_by_date = winrate_by_date.filter(models.MoonBotOrder.closed_at >= start_of_week)
+        elif time_period == "month":
+            start_of_month = now - timedelta(days=30)
+            winrate_by_date = winrate_by_date.filter(models.MoonBotOrder.closed_at >= start_of_month)
+    
+    winrate_by_date = winrate_by_date.group_by(func.date(models.MoonBotOrder.closed_at)).order_by('date').all()
+    
+    winrate_timeline = []
+    for item in winrate_by_date:
+        wins = int(item.wins or 0)
+        total = int(item.total or 0)
+        winrate_val = (wins / total * 100) if total > 0 else 0.0
+        winrate_timeline.append({
+            "date": str(item.date),
+            "winrate": round(winrate_val, 2),
+            "total_orders": total,
+            "wins": wins
+        })
+    
+    # ===== СРАВНЕНИЕ С ПРЕДЫДУЩИМ ПЕРИОДОМ =====
+    previous_stats = None
+    if time_period and time_period != "all":
+        # Вычисляем границы предыдущего периода
+        if time_period == "today":
+            prev_start = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+            prev_end = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif time_period == "week":
+            prev_start = now - timedelta(days=14)
+            prev_end = now - timedelta(days=7)
+        elif time_period == "month":
+            prev_start = now - timedelta(days=60)
+            prev_end = now - timedelta(days=30)
+        
+        # Запрос для предыдущего периода
+        prev_query = db.query(models.MoonBotOrder).join(
+            models.Server,
+            models.MoonBotOrder.server_id == models.Server.id
+        ).filter(
+            models.Server.user_id == current_user.id,
+            models.MoonBotOrder.opened_at >= prev_start,
+            models.MoonBotOrder.opened_at < prev_end
+        )
+        
+        # Применяем фильтры
+        if server_ids and server_ids != "all":
+            try:
+                server_id_list = [int(sid.strip()) for sid in server_ids.split(',')]
+                prev_query = prev_query.filter(models.MoonBotOrder.server_id.in_(server_id_list))
+            except:
+                pass
+        
+        if strategies and strategies != "all":
+            strategy_list = [s.strip() for s in strategies.split(',')]
+            prev_query = prev_query.filter(models.MoonBotOrder.strategy.in_(strategy_list))
+        
+        if emulator and emulator.lower() in ['true', 'false']:
+            is_emulator = emulator.lower() == 'true'
+            prev_query = prev_query.filter(models.MoonBotOrder.is_emulator == is_emulator)
+        
+        prev_total_orders = prev_query.count()
+        prev_total_profit = db.query(func.sum(models.MoonBotOrder.profit_btc)).filter(
+            models.MoonBotOrder.id.in_([o.id for o in prev_query.all()])
+        ).scalar() or 0.0
+        
+        prev_profitable_count = prev_query.filter(models.MoonBotOrder.profit_btc > 0).count()
+        prev_winrate = (prev_profitable_count / prev_total_orders * 100) if prev_total_orders > 0 else 0.0
+        
+        # Вычисляем изменения
+        profit_change = total_profit - prev_total_profit
+        profit_change_percent = ((total_profit - prev_total_profit) / abs(prev_total_profit) * 100) if prev_total_profit != 0 else 0.0
+        
+        winrate_change = winrate - prev_winrate
+        
+        orders_change = total_orders - prev_total_orders
+        orders_change_percent = ((total_orders - prev_total_orders) / prev_total_orders * 100) if prev_total_orders > 0 else 0.0
+        
+        previous_stats = {
+            "profit_change": round(profit_change, 2),
+            "profit_change_percent": round(profit_change_percent, 2),
+            "winrate_change": round(winrate_change, 2),
+            "orders_change": orders_change,
+            "orders_change_percent": round(orders_change_percent, 2),
+            "prev_total_profit": round(prev_total_profit, 2),
+            "prev_winrate": round(prev_winrate, 2),
+            "prev_total_orders": prev_total_orders
+        }
+    
     return {
         "overall": {
             "total_orders": total_orders,
@@ -4215,14 +4619,29 @@ async def get_trading_stats(
             "avg_profit": round(avg_profit, 2),
             "profitable_count": profitable_count,
             "losing_count": losing_count,
-            "winrate": round(winrate, 2)
+            "winrate": round(winrate, 2),
+            # Новые метрики
+            "profit_factor": round(profit_factor, 2),
+            "max_drawdown": round(max_drawdown, 2),
+            "avg_duration_hours": round(avg_duration_hours, 2),
+            "roi": round(roi, 2),
+            "max_win_streak": max_win_streak,
+            "max_loss_streak": max_loss_streak,
+            "total_wins": round(total_wins, 2),
+            "total_losses": round(total_losses, 2)
         },
         "by_strategy": [
             {
                 "strategy": s.strategy or "Unknown",
                 "total_orders": s.total or 0,
                 "total_profit": round(s.profit or 0, 2),
-                "avg_profit_percent": round(s.avg_profit_percent or 0, 2)
+                "avg_profit_percent": round(s.avg_profit_percent or 0, 2),
+                "winrate": round(
+                    (base_query.filter(
+                        models.MoonBotOrder.strategy == s.strategy,
+                        models.MoonBotOrder.profit_btc > 0
+                    ).count() / s.total * 100) if s.total > 0 else 0.0, 2
+                )
             }
             for s in strategy_stats
         ],
@@ -4235,7 +4654,13 @@ async def get_trading_stats(
                 "open_orders": db.query(func.count(models.MoonBotOrder.id)).filter(
                     models.MoonBotOrder.server_id == s.id,
                     models.MoonBotOrder.status == "Open"
-                ).scalar() or 0
+                ).scalar() or 0,
+                "winrate": round(
+                    (db.query(func.count(models.MoonBotOrder.id)).filter(
+                        models.MoonBotOrder.server_id == s.id,
+                        models.MoonBotOrder.profit_btc > 0
+                    ).scalar() / s.total * 100) if s.total > 0 else 0.0, 2
+                )
             }
             for s in server_stats
         ],
@@ -4244,7 +4669,13 @@ async def get_trading_stats(
                 "symbol": s.symbol or "UNKNOWN",
                 "total_orders": s.total or 0,
                 "total_profit": round(s.profit or 0, 2),
-                "avg_profit_percent": round(s.avg_profit_percent or 0, 2)
+                "avg_profit_percent": round(s.avg_profit_percent or 0, 2),
+                "winrate": round(
+                    (base_query.filter(
+                        models.MoonBotOrder.symbol == s.symbol,
+                        models.MoonBotOrder.profit_btc > 0
+                    ).count() / s.total * 100) if s.total > 0 else 0.0, 2
+                )
             }
             for s in symbol_stats
         ],
@@ -4269,7 +4700,126 @@ async def get_trading_stats(
             for o in top_losing
         ],
         "available_strategies": [s.strategy for s in all_strategies if s.strategy],
-        "available_servers": [{"id": s.id, "name": s.name} for s in all_servers]
+        "available_servers": [{"id": s.id, "name": s.name} for s in all_servers],
+        "profit_timeline": profit_timeline,
+        "winrate_timeline": winrate_timeline,
+        "previous_period": previous_stats
+    }
+
+
+@app.get("/api/trading-stats/details/{entity_type}/{entity_value}")
+async def get_trading_stats_details(
+    entity_type: str,  # "strategy", "server", "symbol"
+    entity_value: str,  # название стратегии/сервера/символа
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Получить детальную информацию о конкретной стратегии/боте/монете
+    - График прибыли по времени
+    - Список сделок
+    - Распределение по символам (для стратегии)
+    """
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    # Базовый запрос
+    base_query = db.query(models.MoonBotOrder).join(
+        models.Server,
+        models.MoonBotOrder.server_id == models.Server.id
+    ).filter(
+        models.Server.user_id == current_user.id,
+        models.MoonBotOrder.status == "Closed"
+    )
+    
+    # Фильтр по типу сущности
+    if entity_type == "strategy":
+        base_query = base_query.filter(models.MoonBotOrder.strategy == entity_value)
+    elif entity_type == "server":
+        # entity_value - это server_name
+        base_query = base_query.filter(models.Server.name == entity_value)
+    elif entity_type == "symbol":
+        base_query = base_query.filter(models.MoonBotOrder.symbol == entity_value)
+    else:
+        raise HTTPException(status_code=400, detail="Неверный entity_type")
+    
+    # График прибыли по времени
+    profit_by_date = db.query(
+        func.date(models.MoonBotOrder.closed_at).label('date'),
+        func.sum(models.MoonBotOrder.profit_btc).label('profit'),
+        func.count(models.MoonBotOrder.id).label('count')
+    ).join(
+        models.Server,
+        models.MoonBotOrder.server_id == models.Server.id
+    ).filter(
+        models.Server.user_id == current_user.id,
+        models.MoonBotOrder.status == "Closed",
+        models.MoonBotOrder.closed_at.isnot(None)
+    )
+    
+    if entity_type == "strategy":
+        profit_by_date = profit_by_date.filter(models.MoonBotOrder.strategy == entity_value)
+    elif entity_type == "server":
+        profit_by_date = profit_by_date.filter(models.Server.name == entity_value)
+    elif entity_type == "symbol":
+        profit_by_date = profit_by_date.filter(models.MoonBotOrder.symbol == entity_value)
+    
+    profit_by_date = profit_by_date.group_by(func.date(models.MoonBotOrder.closed_at)).order_by('date').limit(30).all()
+    
+    profit_timeline = []
+    cumulative_profit = 0.0
+    for item in profit_by_date:
+        cumulative_profit += float(item.profit or 0.0)
+        profit_timeline.append({
+            "date": str(item.date),
+            "daily_profit": round(float(item.profit or 0.0), 2),
+            "cumulative_profit": round(cumulative_profit, 2),
+            "orders_count": item.count
+        })
+    
+    # Список последних сделок (топ-20)
+    recent_orders = base_query.order_by(models.MoonBotOrder.closed_at.desc()).limit(20).all()
+    orders_list = []
+    for order in recent_orders:
+        orders_list.append({
+            "id": order.moonbot_order_id,
+            "symbol": order.symbol,
+            "strategy": order.strategy,
+            "opened_at": order.opened_at.isoformat() if order.opened_at else None,
+            "closed_at": order.closed_at.isoformat() if order.closed_at else None,
+            "profit": round(order.profit_btc or 0, 2),
+            "profit_percent": round(order.profit_percent or 0, 2),
+            "order_type": order.order_type,
+            "is_emulator": order.is_emulator
+        })
+    
+    # Распределение по символам (только для стратегии)
+    symbol_distribution = []
+    if entity_type == "strategy":
+        symbol_stats = db.query(
+            models.MoonBotOrder.symbol,
+            func.count(models.MoonBotOrder.id).label('count'),
+            func.sum(models.MoonBotOrder.profit_btc).label('profit')
+        ).join(
+            models.Server,
+            models.MoonBotOrder.server_id == models.Server.id
+        ).filter(
+            models.Server.user_id == current_user.id,
+            models.MoonBotOrder.strategy == entity_value,
+            models.MoonBotOrder.status == "Closed"
+        ).group_by(models.MoonBotOrder.symbol).all()
+        
+        for item in symbol_stats:
+            symbol_distribution.append({
+                "symbol": item.symbol or "UNKNOWN",
+                "count": item.count,
+                "profit": round(float(item.profit or 0), 2)
+            })
+    
+    return {
+        "profit_timeline": profit_timeline,
+        "recent_orders": orders_list,
+        "symbol_distribution": symbol_distribution
     }
 
 

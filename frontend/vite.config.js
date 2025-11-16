@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   
   // Определяем backend URL из переменных окружения или дефолт
   const apiPort = env.VITE_API_PORT || '8000';
-  const apiUrl = env.VITE_API_URL || `http://localhost:${apiPort}`;
+  const apiUrl = env.VITE_API_URL || `http://127.0.0.1:${apiPort}`;  // FIXED: Use 127.0.0.1 instead of localhost to force IPv4
   
   return {
     plugins: [react()],

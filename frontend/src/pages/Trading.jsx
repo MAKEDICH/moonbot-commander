@@ -28,11 +28,22 @@ const Trading = () => {
     const saved = localStorage.getItem('trading_autoRefresh');
     return saved !== null ? saved === 'true' : false;
   });
+  
+  // ОБЩЕЕ состояние фильтра эмулятора для всех подвкладок Торговли
+  const [emulatorFilter, setEmulatorFilter] = useState(() => {
+    const saved = localStorage.getItem('trading_emulatorFilter');
+    return saved || 'all'; // 'all', 'real', 'emulator'
+  });
 
   // Сохраняем состояние автообновления в localStorage
   useEffect(() => {
     localStorage.setItem('trading_autoRefresh', autoRefresh.toString());
   }, [autoRefresh]);
+  
+  // Сохраняем состояние фильтра эмулятора в localStorage
+  useEffect(() => {
+    localStorage.setItem('trading_emulatorFilter', emulatorFilter);
+  }, [emulatorFilter]);
 
   // Обновляем вкладку при изменении URL
   useEffect(() => {
@@ -54,17 +65,17 @@ const Trading = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'orders':
-        return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} />;
+        return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
       case 'logs':
-        return <SQLLogs autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} />;
+        return <SQLLogs autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
       case 'stats':
-        return <TradingStats autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} />;
+        return <TradingStats autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
       case 'strategies':
-        return <StrategyComparison />;
+        return <StrategyComparison emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
       case 'heatmap':
-        return <ActivityHeatmap />;
+        return <ActivityHeatmap emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
       default:
-        return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} />;
+        return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
     }
   };
 

@@ -13,6 +13,7 @@ import TwoFactorVerify from './pages/TwoFactorVerify';
 import Recover2FAPassword from './pages/Recover2FAPassword';
 import Dashboard from './pages/Dashboard';
 import Servers from './pages/Servers';
+import Balances from './pages/Balances';
 import Commands from './pages/Commands';
 import CommandsNew from './pages/CommandsNew';
 import ScheduledCommands from './pages/ScheduledCommands';
@@ -62,6 +63,7 @@ function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="servers" element={<Servers />} />
+        <Route path="balances" element={<Balances />} />
         <Route path="groups" element={<Groups />} />
         <Route path="commands" element={<CommandsNew />} />
         <Route path="scheduled-commands" element={<ScheduledCommands />} />

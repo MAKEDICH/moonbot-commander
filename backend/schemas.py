@@ -82,6 +82,7 @@ class ServerBase(BaseModel):
     password: Optional[str] = None  # UDP пароль для HMAC-SHA256
     description: Optional[str] = Field(None, max_length=500)  # ИСПРАВЛЕНО: Ограничение длины
     group_name: Optional[str] = Field(None, max_length=200)  # Группы через запятую
+    keepalive_enabled: bool = True  # Включен ли keep-alive
     
     # РАЗМЫШЛЕНИЕ: Валидация host должна быть, но @validator требует Pydantic v1 syntax
     # В Pydantic v2 используется @field_validator
@@ -99,6 +100,7 @@ class ServerUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=500)  # ИСПРАВЛЕНО: Ограничение длины
     group_name: Optional[str] = Field(None, max_length=200)  # Группы через запятую
     is_active: Optional[bool] = None
+    keepalive_enabled: Optional[bool] = None  # Включен ли keep-alive
 
 
 class Server(ServerBase):
@@ -109,6 +111,7 @@ class Server(ServerBase):
     user_id: int
     group_name: Optional[str] = None
     password: Optional[str] = None  # UDP пароль
+    keepalive_enabled: bool = True
 
     class Config:
         from_attributes = True
@@ -390,6 +393,7 @@ class ServerResponse(BaseModel):
     description: Optional[str] = None
     group_name: Optional[str] = None
     is_active: bool
+    keepalive_enabled: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
     user_id: int

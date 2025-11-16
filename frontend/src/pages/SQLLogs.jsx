@@ -6,7 +6,7 @@ import { getApiBaseUrl } from '../utils/apiUrl';
 import { sqlLogsAPI } from '../api/api';
 import wsService from '../services/websocket';
 
-const SQLLogs = ({ autoRefresh, setAutoRefresh }) => {
+const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter }) => {
   const API_BASE_URL = getApiBaseUrl();
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('all'); // По умолчанию "Все сервера"

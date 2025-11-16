@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { FiServer, FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiRadio, FiRefreshCw, FiGrid, FiList } from 'react-icons/fi';
+import { FiServer, FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiRadio, FiRefreshCw, FiGrid, FiList, FiDollarSign } from 'react-icons/fi';
 import { serversAPI } from '../api/api';
 import Tooltip from '../components/Tooltip';
 import styles from './Servers.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
+import { useNavigate } from 'react-router-dom';
 
 const Servers = () => {
   const API_BASE_URL = getApiBaseUrl();
+  const navigate = useNavigate();
   const [servers, setServers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -28,7 +30,8 @@ const Servers = () => {
     port: '',
     password: '',  // UDP пароль для HMAC-SHA256
     description: '',
-    group_name: ''
+    group_name: '',
+    keepalive_enabled: true  // По умолчанию включён
   });
 
   useEffect(() => {
@@ -189,7 +192,8 @@ const Servers = () => {
       port: server.port.toString(),
       password: server.password || '',  // Пароль для HMAC-SHA256
       description: server.description || '',
-      group_name: server.group_name || ''
+      group_name: server.group_name || '',
+      keepalive_enabled: server.keepalive_enabled !== false  // По умолчанию true
     });
     
     // Разбираем группы из строки через запятую
@@ -207,7 +211,7 @@ const Servers = () => {
     setShowModal(false);
     setEditingServer(null);
     setSelectedGroups([]);
-    setFormData({ name: '', host: '', port: '', password: '', description: '', group_name: '' });
+    setFormData({ name: '', host: '', port: '', password: '', description: '', group_name: '', keepalive_enabled: true });
   };
 
   // ДОБАВЛЕНО: Функция переключения вида
@@ -236,6 +240,15 @@ const Servers = () => {
           >
             {viewMode === 'full' ? <><FiList /> Компактный</> : <><FiGrid /> Полный</>}
           </button>
+          <Tooltip text="Посмотреть балансы всех серверов" position="bottom">
+            <button 
+              className={styles.balancesBtn} 
+              onClick={() => navigate('/balances')}
+            >
+              <FiDollarSign />
+              Балансы
+            </button>
+          </Tooltip>
           <Tooltip text="Добавить новый MoonBot сервер для удаленного управления" position="bottom">
             <button className={styles.addBtn} onClick={() => setShowModal(true)}>
               <FiPlus />
@@ -430,6 +443,21 @@ const Servers = () => {
                 <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>
                   🔒 Требуется для нового протокола MoonBot (HMAC-SHA256).<br/>
                   Укажите пароль из: Настройки → Специальные → Remote → UDP Commands Pass
+                </small>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={formData.keepalive_enabled !== false}
+                    onChange={(e) => setFormData({ ...formData, keepalive_enabled: e.target.checked })}
+                  />
+                  <span>Включить Keep-Alive</span>
+                </label>
+                <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  💓 Отправляет "lst" каждые 2 минуты для поддержания UDP соединения через NAT.<br/>
+                  Рекомендуется включать при работе через NAT/роутер.
                 </small>
               </div>
 

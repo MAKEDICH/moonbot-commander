@@ -4,7 +4,7 @@ import { FiTrendingUp, FiTrendingDown, FiRefreshCw, FiAward, FiTarget } from 're
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import styles from './StrategyComparison.module.css';
 
-const StrategyComparison = () => {
+const StrategyComparison = ({ emulatorFilter, setEmulatorFilter }) => {
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('all');
   const [strategies, setStrategies] = useState([]);
@@ -20,7 +20,7 @@ const StrategyComparison = () => {
     if (servers.length > 0) {
       loadStrategies();
     }
-  }, [selectedServer, servers]);
+  }, [selectedServer, servers, emulatorFilter]);
 
   const loadServers = async () => {
     try {
@@ -35,11 +35,21 @@ const StrategyComparison = () => {
     setLoading(true);
     try {
       let response;
+      const params = new URLSearchParams();
+      
+      // Добавляем фильтр эмулятора
+      if (emulatorFilter !== 'all') {
+        params.append('emulator', emulatorFilter === 'emulator' ? 'true' : 'false');
+      }
+      
+      const queryString = params.toString();
+      const urlSuffix = queryString ? `?${queryString}` : '';
+      
       if (selectedServer === 'all') {
-        response = await api.get('/api/strategies/comparison-all');
+        response = await api.get(`/api/strategies/comparison-all${urlSuffix}`);
         setStrategies(response.data.strategies || []);
       } else {
-        response = await api.get(`/api/servers/${selectedServer}/strategies/comparison`);
+        response = await api.get(`/api/servers/${selectedServer}/strategies/comparison${urlSuffix}`);
         setStrategies(response.data.strategies || []);
       }
     } catch (error) {
@@ -99,6 +109,15 @@ const StrategyComparison = () => {
           <p className={styles.subtitle}>Анализ эффективности торговых стратегий</p>
         </div>
         <div className={styles.controls}>
+          <select
+            value={emulatorFilter}
+            onChange={(e) => setEmulatorFilter(e.target.value)}
+            className={styles.serverSelect}
+          >
+            <option value="all">🎮 Все</option>
+            <option value="real">💰 Реальные</option>
+            <option value="emulator">🎮 Эмулятор</option>
+          </select>
           <select
             value={selectedServer}
             onChange={(e) => setSelectedServer(e.target.value)}
