@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare, FiMinusSquare } from 'react-icons/fi';
+import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare, FiMinusSquare, FiSettings } from 'react-icons/fi';
 import { serversAPI, commandsAPI, groupsAPI } from '../api/api';
 import styles from './Commands.module.css';
+import StrategyCommander from './StrategyCommander';
 
 // Список команд MoonBot - ПОЛНЫЙ СПИСОК
 const MOONBOT_COMMANDS = [
@@ -47,6 +48,10 @@ const MOONBOT_COMMANDS = [
   // Утилиты
   { cmd: 'ConvertBNB', desc: 'Конвертировать пыль в BNB' },
   { cmd: 'DoUpdate', desc: 'Обновить версию бота' },
+  
+  // Стратегии (новые команды)
+  { cmd: 'GetStrategiesFull', desc: 'Выслать все стратегии' },
+  { cmd: 'GetStrategiesActive', desc: 'Выслать только активные стратегии' },
 ];
 
 // Команды требующие конструктора
@@ -195,6 +200,9 @@ const Commands = () => {
   // Состояния конструктора
   const [selectedConstructor, setSelectedConstructor] = useState(null);
   const [constructorValues, setConstructorValues] = useState({});
+
+  // Состояние для переключения на StrategyCommander
+  const [showStrategyCommander, setShowStrategyCommander] = useState(false);
 
   useEffect(() => {
     loadServers();
@@ -458,10 +466,22 @@ const Commands = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <FiSend className={styles.icon} />
-        <h1>Отправка команд</h1>
-      </div>
+      {/* Условный рендеринг: показываем либо StrategyCommander, либо обычные команды */}
+      {showStrategyCommander ? (
+        <StrategyCommander onClose={() => setShowStrategyCommander(false)} />
+      ) : (
+        <>
+          <div className={styles.header}>
+            <FiSend className={styles.icon} />
+            <h1>Отправка команд</h1>
+            <button 
+              className={styles.strategyCommanderButton}
+              onClick={() => setShowStrategyCommander(true)}
+              title="Открыть MoonBot Commander Pro"
+            >
+              <FiSettings /> Strategy Commander
+            </button>
+          </div>
 
       <div className={styles.content}>
         {/* Левая панель - Выбор серверов */}
@@ -888,6 +908,8 @@ const Commands = () => {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

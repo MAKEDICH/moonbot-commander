@@ -36,6 +36,65 @@
   gap: 0.75rem;
 }
 
+.strategyCommanderButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, #9945FF 0%, #00F5FF 50%, #14F195 100%);
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(153, 69, 255, 0.4), 0 2px 8px rgba(0, 245, 255, 0.2);
+}
+
+.strategyCommanderButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.strategyCommanderButton:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(153, 69, 255, 0.6), 
+              0 0 30px rgba(0, 245, 255, 0.4);
+  animation: gradientShift 3s ease infinite;
+}
+
+.strategyCommanderButton:hover::before {
+  left: 100%;
+}
+
+.strategyCommanderButton:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(153, 69, 255, 0.5);
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .headerBtn {
   display: flex;
   align-items: center;
@@ -1248,14 +1307,17 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  flex: 1;
+  gap: 0;
+  margin: 0; /* Убираем любые браузерные отступы */
+  padding: 0; /* Убираем любые браузерные отступы */
+  /* Убрали flex: 1, чтобы форма не растягивалась */
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 0.75rem; /* Уменьшили отступ между группами */
 }
 
 .formGroup label {
@@ -1280,8 +1342,9 @@
   font-family: 'Courier New', monospace;
   font-size: 0.85rem;
   resize: vertical;
-  min-height: 200px;
-  max-height: 800px;
+  min-height: 180px;
+  height: 180px; /* Фиксированная начальная высота */
+  max-height: 600px;
 }
 
 .textarea:focus {
@@ -1300,6 +1363,8 @@
   font-weight: 600;
   transition: all 0.3s;
   box-shadow: 0 4px 16px rgba(0, 245, 255, 0.4);
+  margin-top: 0.75rem; /* Небольшой отступ от редактора */
+  margin-bottom: 0; /* Убираем нижний отступ */
 }
 
 .sendButton:hover:not(:disabled) {
@@ -1313,14 +1378,15 @@
   transform: none;
 }
 
-/* Результаты */
+/* Результаты - прямо под кнопкой */
 .response {
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-top: 0.5rem; /* Минимальный отступ от кнопки */
+  padding: 0.75rem;
   border-radius: 8px;
   border: 2px solid;
-  max-height: 400px;
+  max-height: 250px;
   overflow-y: auto;
+  position: relative;
 }
 
 .response.success {

@@ -65,6 +65,7 @@ class Server(Base):
     description = Column(String, nullable=True)
     group_name = Column(String, nullable=True)  # Группа сервера
     is_active = Column(Boolean, default=True)
+    keepalive_enabled = Column(Boolean, default=True)  # Включен ли keep-alive для этого сервера
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     
@@ -245,6 +246,22 @@ class MoonBotOrder(Base):
     strategy = Column(String)  # Название стратегии
     close_date = Column(DateTime)  # Дата закрытия (0 = открыт)
     
+    # Расширенные метрики (из SQL логов Moonbot)
+    is_emulator = Column(Boolean, default=False, index=True)  # Эмулятор или реальный
+    signal_type = Column(String)  # Тип сигнала
+    base_currency = Column(String)  # Базовая валюта (USDT, BTC...)
+    safety_orders_used = Column(Integer)  # Сколько Safety Orders использовано
+    latency = Column(Integer)  # Задержка в мс
+    ping = Column(Integer)  # Пинг к бирже в мс
+    task_id = Column(Integer)  # ID задачи Moonbot
+    exchange_1h_delta = Column(Float)  # Изменение цены за 1ч
+    exchange_24h_delta = Column(Float)  # Изменение цены за 24ч
+    bought_so = Column(Integer)  # BoughtSO
+    btc_in_delta = Column(Float)  # BTCInDelta
+    price_blow = Column(Boolean)  # PriceBlow
+    daily_vol = Column(String)  # DailyVol
+    ex_order_id = Column(String)  # exOrderID - ID на бирже
+    
     # Временные метки
     opened_at = Column(DateTime)
     closed_at = Column(DateTime)
@@ -277,4 +294,59 @@ class UDPListenerStatus(Base):
     server = relationship("Server")
 
 
+class CleanupSettings(Base):
+    """Настройки автоматической очистки данных"""
+    __tablename__ = "cleanup_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    enabled = Column(Boolean, default=False)
+    trigger_type = Column(String, default="time")  # time, disk, combined
+    days_to_keep = Column(Integer, default=30)
+    disk_threshold_percent = Column(Integer, default=80)
+    
+    # Гибкий выбор что очищать автоматически
+    auto_cleanup_sql_logs = Column(Boolean, default=True)
+    auto_cleanup_command_history = Column(Boolean, default=True)
+    auto_cleanup_backend_logs = Column(Boolean, default=False)
+    backend_logs_max_size_mb = Column(Integer, default=10)  # Обрезать до N МБ
+    
+    last_cleanup = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    user = relationship("User")
+
+
+class ServerBalance(Base):
+    """Текущий баланс сервера (обновляется раз в 5 сек)"""
+    __tablename__ = "server_balance"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    server_id = Column(Integer, ForeignKey("servers.id"), nullable=False, unique=True)
+    bot_name = Column(String, nullable=True)
+    available = Column(Float, default=0.0)  # Доступный баланс
+    total = Column(Float, default=0.0)      # Всего баланс
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    server = relationship("Server")
+
+
+class StrategyCache(Base):
+    """Кэш стратегий с сервера"""
+    __tablename__ = "strategy_cache"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    server_id = Column(Integer, ForeignKey("servers.id"), nullable=False)
+    pack_number = Column(Integer, default=1)  # Номер пакета (если много стратегий)
+    bot_name = Column(String, nullable=True)
+    data = Column(Text, nullable=False)  # Текст стратегий
+    received_at = Column(DateTime, default=datetime.now)
+    
+    server = relationship("Server")
+    
+    # Композитный индекс для быстрого поиска
+    __table_args__ = (
+        Index('ix_strategy_cache_server_pack', 'server_id', 'pack_number'),
+    )
 

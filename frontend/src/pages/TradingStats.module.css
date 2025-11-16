@@ -330,6 +330,513 @@
   color: #ff4444;
 }
 
+/* Горячие индикаторы */
+.hotIndicators {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.hotCard {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.hotCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.hotSuccess {
+  border-color: #00ff88;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 136, 0.05));
+}
+
+.hotWarning {
+  border-color: #ffaa00;
+  background: linear-gradient(135deg, rgba(255, 170, 0, 0.1), rgba(255, 170, 0, 0.05));
+}
+
+.hotInfo {
+  border-color: #00aaff;
+  background: linear-gradient(135deg, rgba(0, 170, 255, 0.1), rgba(0, 170, 255, 0.05));
+}
+
+.hotIcon {
+  font-size: 2.5rem;
+}
+
+.hotSuccess .hotIcon {
+  color: #00ff88;
+}
+
+.hotWarning .hotIcon {
+  color: #ffaa00;
+}
+
+.hotInfo .hotIcon {
+  color: #00aaff;
+}
+
+.hotLabel {
+  font-size: 0.85rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
+
+.hotValue {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 3px;
+}
+
+.hotSubtext {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+/* Подтекст для карточек метрик */
+.statSubtext {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 5px;
+  text-align: center;
+}
+
+/* Стили для графиков */
+.section h2 {
+  margin-bottom: 20px;
+}
+
+/* AI Инсайты */
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.insightCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.insightCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.insightIcon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.insightText {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.insightText strong {
+  color: #00ff88;
+  font-weight: 600;
+}
+
+/* Индикаторы изменений */
+.changeIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.changePositive {
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+}
+
+.changeNegative {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+/* Кастомные даты */
+.customDateInputs {
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dateInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dateInputGroup label {
+  font-size: 0.9rem;
+  color: #999;
+  min-width: 30px;
+}
+
+.dateInput {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.dateInput:focus {
+  border-color: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
+.dateInput::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.applyDateBtn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.applyDateBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+}
+
+.applyDateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Блок сравнения периодов */
+.comparisonBlock {
+  margin-top: 25px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.comparisonTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #00ff88;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.comparisonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.comparisonCard {
+  padding: 15px;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.comparisonLabel {
+  font-size: 0.85rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.comparisonValue {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.comparisonDetail {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Цветовая индикация строк таблиц */
+.topRow {
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.15), rgba(0, 255, 136, 0.05)) !important;
+  border-left: 3px solid #00ff88 !important;
+}
+
+.worstRow {
+  background: linear-gradient(90deg, rgba(255, 68, 68, 0.15), rgba(255, 68, 68, 0.05)) !important;
+  border-left: 3px solid #ff4444 !important;
+}
+
+.clickableRow {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clickableRow:hover {
+  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Модальное окно */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+  border: 2px solid #00ff88;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 50px rgba(0, 255, 136, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.modalContentLarge {
+  background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+  border: 2px solid #00ff88;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 900px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 50px rgba(0, 255, 136, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.modalSection {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modalSection h3 {
+  color: #00ff88;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.modalTable {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.modalTable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.modalTable th {
+  background: rgba(0, 255, 136, 0.1);
+  padding: 10px;
+  text-align: left;
+  color: #00ff88;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(0, 255, 136, 0.3);
+}
+
+.modalTable td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modalTable tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.modalLoading {
+  text-align: center;
+  padding: 30px;
+  color: #00ff88;
+  font-size: 1.1rem;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalClose {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 68, 68, 0.2);
+  border: 1px solid #ff4444;
+  color: #ff4444;
+  font-size: 1.5rem;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.modalClose:hover {
+  background: #ff4444;
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  color: #00ff88;
+  margin-bottom: 25px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.modalStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.modalStatCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+}
+
+.modalStatLabel {
+  font-size: 0.85rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.modalStatValue {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.modalNote {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.modalNote strong {
+  color: #00ff88;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.modalBtn {
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  border: none;
+  color: #000;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.modalBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+}
+
 /* Адаптивность */
 @media (max-width: 1200px) {
   .topDeals {
@@ -360,5 +867,99 @@
     width: 100%;
     justify-content: space-between;
   }
+}
+
+/* Sparkline (мини-графики в карточках) */
+.sparkline {
+  display: flex;
+  align-items: flex-end;
+  height: 40px;
+  gap: 2px;
+  margin-top: 10px;
+  padding: 0 5px;
+}
+
+.sparklineBar {
+  flex: 1;
+  background: linear-gradient(180deg, #00ff88, #00cc6a);
+  border-radius: 2px 2px 0 0;
+  transition: all 0.3s ease;
+  min-height: 3px;
+}
+
+.sparklineBar.negative {
+  background: linear-gradient(180deg, #ff4444, #cc0000);
+}
+
+.sparklineBar:hover {
+  opacity: 0.7;
+  transform: scaleY(1.1);
+}
+
+/* Тепловая карта */
+.heatmapContainer {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.heatmapGrid {
+  display: grid;
+  grid-template-columns: 80px repeat(24, 40px);
+  gap: 2px;
+  min-width: 1040px;
+}
+
+.heatmapLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #999;
+  padding: 5px;
+}
+
+.heatmapCell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.heatmapCell:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  z-index: 10;
+}
+
+/* Градиент для тепловой карты */
+.heatmapCell.heat0 {
+  background: #1a1a1a;
+  color: #666;
+}
+
+.heatmapCell.heat1 {
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+}
+
+.heatmapCell.heat2 {
+  background: linear-gradient(135deg, #ff8844, #dd6622);
+}
+
+.heatmapCell.heat3 {
+  background: linear-gradient(135deg, #ffbb44, #dd9922);
+}
+
+.heatmapCell.heat4 {
+  background: linear-gradient(135deg, #88ff44, #66dd22);
+}
+
+.heatmapCell.heat5 {
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
 }
 

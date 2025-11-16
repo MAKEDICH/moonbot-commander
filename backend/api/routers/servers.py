@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
+from pydantic import BaseModel
 
 from database import get_db
 from auth import get_current_user
@@ -14,6 +15,58 @@ from encryption import encrypt_password, decrypt_password
 from ip_validator import validate_host  # ДОБАВЛЕНО: IP валидация
 
 router = APIRouter(prefix="/api/servers", tags=["Servers"])
+
+
+# Схема для баланса сервера
+class ServerBalanceResponse(BaseModel):
+    server_id: int
+    server_name: str
+    host: str
+    port: int
+    is_active: bool
+    bot_name: Optional[str] = None
+    available: float
+    total: float
+    updated_at: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+@router.get("/balances", response_model=List[ServerBalanceResponse], tags=["Balances"])
+def get_server_balances(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Получить балансы всех серверов пользователя
+    
+    Возвращает список серверов с их текущими балансами
+    """
+    servers = db.query(models.Server).filter(
+        models.Server.user_id == current_user.id
+    ).all()
+    
+    result = []
+    for server in servers:
+        # Получаем последний баланс для сервера
+        balance = db.query(models.ServerBalance).filter(
+            models.ServerBalance.server_id == server.id
+        ).first()
+        
+        result.append(ServerBalanceResponse(
+            server_id=server.id,
+            server_name=server.name,
+            host=server.host,
+            port=server.port,
+            is_active=server.is_active,
+            bot_name=balance.bot_name if balance else None,
+            available=float(balance.available) if balance and balance.available else 0.0,
+            total=float(balance.total) if balance and balance.total else 0.0,
+            updated_at=balance.updated_at.isoformat() if balance and balance.updated_at else None,
+        ))
+    
+    return result
 
 
 @router.get("", response_model=List[schemas.ServerResponse])
@@ -137,9 +190,12 @@ def update_server(
                 detail=f"Invalid host: {error_message}"
             )
     
-    # Шифруем новый пароль если указан
+    # Шифруем новый пароль если указан И он НЕ зашифрован
     if 'password' in update_data and update_data['password']:
-        update_data['password'] = encrypt_password(update_data['password'])
+        # Проверяем, не является ли пароль уже зашифрованным (начинается с gAAAAA... - Fernet signature)
+        if not update_data['password'].startswith('gAAAAA'):
+            update_data['password'] = encrypt_password(update_data['password'])
+        # Если пароль уже зашифрован (начинается с gAAAAA), оставляем как есть
     
     for field, value in update_data.items():
         setattr(server, field, value)

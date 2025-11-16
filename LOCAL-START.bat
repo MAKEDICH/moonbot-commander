@@ -173,11 +173,11 @@ echo.
 set "PROJECT_DIR=%CD%"
 
 echo [2/4] Starting Backend %APP_VERSION%...
-start "MoonBot Backend %APP_VERSION%" cmd /k "cd /d "%PROJECT_DIR%\backend" && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000 --reload"
+start "MoonBot Backend %APP_VERSION%" cmd /k "cd /d "%PROJECT_DIR%\backend" && set "MOONBOT_MODE=local" && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000 --reload"
 timeout /t 3 /nobreak >nul
 
 echo [3/4] Starting Scheduler...
-start "MoonBot Scheduler" cmd /k "cd /d "%PROJECT_DIR%\backend" && python scheduler.py"
+start "MoonBot Scheduler" cmd /k "cd /d "%PROJECT_DIR%\backend" && set "MOONBOT_MODE=local" && python scheduler.py"
 timeout /t 2 /nobreak >nul
 
 echo [4/4] Starting Frontend...

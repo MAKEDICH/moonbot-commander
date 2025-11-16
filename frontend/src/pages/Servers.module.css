@@ -65,6 +65,23 @@
   box-shadow: var(--shadow-glow);
 }
 
+.balancesBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.balancesBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
 .serverGrid {
   display: grid;
   /* COMPACT: Reduced card size from 300px to 250px for more cards per row */

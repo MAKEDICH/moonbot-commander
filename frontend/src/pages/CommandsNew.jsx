@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare, FiPlus, FiTrash2, FiEdit2, FiBook, FiSave, FiX, FiTool, FiPlayCircle, FiInfo } from 'react-icons/fi';
+import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare, FiPlus, FiTrash2, FiEdit2, FiBook, FiSave, FiX, FiTool, FiPlayCircle, FiInfo, FiSettings } from 'react-icons/fi';
 import { serversAPI, commandsAPI, groupsAPI, quickCommandsAPI, presetsAPI, botCommandsAPI } from '../api/api';
 import styles from './CommandsNew.module.css';
+import StrategyCommander from './StrategyCommander';
 
 // Параметры стратегий для автокомплита
 const STRATEGY_PARAMS = [
@@ -212,6 +213,38 @@ const CONSTRUCTOR_COMMANDS = [
     ]
   },
   {
+    id: 'buy',
+    name: 'buy',
+    desc: 'Применить стандартные правила для покупки',
+    fields: [
+      { name: 'params', label: 'Params', placeholder: 'Параметры покупки' }
+    ]
+  },
+  {
+    id: 'short',
+    name: 'short',
+    desc: 'Применить стандартные правила для шорта (фьючерсы)',
+    fields: [
+      { name: 'params', label: 'Params', placeholder: 'Параметры шорта' }
+    ]
+  },
+  {
+    id: 'BL+',
+    name: 'BL +',
+    desc: 'Добавить монету в черный список',
+    fields: [
+      { name: 'coin', label: 'Coin', placeholder: 'Монета (BTC, ETH...)' }
+    ]
+  },
+  {
+    id: 'BL-',
+    name: 'BL -',
+    desc: 'Убрать монету из черного списка',
+    fields: [
+      { name: 'coin', label: 'Coin', placeholder: 'Монета (BTC, ETH...)' }
+    ]
+  },
+  {
     id: 'AutoLevConfig',
     name: 'AutoLevConfig',
     desc: 'Автоподбор плеча по сумме ордеров',
@@ -252,6 +285,9 @@ const CommandsNew = () => {
   // Справочник команд
   const [botCommands, setBotCommands] = useState([]);
   const [showCommandsReference, setShowCommandsReference] = useState(false);
+  
+  // Strategy Commander
+  const [showStrategyCommander, setShowStrategyCommander] = useState(false);
   const [commandsFilter, setCommandsFilter] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedCommandsFromReference, setSelectedCommandsFromReference] = useState([]);
@@ -327,25 +363,20 @@ const CommandsNew = () => {
     }
   };
 
-  // Команды по умолчанию (которых нет в Конструкторе)
+  // Команды по умолчанию (только разовые, без параметров)
   const DEFAULT_QUICK_COMMANDS = [
     { label: 'START', command: 'START' },
     { label: 'STOP', command: 'STOP' },
     { label: 'Список ордеров', command: 'list' },
     { label: 'Список (короткий)', command: 'lst' },
     { label: 'Черный список', command: 'BL' },
-    { label: 'BL + монета', command: 'BL + ' },
-    { label: 'BL - монета', command: 'BL - ' },
     { label: 'Отключить уведомления', command: 'silent' },
     { label: 'Включить уведомления', command: 'talk' },
-    { label: 'Отменить покупки', command: 'CancelBuy' },
+    { label: 'Отмена ордеров', command: 'CancelBuy' },
     { label: 'Продать всё', command: 'SellALL' },
-    { label: 'Купить монету', command: 'buy ' },
-    { label: 'Шорт монету', command: 'short ' },
     { label: 'Конвертировать пыль', command: 'ConvertBNB' },
     { label: 'Обновить бота', command: 'DoUpdate' },
     { label: 'Обновить на Release', command: 'InstallTestVersion Release' },
-    { label: 'Автоплечо', command: 'AutoLevConfig ' },
     { label: 'Сбросить профит', command: 'ResetLoss' },
   ];
 
@@ -868,6 +899,86 @@ const CommandsNew = () => {
     }
   };
 
+  // === Быстрая отправка команды (без редактора) ===
+  const handleQuickSend = async (command) => {
+    if (selectedServers.length === 0) {
+      alert('Выберите хотя бы один сервер');
+      return;
+    }
+
+    setLoading(true);
+    setResponse(null);
+    
+    try {
+      const selectedServersData = servers.filter(s => selectedServers.includes(s.id));
+      const allResults = [];
+      
+      for (let serverIndex = 0; serverIndex < selectedServersData.length; serverIndex++) {
+        const server = selectedServersData[serverIndex];
+        
+        // Задержка между ботами
+        if (serverIndex > 0 && delayBetweenBots > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayBetweenBots * 1000));
+        }
+
+        let finalCommand = command;
+        if (useBotname && server.name) {
+          finalCommand = `botname:${server.name} ${command}`;
+        }
+
+        try {
+          const result = await commandsAPI.send({
+            server_id: server.id,
+            command: finalCommand,
+            timeout: timeout
+          });
+
+          allResults.push({
+            server_name: server.name,
+            command: finalCommand,
+            status: 'success',
+            response: result.data.response
+          });
+        } catch (error) {
+          allResults.push({
+            server_name: server.name,
+            command: finalCommand,
+            status: 'error',
+            response: error.response?.data?.detail || 'Ошибка отправки'
+          });
+        }
+      }
+      
+      // Формируем детальный ответ как в основной отправке
+      let responseText = '';
+      let successCount = allResults.filter(r => r.status === 'success').length;
+      let errorCount = allResults.filter(r => r.status === 'error').length;
+      
+      responseText += `✅ Успешно: ${successCount} | ❌ Ошибок: ${errorCount}\n\n`;
+      
+      allResults.forEach(result => {
+        const statusIcon = result.status === 'success' ? '✅' : '❌';
+        responseText += `${statusIcon} [${result.server_name}] ${result.command}\n`;
+        responseText += `${result.response}\n\n`;
+      });
+      
+      setResponse({
+        status: errorCount === 0 ? 'success' : (successCount === 0 ? 'error' : 'partial'),
+        text: responseText.trim(),
+        time: new Date().toLocaleString('ru-RU')
+      });
+      
+    } catch (error) {
+      setResponse({
+        status: 'error',
+        text: error.message || 'Ошибка отправки команды',
+        time: new Date().toLocaleString('ru-RU')
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // === Справочник команд ===
   const filteredBotCommands = botCommands.filter(cmd => {
     const matchesFilter = 
@@ -897,20 +1008,32 @@ const CommandsNew = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <FiSend className={styles.icon} />
-          <h1>Отправка команд</h1>
-        </div>
-        <div className={styles.headerActions}>
-        <button 
-            onClick={() => setShowCommandsReference(!showCommandsReference)}
-            className={styles.headerBtn}
-        >
-            <FiBook /> Справочник команд
-        </button>
-        </div>
-      </div>
+      {/* Условный рендеринг: показываем либо StrategyCommander, либо обычные команды */}
+      {showStrategyCommander ? (
+        <StrategyCommander onClose={() => setShowStrategyCommander(false)} />
+      ) : (
+        <>
+          <div className={styles.header}>
+            <div className={styles.headerLeft}>
+              <FiSend className={styles.icon} />
+              <h1>Отправка команд</h1>
+            </div>
+            <div className={styles.headerActions}>
+              <button 
+                className={styles.strategyCommanderButton}
+                onClick={() => setShowStrategyCommander(true)}
+                title="Открыть MoonBot Commander Pro"
+              >
+                <FiSettings /> Strategy Commander
+              </button>
+              <button 
+                onClick={() => setShowCommandsReference(!showCommandsReference)}
+                className={styles.headerBtn}
+              >
+                <FiBook /> Справочник команд
+              </button>
+            </div>
+          </div>
 
       {/* КОМПАКТНЫЙ ВЫБОР СЕРВЕРОВ С ЧЕКБОКСАМИ */}
       <div className={styles.serverSelectorCompact}>
@@ -1333,7 +1456,7 @@ const CommandsNew = () => {
           {/* Быстрые команды */}
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
-              <h3>🚀 Мои быстрые команды</h3>
+              <h3>⚡ Быстрые команды</h3>
                   <button
                 onClick={() => setShowAddQuickCmd(!showAddQuickCmd)}
                 className={styles.addBtn}
@@ -1446,13 +1569,7 @@ const CommandsNew = () => {
                     ) : (
                       <>
                         <button
-                          onClick={() => {
-                            if (commands.trim()) {
-                              setCommands(commands + '\n' + qc.command);
-                            } else {
-                              setCommands(qc.command);
-                            }
-                          }}
+                          onClick={() => handleQuickSend(qc.command)}
                           className={styles.quickCmdBtn}
                           title={qc.command}
                         >
@@ -1702,6 +1819,8 @@ const CommandsNew = () => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

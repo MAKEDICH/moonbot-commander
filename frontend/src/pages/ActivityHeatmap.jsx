@@ -3,7 +3,7 @@ import api from '../api/api';
 import { FiRefreshCw, FiClock, FiActivity } from 'react-icons/fi';
 import styles from './ActivityHeatmap.module.css';
 
-const ActivityHeatmap = () => {
+const ActivityHeatmap = ({ emulatorFilter, setEmulatorFilter }) => {
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('all');
   const [heatmapData, setHeatmapData] = useState([]);
@@ -18,7 +18,7 @@ const ActivityHeatmap = () => {
     if (servers.length > 0) {
       loadHeatmap();
     }
-  }, [selectedServer, servers]);
+  }, [selectedServer, servers, emulatorFilter]);
 
   const loadServers = async () => {
     try {
@@ -33,11 +33,21 @@ const ActivityHeatmap = () => {
     setLoading(true);
     try {
       let response;
+      const params = new URLSearchParams();
+      
+      // Добавляем фильтр эмулятора
+      if (emulatorFilter !== 'all') {
+        params.append('emulator', emulatorFilter === 'emulator' ? 'true' : 'false');
+      }
+      
+      const queryString = params.toString();
+      const urlSuffix = queryString ? `?${queryString}` : '';
+      
       if (selectedServer === 'all') {
-        response = await api.get('/api/heatmap-all');
+        response = await api.get(`/api/heatmap-all${urlSuffix}`);
         setHeatmapData(response.data.data || []);
       } else {
-        response = await api.get(`/api/servers/${selectedServer}/heatmap`);
+        response = await api.get(`/api/servers/${selectedServer}/heatmap${urlSuffix}`);
         setHeatmapData(response.data.data || []);
       }
     } catch (error) {
@@ -112,6 +122,15 @@ const ActivityHeatmap = () => {
           <p className={styles.subtitle}>Анализ прибыльности по времени суток и дням недели</p>
         </div>
         <div className={styles.controls}>
+          <select
+            value={emulatorFilter}
+            onChange={(e) => setEmulatorFilter(e.target.value)}
+            className={styles.serverSelect}
+          >
+            <option value="all">🎮 Все</option>
+            <option value="real">💰 Реальные</option>
+            <option value="emulator">🎮 Эмулятор</option>
+          </select>
           <select
             value={selectedServer}
             onChange={(e) => setSelectedServer(e.target.value)}

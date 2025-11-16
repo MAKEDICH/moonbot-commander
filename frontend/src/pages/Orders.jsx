@@ -6,7 +6,7 @@ import { getApiBaseUrl } from '../utils/apiUrl';
 import { ordersAPI } from '../api/api';
 import wsService from '../services/websocket';
 
-const Orders = ({ autoRefresh, setAutoRefresh }) => {
+const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter }) => {
   const API_BASE_URL = getApiBaseUrl();
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('all'); // По умолчанию "Все сервера"
@@ -18,9 +18,36 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
   const [limit] = useState(30);
   const [statusFilter, setStatusFilter] = useState('');
   const [symbolFilter, setSymbolFilter] = useState('');
+  // emulatorFilter теперь приходит из пропсов Trading.jsx
   // ИСПРАВЛЕНО: Добавлено недостающее состояние error
   const [error, setError] = useState(null);
   const autoRefreshRef = useRef(null);
+  
+  // Сортировка
+  const [sortBy, setSortBy] = useState('openedAt'); // Поле для сортировки
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' или 'desc'
+  
+  // Управление видимостью колонок
+  const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const saved = localStorage.getItem('orders_visible_columns');
+    return saved ? JSON.parse(saved) : {
+      id: true,              // Закреплена и всегда видна
+      type: true,            // Всегда видна по умолчанию
+      status: true,          // Всегда видна по умолчанию
+      symbol: true,          // Всегда видна по умолчанию
+      buyPrice: true,        // Включена по умолчанию
+      sellPrice: true,       // Включена по умолчанию
+      quantity: true,        // Включена по умолчанию
+      profitUSDT: true,      // Включена по умолчанию
+      profitPercent: true,   // Включена по умолчанию
+      delta1h: true,         // Включена по умолчанию
+      delta24h: true,        // Включена по умолчанию
+      strategy: true,        // Включена по умолчанию (Стратегия / Task ID)
+      openedAt: true,        // Включена по умолчанию
+      closedAt: true,        // Включена по умолчанию
+    };
+  });
 
   // Восстановление настроек из localStorage при загрузке
   useEffect(() => {
@@ -31,6 +58,23 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     }
     // autoRefresh больше не восстанавливаем здесь - он приходит из пропсов
   }, []);
+  
+  // Сохранение видимости колонок в localStorage
+  useEffect(() => {
+    localStorage.setItem('orders_visible_columns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
+  
+  // Закрытие выпадающего меню при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showColumnSettings && !event.target.closest(`.${styles.columnSettingsWrapper}`)) {
+        setShowColumnSettings(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showColumnSettings]);
 
   useEffect(() => {
     fetchServers();
@@ -41,7 +85,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     const handleVisibilityChange = () => {
       if (!document.hidden && selectedServer) {
         // Вкладка стала активной - обновляем данные
-        fetchOrders(selectedServer, page, statusFilter, symbolFilter);
+        fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
         fetchStats(selectedServer);
       }
     };
@@ -51,7 +95,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [selectedServer, page, statusFilter, symbolFilter, servers]);
+  }, [selectedServer, page, statusFilter, symbolFilter, emulatorFilter, servers]);
 
   // WebSocket подключение (всегда активно для real-time обновлений)
   useEffect(() => {
@@ -70,7 +114,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
       if (selectedServer === 'all' || Number(selectedServer) === data.server_id) {
         console.log('[Orders] Refreshing orders due to WebSocket event');
         // Обновляем ордера и статистику
-        fetchOrders(selectedServer, page, statusFilter, symbolFilter);
+        fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
         fetchStats(selectedServer);
       }
     });
@@ -79,7 +123,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     return () => {
       unsubscribe();
     };
-  }, [selectedServer, page, statusFilter, symbolFilter, servers.length]);
+  }, [selectedServer, page, statusFilter, symbolFilter, emulatorFilter, servers.length]);
 
   // Автообновление: Fallback polling если WebSocket не работает
   useEffect(() => {
@@ -97,7 +141,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     const checkInterval = setInterval(() => {
       if (!wsService.isConnected()) {
         console.log('[Orders] WebSocket not connected, using polling fallback');
-        fetchOrders(selectedServer, page, statusFilter, symbolFilter);
+        fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
         fetchStats(selectedServer);
       }
     }, 30000);
@@ -108,7 +152,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
         clearInterval(checkInterval);
       }
     };
-  }, [autoRefresh, selectedServer, page, statusFilter, symbolFilter, servers.length]);
+  }, [autoRefresh, selectedServer, page, statusFilter, symbolFilter, emulatorFilter, servers.length]);
 
   const fetchServers = async () => {
     try {
@@ -144,12 +188,12 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     }
   };
 
-  const fetchOrders = async (serverId, pageNum = 1, status = '', symbol = '') => {
+  const fetchOrders = async (serverId, pageNum = 1, status = '', symbol = '', emulator = 'all') => {
     // Используем текущий state servers
-    return fetchOrdersWithServers(serverId, servers, pageNum, status, symbol);
+    return fetchOrdersWithServers(serverId, servers, pageNum, status, symbol, emulator);
   };
 
-  const fetchOrdersWithServers = async (serverId, serversArray, pageNum = 1, status = '', symbol = '') => {
+  const fetchOrdersWithServers = async (serverId, serversArray, pageNum = 1, status = '', symbol = '', emulator = 'all') => {
     if (!serverId) return;
     
     console.log('[Orders] fetchOrdersWithServers called:', { serverId, serversCount: serversArray.length, pageNum, status, symbol });
@@ -170,6 +214,9 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
             let url = `${API_BASE_URL}/api/servers/${server.id}/orders?limit=${MAX_ORDERS_PER_SERVER}&offset=0`;
             if (status) url += `&status=${status}`;
             if (symbol) url += `&symbol=${symbol}`;
+            if (emulator !== 'all') {
+              url += `&emulator=${emulator === 'emulator' ? 'true' : 'false'}`;
+            }
             
             const response = await axios.get(url, {
               headers: { Authorization: `Bearer ${token}` }
@@ -196,6 +243,9 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
         let url = `${API_BASE_URL}/api/servers/${serverId}/orders?limit=${limit}&offset=${offset}`;
         if (status) url += `&status=${status}`;
         if (symbol) url += `&symbol=${symbol}`;
+        if (emulator !== 'all') {
+          url += `&emulator=${emulator === 'emulator' ? 'true' : 'false'}`;
+        }
         
         const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
@@ -271,7 +321,8 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     setPage(1);
     setStatusFilter('');
     setSymbolFilter('');
-    fetchOrders(serverId, 1);
+    // emulatorFilter НЕ сбрасываем - он общий для всех вкладок
+    fetchOrders(serverId, 1, '', '', emulatorFilter);
     fetchStats(serverId);
   };
 
@@ -333,16 +384,64 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     }
     
     // Загружаем данные
-    fetchOrders(selectedServer, page, statusFilter, symbolFilter);
+    fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
     fetchStats(selectedServer);
   };
 
-  const handleFilterChange = (status, symbol) => {
+  const handleFilterChange = (status, symbol, emulator = null) => {
     setStatusFilter(status);
     setSymbolFilter(symbol);
+    if (emulator !== null) {
+      setEmulatorFilter(emulator);
+    }
     setPage(1);
-    fetchOrders(selectedServer, 1, status, symbol);
+    const finalEmulator = emulator !== null ? emulator : emulatorFilter;
+    fetchOrders(selectedServer, 1, status, symbol, finalEmulator);
   };
+
+  // Обработчик клика на заголовок колонки для сортировки
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      // Если кликнули на ту же колонку, меняем порядок
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Если кликнули на другую колонку, устанавливаем её и порядок desc
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+  };
+
+  // Функция сортировки массива ордеров
+  const sortedOrders = [...orders].sort((a, b) => {
+    let aVal = a[sortBy];
+    let bVal = b[sortBy];
+    
+    // Обработка null/undefined
+    if (aVal === null || aVal === undefined) aVal = '';
+    if (bVal === null || bVal === undefined) bVal = '';
+    
+    // Обработка чисел
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+    }
+    
+    // Обработка дат
+    if (sortBy === 'openedAt' || sortBy === 'closedAt') {
+      const dateA = aVal ? new Date(aVal).getTime() : 0;
+      const dateB = bVal ? new Date(bVal).getTime() : 0;
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+    
+    // Обработка строк
+    const strA = String(aVal).toLowerCase();
+    const strB = String(bVal).toLowerCase();
+    
+    if (sortOrder === 'asc') {
+      return strA.localeCompare(strB);
+    } else {
+      return strB.localeCompare(strA);
+    }
+  });
 
   const handleClearOrders = async () => {
     const confirmed = window.confirm(
@@ -364,7 +463,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
       }
       
       // Перезагружаем данные
-      fetchOrders(selectedServer, 1, statusFilter, symbolFilter);
+      fetchOrders(selectedServer, 1, statusFilter, symbolFilter, emulatorFilter);
       fetchStats(selectedServer);
       setPage(1);
     } catch (error) {
@@ -374,7 +473,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
   };
 
   const handlePageChange = (newPage) => {
-    fetchOrders(selectedServer, newPage, statusFilter, symbolFilter);
+    fetchOrders(selectedServer, newPage, statusFilter, symbolFilter, emulatorFilter);
   };
 
   const handleAutoRefreshToggle = (e) => {
@@ -382,6 +481,30 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
     setAutoRefresh(newValue);
     // Сохранение в localStorage теперь происходит в Trading.jsx
   };
+  
+  const toggleColumnVisibility = (columnKey) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [columnKey]: !prev[columnKey]
+    }));
+  };
+  
+  const columnDefinitions = [
+    { key: 'id', label: 'ID', sticky: true, alwaysVisible: true },
+    { key: 'type', label: 'Тип', sticky: false, alwaysVisible: true },
+    { key: 'status', label: 'Статус', sticky: false, alwaysVisible: true },
+    { key: 'symbol', label: 'Символ', sticky: false, alwaysVisible: true },
+    { key: 'buyPrice', label: 'Цена покупки' },
+    { key: 'sellPrice', label: 'Цена продажи' },
+    { key: 'quantity', label: 'Количество' },
+    { key: 'profitUSDT', label: 'Прибыль USDT' },
+    { key: 'profitPercent', label: 'Прибыль %' },
+    { key: 'delta1h', label: 'Δ 1h %' },
+    { key: 'delta24h', label: 'Δ 24h %' },
+    { key: 'strategy', label: 'Стратегия / Task ID' },
+    { key: 'openedAt', label: 'Открыт' },
+    { key: 'closedAt', label: 'Закрыт' },
+  ];
 
   const totalPages = Math.ceil(total / limit);
 
@@ -456,6 +579,45 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
             <FaSync className={loading ? styles.spinning : ''} />
           </button>
           
+          <div className={styles.columnSettingsWrapper}>
+            <button 
+              onClick={() => setShowColumnSettings(!showColumnSettings)} 
+              className={styles.columnSettingsBtn}
+              title="Настройка колонок"
+            >
+              ⚙️ Колонки
+            </button>
+            
+            {showColumnSettings && (
+              <div className={styles.columnSettingsDropdown}>
+                <div className={styles.columnSettingsHeader}>
+                  <span>Показать колонки</span>
+                  <button 
+                    onClick={() => setShowColumnSettings(false)}
+                    className={styles.closeDropdown}
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className={styles.columnSettingsList}>
+                  {columnDefinitions.map(col => (
+                    <label key={col.key} className={styles.columnSettingItem}>
+                      <input
+                        type="checkbox"
+                        checked={visibleColumns[col.key]}
+                        onChange={() => toggleColumnVisibility(col.key)}
+                        disabled={col.alwaysVisible} // Всегда видимые колонки нельзя отключить
+                      />
+                      <span className={col.alwaysVisible ? styles.alwaysVisibleLabel : ''}>
+                        {col.label} {col.alwaysVisible && '📌'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
           <button 
             onClick={handleClearOrders} 
             className={styles.clearBtn}
@@ -501,7 +663,7 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
           <label><FaFilter /> Статус:</label>
           <select 
             value={statusFilter}
-            onChange={(e) => handleFilterChange(e.target.value, symbolFilter)}
+            onChange={(e) => handleFilterChange(e.target.value, symbolFilter, null)}
             className={styles.filterSelect}
           >
             <option value="">Все</option>
@@ -515,10 +677,23 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
           <input
             type="text"
             value={symbolFilter}
-            onChange={(e) => handleFilterChange(statusFilter, e.target.value)}
+            onChange={(e) => handleFilterChange(statusFilter, e.target.value, null)}
             placeholder="BTC, ETH..."
             className={styles.filterInput}
           />
+        </div>
+
+        <div className={styles.filterGroup}>
+          <label>🎮 Тип:</label>
+          <select 
+            value={emulatorFilter}
+            onChange={(e) => handleFilterChange(statusFilter, symbolFilter, e.target.value)}
+            className={styles.filterSelect}
+          >
+            <option value="all">Все</option>
+            <option value="real">Реальные</option>
+            <option value="emulator">Эмулятор</option>
+          </select>
         </div>
       </div>
 
@@ -532,50 +707,160 @@ const Orders = ({ autoRefresh, setAutoRefresh }) => {
         </div>
       ) : (
         <>
-          <div className={styles.ordersTable}>
-            <table>
+          <div className={styles.tableWrapper}>
+            <table className={styles.ordersTable}>
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Статус</th>
-                  <th>Символ</th>
-                  <th>Цена покупки</th>
-                  <th>Цена продажи</th>
-                  <th>Количество</th>
-                  <th>Прибыль USDT</th>
-                  <th>Прибыль %</th>
-                  <th>Стратегия</th>
-                  <th>Открыт</th>
-                  <th>Закрыт</th>
+                  {visibleColumns.id && (
+                    <th className={styles.stickyCol} onClick={() => handleSort('moonbot_order_id')} style={{ cursor: 'pointer' }}>
+                      ID {sortBy === 'moonbot_order_id' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.type && (
+                    <th onClick={() => handleSort('is_emulator')} style={{ cursor: 'pointer' }}>
+                      Тип {sortBy === 'is_emulator' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.status && (
+                    <th onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
+                      Статус {sortBy === 'status' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.symbol && (
+                    <th onClick={() => handleSort('symbol')} style={{ cursor: 'pointer' }}>
+                      Символ {sortBy === 'symbol' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.buyPrice && (
+                    <th onClick={() => handleSort('buy_price')} style={{ cursor: 'pointer' }}>
+                      Цена покупки {sortBy === 'buy_price' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.sellPrice && (
+                    <th onClick={() => handleSort('sell_price')} style={{ cursor: 'pointer' }}>
+                      Цена продажи {sortBy === 'sell_price' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.quantity && (
+                    <th onClick={() => handleSort('quantity')} style={{ cursor: 'pointer' }}>
+                      Количество {sortBy === 'quantity' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.profitUSDT && (
+                    <th onClick={() => handleSort('profit_btc')} style={{ cursor: 'pointer' }}>
+                      Прибыль USDT {sortBy === 'profit_btc' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.profitPercent && (
+                    <th onClick={() => handleSort('profit_percent')} style={{ cursor: 'pointer' }}>
+                      Прибыль % {sortBy === 'profit_percent' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.delta1h && (
+                    <th onClick={() => handleSort('exchange_1h_delta')} style={{ cursor: 'pointer' }}>
+                      Δ 1h % {sortBy === 'exchange_1h_delta' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.delta24h && (
+                    <th onClick={() => handleSort('exchange_24h_delta')} style={{ cursor: 'pointer' }}>
+                      Δ 24h % {sortBy === 'exchange_24h_delta' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.strategy && (
+                    <th onClick={() => handleSort('strategy')} style={{ cursor: 'pointer' }}>
+                      Стратегия / Task ID {sortBy === 'strategy' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.openedAt && (
+                    <th onClick={() => handleSort('openedAt')} style={{ cursor: 'pointer' }}>
+                      Открыт {sortBy === 'openedAt' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
+                  {visibleColumns.closedAt && (
+                    <th onClick={() => handleSort('closedAt')} style={{ cursor: 'pointer' }}>
+                      Закрыт {sortBy === 'closedAt' && (sortOrder === 'asc' ? '▲' : '▼')}
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
-                {orders.map(order => (
+                {sortedOrders.map(order => (
                   <tr key={order.id} className={order.status === 'Open' ? styles.openOrder : ''}>
-                    <td className={styles.orderId}>#{order.moonbot_order_id}</td>
-                    <td>
-                      <span className={`${styles.status} ${order.status === 'Open' ? styles.statusOpen : styles.statusClosed}`}>
-                        {order.status === 'Open' ? <FaTimesCircle /> : <FaCheckCircle />}
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className={styles.symbol}>{order.symbol}</td>
-                    <td className={styles.price}>{order.buy_price?.toFixed(8) || '-'}</td>
-                    <td className={styles.price}>{order.sell_price?.toFixed(8) || '-'}</td>
-                    <td className={styles.quantity}>{order.quantity?.toFixed(4) || '-'}</td>
-                    <td className={styles.btc}>
-                      {order.profit_btc !== null && order.profit_btc !== undefined ? (
-                        <span className={order.profit_btc >= 0 ? styles.profitPositive : styles.profitNegative}>
-                          {order.profit_btc.toFixed(2)} USDT
+                    {visibleColumns.id && (
+                      <td className={`${styles.orderId} ${styles.stickyCol}`}>#{order.moonbot_order_id}</td>
+                    )}
+                    {visibleColumns.type && (
+                      <td>
+                        <span className={order.is_emulator ? styles.emulatorBadge : styles.realBadge}>
+                          {order.is_emulator ? '🎮 EMU' : '💰 REAL'}
                         </span>
-                      ) : '-'}
-                    </td>
-                    <td className={styles.percent}>{formatPercent(order.profit_percent)}</td>
-                    <td className={styles.strategy}>
-                      {order.strategy ? <code>{order.strategy}</code> : '-'}
-                    </td>
-                    <td className={styles.date}>{formatDate(order.opened_at)}</td>
-                    <td className={styles.date}>{formatDate(order.closed_at)}</td>
+                      </td>
+                    )}
+                    {visibleColumns.status && (
+                      <td>
+                        <span className={`${styles.status} ${order.status === 'Open' ? styles.statusOpen : styles.statusClosed}`}>
+                          {order.status === 'Open' ? <FaTimesCircle /> : <FaCheckCircle />}
+                          {order.status}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.symbol && (
+                      <td className={styles.symbol}>{order.symbol}</td>
+                    )}
+                    {visibleColumns.buyPrice && (
+                      <td className={styles.price}>{order.buy_price?.toFixed(8) || '-'}</td>
+                    )}
+                    {visibleColumns.sellPrice && (
+                      <td className={styles.price}>{order.sell_price?.toFixed(8) || '-'}</td>
+                    )}
+                    {visibleColumns.quantity && (
+                      <td className={styles.quantity}>{order.quantity?.toFixed(4) || '-'}</td>
+                    )}
+                    {visibleColumns.profitUSDT && (
+                      <td className={styles.btc}>
+                        {order.profit_btc !== null && order.profit_btc !== undefined ? (
+                          <span className={order.profit_btc >= 0 ? styles.profitPositive : styles.profitNegative}>
+                            {order.profit_btc.toFixed(2)}
+                          </span>
+                        ) : '-'}
+                      </td>
+                    )}
+                    {visibleColumns.profitPercent && (
+                      <td className={styles.percent}>{formatPercent(order.profit_percent)}</td>
+                    )}
+                    {visibleColumns.delta1h && (
+                      <td className={styles.delta}>
+                        {order.exchange_1h_delta !== null ? (
+                          <span className={order.exchange_1h_delta >= 0 ? styles.profitPositive : styles.profitNegative}>
+                            {order.exchange_1h_delta.toFixed(2)}%
+                          </span>
+                        ) : '-'}
+                      </td>
+                    )}
+                    {visibleColumns.delta24h && (
+                      <td className={styles.delta}>
+                        {order.exchange_24h_delta !== null ? (
+                          <span className={order.exchange_24h_delta >= 0 ? styles.profitPositive : styles.profitNegative}>
+                            {order.exchange_24h_delta.toFixed(2)}%
+                          </span>
+                        ) : '-'}
+                      </td>
+                    )}
+                    {visibleColumns.strategy && (
+                      <td className={styles.strategy}>
+                        {order.strategy ? (
+                          <code>{order.strategy}</code>
+                        ) : order.task_id ? (
+                          <code>Task #{order.task_id}</code>
+                        ) : '-'}
+                      </td>
+                    )}
+                    {visibleColumns.openedAt && (
+                      <td className={styles.date}>{formatDate(order.opened_at)}</td>
+                    )}
+                    {visibleColumns.closedAt && (
+                      <td className={styles.date}>{formatDate(order.closed_at)}</td>
+                    )}
                   </tr>
                 ))}
               </tbody>

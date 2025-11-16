@@ -1,108 +1,75 @@
 @echo off
 setlocal enabledelayedexpansion
 chcp 65001 > nul
-title MoonBot Commander - Server Start
+title MoonBot Commander - Server Mode
 color 0B
 
 echo.
 echo ============================================================
-echo       MoonBot Commander - Server Start
+echo       MoonBot Commander - SERVER MODE
+echo ============================================================
+echo.
+echo   This mode is optimized for VPS/dedicated servers:
+echo   - Fixed UDP ports (no ephemeral)
+echo   - Keep-alive DISABLED (no NAT)
+echo   - Production configuration
+echo.
 echo ============================================================
 echo.
 
 REM Check if setup was executed
 if not exist "backend\main.py" (
-    echo [ERROR] Backend not found!
-    echo.
-    echo Please run SERVER-SETUP.bat first
-    echo.
-    pause
-    exit /b 1
+    if not exist "backend\main_v2.py" (
+        echo [ERROR] Backend not found!
+        echo.
+        echo Please run LOCAL-SETUP.bat first
+        echo.
+        pause
+        exit /b 1
+    )
 )
 
 if not exist "backend\.env" (
     echo [ERROR] .env file not found!
     echo.
-    echo Please run SERVER-SETUP.bat first to generate security keys
+    echo Please run LOCAL-SETUP.bat first to generate security keys
     echo.
     pause
     exit /b 1
 )
 
-REM Security check: Verify .env keys are valid
+REM Security check
 cd backend
 python check_keys.py >nul 2>&1
 if !errorlevel! neq 0 (
     echo.
-    echo [WARNING] Security keys in .env are invalid or corrupted!
-    echo.
-    echo This may happen if:
-    echo   - .env file was manually edited incorrectly
-    echo   - ENCRYPTION_KEY is invalid or placeholder text
-    echo   - SECRET_KEY is too short or placeholder text
-    echo.
+    echo [WARNING] Security keys in .env are invalid!
     echo [ACTION] Auto-fixing security keys...
     echo.
     
-    REM Backup and delete old database
     if exist moonbot_commander.db (
         echo Backing up old database...
         if exist moonbot_commander.db.old del moonbot_commander.db.old >nul 2>&1
         ren moonbot_commander.db moonbot_commander.db.old >nul 2>&1
-        echo [OK] Old database backed up to moonbot_commander.db.old
+        echo [OK] Old database backed up
     )
     
-    REM Delete invalid .env
-    if exist .env (
-        echo Removing invalid .env file...
-        del .env >nul 2>&1
-        echo [OK] Invalid .env removed
-    )
-    
-    REM Generate new valid keys
-    echo Generating new security keys...
+    if exist .env del .env >nul 2>&1
     python init_security.py
     
-    REM Verify new keys are valid
     python check_keys.py >nul 2>&1
     if !errorlevel! neq 0 (
         echo [ERROR] Failed to generate valid security keys!
-        echo Please run SERVER-SETUP.bat manually
         cd ..
         pause
         exit /b 1
     )
     
-    echo [OK] Security keys regenerated successfully
-    echo [INFO] You will need to register a new user - old database was incompatible
-    echo.
-    
-    REM Auto-configure CORS for server IP
-    echo Configuring CORS...
-    for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /C:"IPv4"') do (
-        set SERVER_IP=%%a
-        goto ip_found_start
-    )
-    :ip_found_start
-    set SERVER_IP=%SERVER_IP: =%
-    
-    if defined SERVER_IP (
-        findstr /C:"http://!SERVER_IP!:3000" .env >nul 2>&1
-        if !errorlevel! neq 0 (
-            powershell -Command "(Get-Content .env) -replace 'CORS_ORIGINS=(.+)', \"CORS_ORIGINS=`$1,http://!SERVER_IP!:3000\" | Set-Content .env"
-            echo [OK] Added !SERVER_IP! to CORS_ORIGINS
-        )
-    )
-    
-    echo.
-    echo [OK] Security fixed! Continuing startup...
+    echo [OK] Security keys regenerated
     echo.
 )
-cd ..
 
 REM Auto-detect application version
-cd backend
-
 echo [0/4] Detecting application version...
 echo.
 
@@ -143,6 +110,7 @@ if exist "moonbot_commander.db" (
 echo.
 echo Application Version: %APP_VERSION%
 echo Main File: %MAIN_FILE%
+echo Mode: SERVER (Fixed ports, No keep-alive)
 echo.
 
 REM Verify main file exists
@@ -160,45 +128,20 @@ if not exist "!MAIN_FILE!" (
 
 cd ..
 
-if not exist "frontend\dist\index.html" (
-    echo [ERROR] Frontend dist not found!
+if not exist "frontend\package.json" (
+    echo [ERROR] Frontend not found!
     echo.
-    echo Please run SERVER-SETUP.bat first
+    echo Please run LOCAL-SETUP.bat first
     echo.
     pause
     exit /b 1
 )
 
-echo Starting all services in separate windows for monitoring...
 echo.
-
-REM Kill old processes
 echo [1/4] Cleaning up old processes...
 echo.
 
-REM Stop services if exist
-sc query "MoonBotBackend" >nul 2>&1
-if !errorlevel! equ 0 (
-    echo Stopping Backend Service...
-    net stop MoonBotBackend >nul 2>&1
-    echo   [OK] Backend service stopped
-)
-
-sc query "MoonBotScheduler" >nul 2>&1
-if !errorlevel! equ 0 (
-    echo Stopping Scheduler Service...
-    net stop MoonBotScheduler >nul 2>&1
-    echo   [OK] Scheduler service stopped
-)
-
-sc query "MoonBotFrontend" >nul 2>&1
-if !errorlevel! equ 0 (
-    echo Stopping Frontend Service...
-    net stop MoonBotFrontend >nul 2>&1
-    echo   [OK] Frontend service stopped
-)
-
-REM Kill old Python processes
+REM Check and kill old processes
 tasklist /FI "IMAGENAME eq python.exe" 2>nul | find /I "python.exe" >nul
 if !errorlevel! equ 0 (
     echo Stopping old Python processes...
@@ -208,7 +151,6 @@ if !errorlevel! equ 0 (
     echo   [INFO] No old Python processes
 )
 
-REM Kill old Node.js processes
 tasklist /FI "IMAGENAME eq node.exe" 2>nul | find /I "node.exe" >nul
 if !errorlevel! equ 0 (
     echo Stopping old Node.js processes...
@@ -219,54 +161,65 @@ if !errorlevel! equ 0 (
 )
 
 timeout /t 2 /nobreak >nul
-echo [OK] Cleanup complete
-echo.
 
+echo Cleaning frontend cache...
+cd frontend
+if exist ".vite" rmdir /s /q .vite >nul 2>&1
+cd ..
+echo [OK] Cleanup complete
+
+echo.
 echo Starting services in separate windows...
 echo.
 
 set "PROJECT_DIR=%CD%"
 
-echo [2/4] Starting Backend %APP_VERSION%...
-start "MoonBot Backend %APP_VERSION% [DO NOT CLOSE]" cmd /k "cd /d "%PROJECT_DIR%\backend" && echo Starting Backend on port 8000... && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000"
-timeout /t 5 /nobreak >nul
-
-echo [3/4] Starting Scheduler...
-start "MoonBot Scheduler [DO NOT CLOSE]" cmd /k "cd /d "%PROJECT_DIR%\backend" && echo Starting Scheduler... && python scheduler.py"
+echo [2/4] Starting Backend %APP_VERSION% [SERVER MODE]...
+start "MoonBot Backend %APP_VERSION% [SERVER]" cmd /k "cd /d "%PROJECT_DIR%\backend" && set "MOONBOT_MODE=server" && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000 --reload"
 timeout /t 3 /nobreak >nul
 
+echo [3/4] Starting Scheduler...
+start "MoonBot Scheduler" cmd /k "cd /d "%PROJECT_DIR%\backend" && set "MOONBOT_MODE=server" && python scheduler.py"
+timeout /t 2 /nobreak >nul
+
 echo [4/4] Starting Frontend...
-start "MoonBot Frontend [DO NOT CLOSE]" cmd /k "cd /d "%PROJECT_DIR%\frontend\dist" && echo Starting Frontend on port 3000... && npx serve -s . -l 3000"
+start "MoonBot Frontend" cmd /k "cd /d "%PROJECT_DIR%\frontend" && npm run dev -- --host 0.0.0.0 --port 3000"
 timeout /t 5 /nobreak >nul
 
 echo.
 echo ============================================================
-echo            Application Started %APP_VERSION%
+echo      Application Started %APP_VERSION% [SERVER MODE]
 echo ============================================================
 echo.
-
-REM Get server IP
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /C:"IPv4"') do (
-    set SERVER_IP=%%a
-    goto ip_found_end
-)
-:ip_found_end
-set SERVER_IP=%SERVER_IP: =%
-
-if defined SERVER_IP (
-    echo Access from network: http://!SERVER_IP!:3000
-    echo Backend API:         http://!SERVER_IP!:8000
-    echo API Docs:            http://!SERVER_IP!:8000/docs
-) else (
-    echo Access locally:      http://localhost:3000
-    echo Backend API:         http://localhost:8000
-    echo API Docs:            http://localhost:8000/docs
-)
-
+echo Detecting server IP address...
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do set "SERVER_IP=%%a"
+set "SERVER_IP=%SERVER_IP:~1%"
 echo.
-echo [!] Do not close the 3 CMD windows
+echo ============================================================
+echo   LOCAL ACCESS (from this server):
+echo ============================================================
+echo   Frontend: http://localhost:3000
+echo   Backend:  http://localhost:8000
+echo   API Docs: http://localhost:8000/docs
 echo.
-echo To stop: Close the 3 windows or use KILL-ALL-PROCESSES.bat
+echo ============================================================
+echo   REMOTE ACCESS (from any device):
+echo ============================================================
+echo   Frontend: http://%SERVER_IP%:3000
+echo   Backend:  http://%SERVER_IP%:8000
+echo   API Docs: http://%SERVER_IP%:8000/docs
+echo.
+echo ============================================================
+echo.
+echo Mode: SERVER
+echo   - Frontend accessible from ANY device (0.0.0.0:3000)
+echo   - Fixed UDP ports (from server settings)
+echo   - Keep-alive DISABLED
+echo   - Optimized for VPS/dedicated servers
+echo.
+echo [!] Do not close the 4 CMD windows
+echo.
+echo To stop: Close the windows or use KILL-ALL-PROCESSES.bat
 echo.
 pause
 endlocal

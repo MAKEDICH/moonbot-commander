@@ -135,6 +135,56 @@
   box-shadow: 0 4px 15px rgba(0, 245, 255, 0.4);
 }
 
+/* Header Actions Container */
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Cleanup Button */
+.cleanupBtn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 77, 77, 0.1) 0%, rgba(255, 100, 100, 0.1) 100%);
+  border: 1px solid #ff4d4d;
+  color: #ff4d4d;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+}
+
+.cleanupBtn:hover {
+  background: #ff4d4d;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+}
+
+/* Larger Modal for Cleanup */
+.modalContentLarge {
+  background: var(--bg-secondary);
+  padding: 0;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+}
+
+.cleanupContainer {
+  overflow-y: auto;
+  flex: 1;
+  padding: 1.5rem;
+}
+
 /* === LOADING === */
 .loading {
   display: flex;
