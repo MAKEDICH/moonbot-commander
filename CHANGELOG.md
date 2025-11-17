@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.0.9] - 2025-11-17
+
+### Fixed
+- 🔧 **Fixed clipboard functionality in Strategy Commander**
+  - Replaced `navigator.clipboard` API with `document.execCommand`
+  - Works on HTTP (without SSL certificate)
+  - All copy buttons now functional: "Скопировать", "Copy ALL Forward/Revert", "Copy Forward/Revert"
+
+### Technical Details
+- **The Problem**: `navigator.clipboard` API requires HTTPS or localhost, blocked on HTTP production servers
+- **The Solution**: Fallback to legacy `document.execCommand('copy')` method (works everywhere)
+- **Impact**: All clipboard operations now work on HTTP servers without SSL
+
+---
+
 ## [2.0.8] - 2025-11-17
 
 ### Fixed
