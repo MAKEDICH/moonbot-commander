@@ -442,6 +442,7 @@ REM Detect if this is a server installation
 set "IS_SERVER=0"
 if exist "..\nssm.exe" set "IS_SERVER=1"
 if exist "C:\Windows\System32\nssm.exe" set "IS_SERVER=1"
+if exist "..\SERVER-START-PRODUCTION.bat" set "IS_SERVER=1"
 
 REM Build frontend for production if server
 if "!IS_SERVER!"=="1" (

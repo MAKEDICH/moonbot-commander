@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.8] - 2025-11-17
+
+### Fixed
+- 🔧 **CRITICAL: Fixed UPDATE.bat frontend build detection**
+  - Now detects server mode by checking for SERVER-START-PRODUCTION.bat
+  - Previously only checked for nssm.exe (not always present)
+  - Ensures frontend is ALWAYS rebuilt on servers
+  - Fixes Strategy Commander buttons not working after update
+  - Fixes all UI issues caused by old frontend with new backend
+
+### Technical Details
+- **The Problem**: UPDATE.bat only rebuilt frontend if `nssm.exe` was found, but many servers don't have it
+- **The Solution**: Added check for `SERVER-START-PRODUCTION.bat` to detect server installations
+- **Impact**: All UI components now update correctly, buttons work, new features visible
+
+---
+
 ## [2.0.7] - 2025-11-17
 
 ### Fixed
