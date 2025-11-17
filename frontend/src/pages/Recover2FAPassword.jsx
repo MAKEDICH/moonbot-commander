@@ -69,9 +69,10 @@ function Recover2FAPassword() {
 
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
-            <label>Имя пользователя или почта</label>
+            <label className={styles.label}>Имя пользователя или почта</label>
             <input
               type="text"
+              className={styles.input}
               name="username"
               placeholder="Введите username или email"
               value={formData.username}
@@ -81,9 +82,10 @@ function Recover2FAPassword() {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Код из Google Authenticator</label>
+            <label className={styles.label}>Код из Google Authenticator</label>
             <input
               type="text"
+              className={styles.input}
               name="totp_code"
               maxLength="6"
               pattern="[0-9]{6}"
@@ -95,15 +97,9 @@ function Recover2FAPassword() {
               }))}
               required
               style={{
-                color: '#000000',
-                backgroundColor: '#ffffff',
-                border: '2px solid #00f5ff',
-                padding: '12px',
-                fontSize: '18px',
-                borderRadius: '8px',
-                width: '100%',
                 textAlign: 'center',
-                letterSpacing: '4px'
+                letterSpacing: '4px',
+                fontSize: '18px'
               }}
             />
             <small style={{ color: '#8b949e' }}>

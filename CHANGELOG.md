@@ -1,5 +1,62 @@
 # Changelog
 
+## [2.0.5] - 2025-11-17
+
+### Fixed
+- 🐛 **Critical: Fixed UDP loopback issue for local bots with external IP** 
+  - Bots running on same server as Commander now work correctly
+  - Added intelligent fallback routing for localhost responses
+  - Fixed balance reporting and command execution for co-located bots
+  - IP normalization handles all localhost variants (127.0.0.1, ::1, ::ffff:127.0.0.1)
+- 🔧 **Fixed TypeError in TradingStats** - Cannot assign to read only property
+  - Replaced spread operator with `.slice()` for proper array copying
+  - Fixed frozen array mutations in sortTableData, problemSymbol, mostActiveServer
+  - Stats page now works correctly with long-term usage
+- ✅ **Fixed Strategy Commander buttons** - All copy/clear buttons now functional
+  - Added proper button types and disabled states
+  - Fixed CSS pointer events and z-index issues
+  - Improved visual feedback for button interactions
+- 🔄 **Fixed Dashboard auto-ping** - Now persists across tab switches
+  - Auto-ping continues running when switching to other tabs
+  - State saved to localStorage for persistence across sessions
+  - Added visibilitychange event listener to resume on tab activation
+- 🎨 **Fixed 2FA input field styling** - Consistent theme application
+  - Applied correct CSS module classes to all 2FA input fields
+  - Fixed TwoFactorSetup, TwoFactorSetupRegister, TwoFactorVerify, Recover2FAPassword
+  - Removed conflicting inline styles that overrode theme
+
+### Changed
+- 🏗️ Enhanced UDP packet routing with smart localhost detection
+- 📡 Improved GlobalUDPSocket listener registration with dual-mapping fallback
+- 🔄 Better array immutability handling in React components
+
+### Technical Details
+- **UDP Loopback Solution**: When bot registers with external IP but runs locally, OS routes responses through 127.0.0.1. Fallback logic now checks for single listener on port when exact IP match fails
+- **Frozen Array Fix**: React may freeze arrays from fetch(). Using `Array.slice()` instead of spread operator creates truly independent copy that can be mutated
+- **Dashboard Persistence**: Auto-ping state stored in localStorage key `dashboardAutoPingEnabled`
+- Both TradingStats.jsx and TradingStatsV2.jsx updated for consistency
+
+---
+
+## [2.0.4] - 2025-11-16
+
+### Fixed
+- 🐛 **Improved error handling for GlobalUDPSocket** - Fixed edge case with occupied ports
+  - When port 2500 is occupied, properly cleanup failed socket object
+  - Prevent "broken" socket objects from being used by other listeners
+  - Added comprehensive socket state validation before registration
+  - Better error messages for socket initialization failures
+- 🔧 Enhanced `send_command_with_response` validation checks
+- 🛡️ More robust GlobalUDPSocket lifecycle management
+
+### Technical Details
+- If global socket fails to start, object is now properly nullified
+- Next server startup will attempt to recreate the socket
+- Added triple-check for socket state (object exists, running, sock initialized)
+- Prevents cascading WinError 10038 errors from initial WinError 10013
+
+---
+
 ## [2.0.3] - 2025-11-16
 
 ### Fixed

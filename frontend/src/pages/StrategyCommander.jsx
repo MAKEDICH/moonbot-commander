@@ -820,6 +820,7 @@ const StrategyCommander = ({ onClose }) => {
                     <div className={styles.thContent}>
                       <span>{header}</span>
                       <button 
+                        type="button"
                         className={styles.copyIcon} 
                         onClick={() => copyColumnData(colIndex)}
                         title="Скопировать весь столбец"
@@ -883,13 +884,28 @@ const StrategyCommander = ({ onClose }) => {
             readOnly
           />
           <div className={styles.commandsActions}>
-            <button className={styles.copyBtn} onClick={() => copyToClipboard(commandPack)}>
+            <button 
+              type="button"
+              className={styles.copyBtn} 
+              onClick={() => copyToClipboard(commandPack)}
+              disabled={!commandPack}
+            >
               <FiCopy /> Скопировать
             </button>
-            <button className={styles.clearBtn} onClick={clearCommands}>
+            <button 
+              type="button"
+              className={styles.clearBtn} 
+              onClick={clearCommands}
+              disabled={!commandPack}
+            >
               <FiTrash2 /> Очистить
             </button>
-            <button className={styles.saveBtn} onClick={saveHistory}>
+            <button 
+              type="button"
+              className={styles.saveBtn} 
+              onClick={saveHistory}
+              disabled={!commandPack}
+            >
               <FiSave /> Сохранить
             </button>
           </div>
@@ -911,12 +927,14 @@ const StrategyCommander = ({ onClose }) => {
                     <h4>Сохранено: {block.savedAt}</h4>
                     <div className={styles.historyHeaderButtons}>
                       <button 
+                        type="button"
                         className={styles.copyBtn} 
                         onClick={() => copyAllForward(block.changes)}
                       >
                         <FiCopy /> Copy ALL Forward
                       </button>
                       <button 
+                        type="button"
                         className={styles.copyBtn} 
                         onClick={() => copyAllRevert(block.changes)}
                       >
@@ -932,6 +950,7 @@ const StrategyCommander = ({ onClose }) => {
                           <div className={styles.forwardLeft}>
                             <strong>{ch.forward}</strong>
                             <button 
+                              type="button"
                               className={styles.copySmallBtn} 
                               onClick={() => copyToClipboard(ch.forward)}
                             >
@@ -939,6 +958,7 @@ const StrategyCommander = ({ onClose }) => {
                             </button>
                           </div>
                           <button 
+                            type="button"
                             className={styles.removeBtn} 
                             onClick={() => removeCommandFromBlock(actualIndex, cmdIndex)}
                           >
@@ -948,6 +968,7 @@ const StrategyCommander = ({ onClose }) => {
                         <div className={styles.leftActions}>
                           <span><em>Revert:</em> {ch.revert}</span>
                           <button 
+                            type="button"
                             className={styles.copySmallBtn} 
                             onClick={() => copyToClipboard(ch.revert)}
                           >

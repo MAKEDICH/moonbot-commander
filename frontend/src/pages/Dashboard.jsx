@@ -14,7 +14,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [pingInterval, setPingInterval] = useState(30);
-  const [autoPingEnabled, setAutoPingEnabled] = useState(false);
+  const [autoPingEnabled, setAutoPingEnabled] = useState(() => {
+    // Восстанавливаем состояние автопроверки из localStorage
+    const saved = localStorage.getItem('dashboardAutoPingEnabled');
+    return saved === 'true';
+  });
   const [testingServers, setTestingServers] = useState(new Set());
   const intervalRef = useRef(null);
   
@@ -46,15 +50,39 @@ const Dashboard = () => {
     // ИСПРАВЛЕНО: Удалили serversWithStatus из зависимостей!
     // РАЗМЫШЛЕНИЕ: serversWithStatus меняется при каждом ping →
     // это вызывало бесконечный loop: ping → update state → useEffect → ping
+    
     // Автоматический пинг серверов по интервалу
-    intervalRef.current = setInterval(() => {
+    // ВАЖНО: Используем стабильный интервал который не зависит от visibility вкладки
+    const startAutoPing = () => {
+      // Сразу выполняем первый пинг
       pingAllServers();
-    }, settings.ping_interval * 1000);
+      
+      // Затем запускаем интервал
+      intervalRef.current = setInterval(() => {
+        pingAllServers();
+      }, settings.ping_interval * 1000);
+    };
+
+    startAutoPing();
+
+    // ДОБАВЛЕНО: Обработчик visibilitychange для поддержания автопроверки
+    // Когда пользователь возвращается на вкладку, проверяем что интервал работает
+    const handleVisibilityChange = () => {
+      if (!document.hidden && autoPingEnabled && !intervalRef.current) {
+        // Вкладка стала видимой, а интервал почему-то остановился - перезапускаем
+        console.log('[Dashboard] Вкладка активна, перезапускаем автопроверку');
+        startAutoPing();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [settings, autoPingEnabled]);  // ИСПРАВЛЕНО: Без serversWithStatus!
 
@@ -237,7 +265,12 @@ const Dashboard = () => {
   };
 
   const toggleAutoPing = () => {
-    setAutoPingEnabled(prev => !prev);
+    setAutoPingEnabled(prev => {
+      const newValue = !prev;
+      // Сохраняем состояние в localStorage
+      localStorage.setItem('dashboardAutoPingEnabled', newValue.toString());
+      return newValue;
+    });
   };
 
   // ДОБАВЛЕНО: Функция переключения вида

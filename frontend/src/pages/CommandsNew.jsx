@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare, FiPlus, FiTrash2, FiEdit2, FiBook, FiSave, FiX, FiTool, FiPlayCircle, FiInfo, FiSettings } from 'react-icons/fi';
 import { serversAPI, commandsAPI, groupsAPI, quickCommandsAPI, presetsAPI, botCommandsAPI } from '../api/api';
 import styles from './CommandsNew.module.css';
-import StrategyCommander from './StrategyCommander';
+
+// Lazy loading для тяжелой страницы StrategyCommander
+const StrategyCommander = lazy(() => import('./StrategyCommander'));
 
 // Параметры стратегий для автокомплита
 const STRATEGY_PARAMS = [
@@ -1010,7 +1012,16 @@ const CommandsNew = () => {
     <div className={styles.container}>
       {/* Условный рендеринг: показываем либо StrategyCommander, либо обычные команды */}
       {showStrategyCommander ? (
-        <StrategyCommander onClose={() => setShowStrategyCommander(false)} />
+        <Suspense fallback={
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>⏳</div>
+              <div style={{ fontSize: '18px' }}>Загрузка Strategy Commander...</div>
+            </div>
+          </div>
+        }>
+          <StrategyCommander onClose={() => setShowStrategyCommander(false)} />
+        </Suspense>
       ) : (
         <>
           <div className={styles.header}>

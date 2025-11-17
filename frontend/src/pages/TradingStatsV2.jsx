@@ -164,9 +164,10 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
 
   // Сортировка данных таблицы
   const sortTableData = (data, table) => {
-    if (!sortConfig.key || sortConfig.table !== table) return data;
+    if (!sortConfig.key || sortConfig.table !== table || !Array.isArray(data)) return data;
     
-    return [...data].sort((a, b) => {
+    // Создаем полную копию массива чтобы избежать ошибок с read-only
+    return data.slice().sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
       
@@ -246,8 +247,8 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
 
   // Горячие индикаторы
   const hotStrategy = by_strategy.length > 0 ? by_strategy[0] : null;
-  const problemSymbol = by_symbol.filter(s => s.total_profit < 0).sort((a, b) => a.total_profit - b.total_profit)[0];
-  const mostActiveServer = by_server.sort((a, b) => b.total_orders - a.total_orders)[0];
+  const problemSymbol = by_symbol.filter(s => s.total_profit < 0).slice().sort((a, b) => a.total_profit - b.total_profit)[0];
+  const mostActiveServer = by_server.slice().sort((a, b) => b.total_orders - a.total_orders)[0];
 
   return (
     <div className={styles.container}>
@@ -778,4 +779,5 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
 };
 
 export default TradingStats;
+
 

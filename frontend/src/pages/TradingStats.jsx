@@ -241,9 +241,10 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
 
   // Сортировка данных таблицы
   const sortTableData = (data, table) => {
-    if (!sortConfig.key || sortConfig.table !== table) return data;
+    if (!sortConfig.key || sortConfig.table !== table || !Array.isArray(data)) return data;
     
-    return [...data].sort((a, b) => {
+    // Создаем полную копию массива чтобы избежать ошибок с read-only
+    return data.slice().sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
       
@@ -264,7 +265,10 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
 
   // Определить ранг строки в таблице (топ-3, худшие)
   const getRowRank = (data, index, key) => {
-    const sorted = [...data].sort((a, b) => b[key] - a[key]);
+    if (!Array.isArray(data) || data.length === 0) return 'normal';
+    
+    // Создаем полную копию массива чтобы избежать ошибок с read-only
+    const sorted = data.slice().sort((a, b) => b[key] - a[key]);
     const sortedIndex = sorted.findIndex(item => item === data[index]);
     
     if (sortedIndex < 3) return 'top';
@@ -406,8 +410,8 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
 
   // Горячие индикаторы
   const hotStrategy = by_strategy.length > 0 ? by_strategy[0] : null;
-  const problemSymbol = by_symbol.filter(s => s.total_profit < 0).sort((a, b) => a.total_profit - b.total_profit)[0];
-  const mostActiveServer = by_server.sort((a, b) => b.total_orders - a.total_orders)[0];
+  const problemSymbol = by_symbol.filter(s => s.total_profit < 0).slice().sort((a, b) => a.total_profit - b.total_profit)[0];
+  const mostActiveServer = by_server.slice().sort((a, b) => b.total_orders - a.total_orders)[0];
   
   // Рост винрейта (сравнение последних 7 дней с предыдущими 7)
   const winrateGrowth = winrateTimeline.length >= 14 ? (() => {

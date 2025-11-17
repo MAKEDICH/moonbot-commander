@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare, FiMinusSquare, FiSettings } from 'react-icons/fi';
 import { serversAPI, commandsAPI, groupsAPI } from '../api/api';
 import styles from './Commands.module.css';
-import StrategyCommander from './StrategyCommander';
+
+// Lazy loading для тяжелой страницы StrategyCommander
+const StrategyCommander = lazy(() => import('./StrategyCommander'));
 
 // Список команд MoonBot - ПОЛНЫЙ СПИСОК
 const MOONBOT_COMMANDS = [
@@ -468,7 +470,16 @@ const Commands = () => {
     <div className={styles.container}>
       {/* Условный рендеринг: показываем либо StrategyCommander, либо обычные команды */}
       {showStrategyCommander ? (
-        <StrategyCommander onClose={() => setShowStrategyCommander(false)} />
+        <Suspense fallback={
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', marginBottom: '10px' }}>⏳</div>
+              <div style={{ fontSize: '18px' }}>Загрузка Strategy Commander...</div>
+            </div>
+          </div>
+        }>
+          <StrategyCommander onClose={() => setShowStrategyCommander(false)} />
+        </Suspense>
       ) : (
         <>
           <div className={styles.header}>

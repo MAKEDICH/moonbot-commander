@@ -268,6 +268,10 @@ class MoonBotOrder(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     
+    # Флаг: ордер создан из UPDATE (пришел раньше INSERT)
+    created_from_update = Column(Boolean, default=False)
+    buy_date = Column(DateTime)  # Дата покупки из INSERT
+    
     # Связи
     server = relationship("Server")
     

@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Orders from './Orders';
 import SQLLogs from './SQLLogs';
-import TradingStats from './TradingStats';
 import StrategyComparison from './StrategyComparison';
-import ActivityHeatmap from './ActivityHeatmap';
 import styles from './Trading.module.css';
+
+// Lazy loading для тяжелых страниц с графиками
+const TradingStats = lazy(() => import('./TradingStats'));
+const ActivityHeatmap = lazy(() => import('./ActivityHeatmap'));
 
 const Trading = () => {
   const navigate = useNavigate();
@@ -63,20 +65,35 @@ const Trading = () => {
   };
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'orders':
-        return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
-      case 'logs':
-        return <SQLLogs autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
-      case 'stats':
-        return <TradingStats autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
-      case 'strategies':
-        return <StrategyComparison emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
-      case 'heatmap':
-        return <ActivityHeatmap emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
-      default:
-        return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
-    }
+    const content = (() => {
+      switch (activeTab) {
+        case 'orders':
+          return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+        case 'logs':
+          return <SQLLogs autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+        case 'stats':
+          return <TradingStats autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+        case 'strategies':
+          return <StrategyComparison emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+        case 'heatmap':
+          return <ActivityHeatmap emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+        default:
+          return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+      }
+    })();
+
+    return (
+      <Suspense fallback={
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+            <div>Загрузка...</div>
+          </div>
+        </div>
+      }>
+        {content}
+      </Suspense>
+    );
   };
 
   return (

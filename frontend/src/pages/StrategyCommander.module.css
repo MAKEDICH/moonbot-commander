@@ -532,6 +532,8 @@
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
+  pointer-events: auto;
+  z-index: 5;
 }
 
 .copyIcon:hover {
@@ -644,11 +646,14 @@
   font-weight: 600;
   font-size: 14px;
   transition: var(--transition);
+  cursor: pointer;
+  border: none;
 }
 
 .copyBtn {
   background: var(--accent-gradient);
   color: white;
+  border: none;
 }
 
 .clearBtn {
@@ -660,6 +665,7 @@
 .saveBtn {
   background: linear-gradient(135deg, #00ff88, #00cc66);
   color: white;
+  border: none;
 }
 
 .copyBtn:hover,

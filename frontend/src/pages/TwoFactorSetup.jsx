@@ -110,9 +110,10 @@ function TwoFactorSetup() {
 
             <form onSubmit={handleEnable}>
               <div className={styles.formGroup}>
-                <label>Код из Google Authenticator</label>
+                <label className={styles.label}>Код из Google Authenticator</label>
                 <input
                   type="text"
+                  className={styles.input}
                   maxLength="6"
                   pattern="[0-9]{6}"
                   placeholder="000000"
@@ -120,15 +121,9 @@ function TwoFactorSetup() {
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                   required
                   style={{
-                    color: '#000000',
-                    backgroundColor: '#ffffff',
-                    border: '2px solid #00f5ff',
-                    padding: '12px',
-                    fontSize: '18px',
-                    borderRadius: '8px',
-                    width: '100%',
                     textAlign: 'center',
-                    letterSpacing: '4px'
+                    letterSpacing: '4px',
+                    fontSize: '18px'
                   }}
                 />
               </div>
@@ -162,9 +157,10 @@ function TwoFactorSetup() {
 
             <form onSubmit={handleDisable}>
               <div className={styles.formGroup}>
-                <label>Код из Google Authenticator</label>
+                <label className={styles.label}>Код из Google Authenticator</label>
                 <input
                   type="text"
+                  className={styles.input}
                   maxLength="6"
                   pattern="[0-9]{6}"
                   placeholder="000000"
@@ -172,15 +168,9 @@ function TwoFactorSetup() {
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                   required
                   style={{
-                    color: '#000000',
-                    backgroundColor: '#ffffff',
-                    border: '2px solid #00f5ff',
-                    padding: '12px',
-                    fontSize: '18px',
-                    borderRadius: '8px',
-                    width: '100%',
                     textAlign: 'center',
-                    letterSpacing: '4px'
+                    letterSpacing: '4px',
+                    fontSize: '18px'
                   }}
                 />
               </div>
