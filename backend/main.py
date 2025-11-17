@@ -855,14 +855,26 @@ async def send_command(
     # Если listener запущен - используем его, чтобы MoonBot продолжал слать данные на listener port
     listener = udp_listener.active_listeners.get(server.id)
     
+    # Проверка: для команд GetStrategies* не ждем синхронный ответ, т.к. данные приходят пакетами асинхронно
+    is_strategy_command = command_data.command.startswith('GetStrategies')
+    
     if listener and listener.running:
         print(f"[API] Sending command through listener for server {server.id}")
         try:
-            success, response = listener.send_command_with_response(
-                command_data.command,
-                timeout=float(command_data.timeout or 5)
-            )
-            print(f"[API] Listener response: success={success}, response={response[:100] if response else 'None'}...")
+            if is_strategy_command:
+                # Для GetStrategies* просто отправляем команду без ожидания ответа
+                # Ответ придет пакетами через listener и сохранится в кэш автоматически
+                listener.send_command(command_data.command)
+                success = True
+                response = f"Команда {command_data.command} отправлена. Данные будут поступать через listener."
+                print(f"[API] Strategy command sent without waiting for response")
+            else:
+                # Для остальных команд ждем ответ
+                success, response = listener.send_command_with_response(
+                    command_data.command,
+                    timeout=float(command_data.timeout or 5)
+                )
+                print(f"[API] Listener response: success={success}, response={response[:100] if response else 'None'}...")
         except Exception as e:
             print(f"[API] Error sending through listener: {e}")
             # Fallback to direct UDP
