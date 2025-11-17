@@ -316,16 +316,16 @@ REM Update batch files (except UPDATE.bat)
 REM Copy ROLLBACK.bat if it doesn't exist
 if not exist "ROLLBACK.bat" (
     if exist "!UPDATE_SOURCE!\ROLLBACK.bat" (
-        copy "!UPDATE_SOURCE!\ROLLBACK.bat" "ROLLBACK.bat" >nul 2>&1
+        copy "!UPDATE_SOURCE!\ROLLBACK.bat" "ROLLBACK.bat" /Y >nul 2>&1
     )
 )
 
-REM Copy other batch files
+REM Copy other batch files (with force overwrite)
 for %%f in ("!UPDATE_SOURCE!\*.bat") do (
     set "filename=%%~nxf"
     if not "!filename!"=="UPDATE.bat" (
         if not "!filename!"=="ROLLBACK.bat" (
-            copy "%%f" "%%~nxf" >nul 2>&1
+            copy "%%f" "%%~nxf" /Y >nul 2>&1
         )
     )
 )
@@ -417,19 +417,16 @@ if !errorlevel! neq 0 (
 )
 
 REM Run migrations (all in order)
-python migrate_add_password.py >nul 2>&1
-python migrate_add_recovery_codes.py >nul 2>&1
-python migrate_add_2fa.py >nul 2>&1
-python migrate_scheduled_commands_full.py >nul 2>&1
-python migrate_add_timezone.py >nul 2>&1
-python migrate_add_scheduler_settings.py >nul 2>&1
-python migrate_add_display_time.py >nul 2>&1
-python migrate_add_udp_listener.py >nul 2>&1
-python migrate_add_keepalive.py >nul 2>&1
-python migrate_add_balance_and_strategies.py >nul 2>&1
-python migrate_add_cleanup_settings.py >nul 2>&1
-python migrate_cleanup_settings_v2.py >nul 2>&1
-python migrate_moonbot_orders_extended.py >nul 2>&1
+echo   [+] Running database migrations...
+for %%f in (migrate_*.py) do (
+    python %%f
+    if errorlevel 1 (
+        echo.
+        echo   [WARNING] Migration %%f reported an issue
+        echo   [INFO] This is usually OK if the migration was already applied
+        echo.
+    )
+)
 echo   [OK] Database migrations completed
 
 cd ..\frontend

@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.7] - 2025-11-17
+
+### Fixed
+- 🔧 **CRITICAL: Fixed UPDATE.bat migrations not running**
+  - Changed from hardcoded list to automatic discovery of all `migrate_*.py` files
+  - Migrations now show output (errors are visible)
+  - Fixes "no such column" errors when updating from older versions
+  - Solves "chicken-and-egg" problem with new migrations
+
+### Technical Details
+- **The Problem**: UPDATE.bat had hardcoded list of migrations. New migrations weren't executed when updating from old versions.
+- **The Solution**: Use `for %%f in (migrate_*.py)` to automatically run ALL migrations in backend folder
+- **Why**: When user updates from v2.0.3 → v2.0.6, the old UPDATE.bat doesn't know about new migrations
+- **Impact**: Critical - without this, database schema doesn't update correctly
+
+---
+
 ## [2.0.6] - 2025-11-17
 
 ### Fixed
