@@ -230,11 +230,22 @@ const StrategyCommander = ({ onClose }) => {
   };
 
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
+    // Fallback for non-HTTPS environments (production servers without SSL)
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+      document.execCommand('copy');
       showToast('Скопировано в буфер обмена!', 'success');
-    }).catch(() => {
+    } catch (err) {
       showToast('Ошибка копирования', 'error');
-    });
+    }
+    
+    document.body.removeChild(textarea);
   };
 
   const copyAllForward = (changes) => {
