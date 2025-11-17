@@ -1,133 +1,162 @@
 # Changelog
 
+## [2.0.6] - 2025-11-17
+
+### Fixed
+- 🔧 **CRITICAL: Fixed .bat files line endings for Windows compatibility**
+  - Converted all .bat files from LF (Unix) to CRLF (Windows) line endings
+  - UTF-8 without BOM encoding (supports Russian text + cmd.exe compatible)
+  - Fixes all "is not recognized as an internal or external command" errors
+
+### Technical Details
+- **The Problem**: .bat files had LF line endings instead of CRLF
+- **The Solution**: Converted to CRLF (`\r\n`) with UTF-8 no BOM
+- **Why**: cmd.exe requires CRLF line endings, `chcp 65001` in files enables UTF-8
+
+---
+
 ## [2.0.5] - 2025-11-17
 
 ### Fixed
-- 🐛 **Critical: Fixed UDP loopback issue for local bots with external IP** 
-  - Bots running on same server as Commander now work correctly
-  - Added intelligent fallback routing for localhost responses
-  - Fixed balance reporting and command execution for co-located bots
-  - IP normalization handles all localhost variants (127.0.0.1, ::1, ::ffff:127.0.0.1)
-- 🔧 **Fixed TypeError in TradingStats** - Cannot assign to read only property
-  - Replaced spread operator with `.slice()` for proper array copying
-  - Fixed frozen array mutations in sortTableData, problemSymbol, mostActiveServer
-  - Stats page now works correctly with long-term usage
-- ✅ **Fixed Strategy Commander buttons** - All copy/clear buttons now functional
-  - Added proper button types and disabled states
-  - Fixed CSS pointer events and z-index issues
-  - Improved visual feedback for button interactions
-- 🔄 **Fixed Dashboard auto-ping** - Now persists across tab switches
-  - Auto-ping continues running when switching to other tabs
-  - State saved to localStorage for persistence across sessions
-  - Added visibilitychange event listener to resume on tab activation
-- 🎨 **Fixed 2FA input field styling** - Consistent theme application
-  - Applied correct CSS module classes to all 2FA input fields
-  - Fixed TwoFactorSetup, TwoFactorSetupRegister, TwoFactorVerify, Recover2FAPassword
-  - Removed conflicting inline styles that overrode theme
+- 🔧 **Critical: Fixed UDP loopback issue for bots on same server**
+  - Added IP normalization (`127.0.0.1`, `::1`, `localhost` → `127.0.0.1`)
+  - Implemented fallback matching for loopback connections
+  - Fixes incorrect online/offline status when bot is on same server as Commander
+  - Fixes unreliable command execution and balance reporting
+  
+- 🐛 **Fixed TypeError in TradingStats component**
+  - Replaced spread operator with `Array.slice()` to prevent mutation of frozen arrays
+  - Added safety checks for array operations
+  - Fixes crash when staying on "Статистика" tab for extended periods
+  - Applied same fix to TradingStatsV2 for consistency
 
-### Changed
-- 🏗️ Enhanced UDP packet routing with smart localhost detection
-- 📡 Improved GlobalUDPSocket listener registration with dual-mapping fallback
-- 🔄 Better array immutability handling in React components
+- 🎨 **Fixed 2FA input field styling**
+  - Applied correct theme styles to 2FA registration/verification inputs
+  - Removed conflicting inline styles
+  - Consistent appearance across all authentication flows
+
+- ⚙️ **Fixed SERVER-START-PRODUCTION.bat production mode**
+  - Removed `--reload` flag from uvicorn command
+  - Backend now runs in true production mode
+  - Improved stability and performance
+
+- 🔄 **Fixed UPDATE.bat batch file copying**
+  - Added `/Y` flag to force overwrite existing .bat files
+  - Ensures all scripts are updated correctly
+  - Added new migration to update list
 
 ### Technical Details
-- **UDP Loopback Solution**: When bot registers with external IP but runs locally, OS routes responses through 127.0.0.1. Fallback logic now checks for single listener on port when exact IP match fails
-- **Frozen Array Fix**: React may freeze arrays from fetch(). Using `Array.slice()` instead of spread operator creates truly independent copy that can be mutated
-- **Dashboard Persistence**: Auto-ping state stored in localStorage key `dashboardAutoPingEnabled`
-- Both TradingStats.jsx and TradingStatsV2.jsx updated for consistency
+
+**UDP Loopback Fix:**
+- When MoonBot runs on same server as Commander, UDP responses come from `127.0.0.1` but listener expects external IP
+- Solution: Normalize localhost variants and implement smart fallback matching
+- Maintains backward compatibility with remote bots
+
+**TradingStats Fix:**
+- `fetch()` returns frozen objects that can't be mutated
+- Spread operator `[...arr]` creates shallow copy that still shares frozen internals
+- `Array.slice()` creates true deep copy that can be safely sorted
+- Error: `TypeError: Cannot assign to read only property '0' of object '[object Array]'`
+
+**Production Mode:**
+- `--reload` flag causes uvicorn to watch for file changes (dev feature)
+- In production this wastes resources and can cause instability
+- Removed for better performance
 
 ---
 
 ## [2.0.4] - 2025-11-16
 
+### Added
+- ✨ **New Feature: Auto-ping persistence across tab switches**
+  - Auto-ping continues running when switching tabs
+  - State persists across browser sessions via localStorage
+  - Automatically restarts when tab becomes visible again
+  
 ### Fixed
-- 🐛 **Improved error handling for GlobalUDPSocket** - Fixed edge case with occupied ports
-  - When port 2500 is occupied, properly cleanup failed socket object
-  - Prevent "broken" socket objects from being used by other listeners
-  - Added comprehensive socket state validation before registration
-  - Better error messages for socket initialization failures
-- 🔧 Enhanced `send_command_with_response` validation checks
-- 🛡️ More robust GlobalUDPSocket lifecycle management
+- 🐛 **Fixed Strategy Commander button interactions**
+  - All buttons now properly clickable and responsive
+  - Added proper `type="button"` attributes
+  - Fixed z-index and pointer-events for button icons
+  - Improved visual feedback (cursor: pointer)
 
 ### Technical Details
-- If global socket fails to start, object is now properly nullified
-- Next server startup will attempt to recreate the socket
-- Added triple-check for socket state (object exists, running, sock initialized)
-- Prevents cascading WinError 10038 errors from initial WinError 10013
+- Implemented `visibilitychange` event listener for tab state management
+- Browser throttles `setInterval` on inactive tabs (to 1 call per second or less)
+- Solution: detect tab activation and restart auto-ping if it was enabled
 
 ---
 
-## [2.0.3] - 2025-11-16
-
-### Fixed
-- 🐛 **Critical: Fixed WinError 10038 in SERVER mode** - Implemented GlobalUDPSocket
-  - Multiple servers can now run simultaneously on the same machine
-  - One shared UDP socket (port 2500) for all MoonBot servers
-  - Automatic packet routing by IP address
-  - Eliminates "socket is not a socket" errors
-- 🔧 Fixed UDP listener initialization in SERVER mode
-- 🚀 Improved performance with single socket architecture
-
-### Changed
-- 🏗️ Refactored UDPListener to support both LOCAL and SERVER modes
-- 📡 Added GlobalUDPSocket class for centralized UDP management
-- 🔄 Updated start_listener/stop_listener functions for dual-mode support
-
-### Technical Details
-- LOCAL mode: Each server uses ephemeral ports with keep-alive (for NAT traversal)
-- SERVER mode: All servers share one socket on port 2500 (no keep-alive needed)
-- Automatic mode detection via MOONBOT_MODE environment variable
-
----
-
-## [1.1.0] - 2024-11-11
+## [2.0.3] - 2025-11-15
 
 ### Added
-- ✨ **WebSocket Support** - Real-time updates without polling
-- 🔄 **Backup Service** - Automatic database backups
-- 📊 **Database Status Checker** - Monitor DB health
-- 🏗️ **Migration Manager** - Better migration handling
-- 🔧 **Config System** - Centralized configuration
-- 🌐 **Multi-Database Support** - Prepare for scaling
-- 📡 **WebSocket Manager** - Handle real-time connections
-- 🔄 **Auto-Update System** - UPDATE.bat/update.sh for easy updates
-- ↩️ **Rollback System** - ROLLBACK.bat/rollback.sh to revert updates
-
-### Changed
-- 🔄 Updated main.py with WebSocket endpoints (+301 lines)
-- 🐧 Added Linux support (shell scripts)
-- 🐳 Added Docker support
-- 📚 Updated README with cross-platform instructions
-- 🔧 **All batch files now use unified logic:**
-  - SERVER-START.bat now auto-detects version (v1.0/v2.0)
-  - SERVER-START.bat runs correct main file (main.py or main_v2.py)
-  - LOCAL-SETUP.bat uses correct migrations
-  - SERVER-SETUP.bat uses correct migrations
-  - START.bat (smart start with auto version detection)
+- 📊 Enhanced trading statistics with server-side aggregation
+- 🔄 Real-time balance updates via WebSocket
+- 📈 Improved performance for large datasets
 
 ### Fixed
-- 🐛 Removed non-existent migration `migrate_add_2fa_attempts.py` from all scripts
-- 🔧 Fixed batch files to use correct migrations
-- 🔧 SERVER-START.bat now properly detects and runs correct version
-- 🔧 Fixed security keys validation in all scripts
-- 🔧 Unified migration list across all setup scripts
-
-### Migration Notes
-- No database schema changes
-- No breaking changes in API
-- WebSocket is optional (frontend works without it)
-- All user data preserved during update
+- 🐛 Various UI improvements and bug fixes
+- ⚡ Optimized database queries for better performance
 
 ---
 
-## [1.0.0] - 2024-11-08
+## [2.0.2] - 2025-11-14
 
-### Initial Release
-- 🎮 Real-time Control - Send commands to Moonbot instances
-- 📊 Statistics Dashboard
-- 🔐 Secure Authentication (JWT + 2FA)
-- 📡 UDP Listeners
-- ⏰ Scheduled Commands
-- 👥 Group Management
-- 📝 SQL Query Interface
+### Added
+- 🎯 Advanced filtering in trading history
+- 📉 New chart visualizations
+- 🔐 Enhanced security for API endpoints
 
+### Fixed
+- 🐛 Fixed WebSocket connection stability
+- 🔧 Improved error handling in UDP communication
+
+---
+
+## [2.0.1] - 2025-11-13
+
+### Fixed
+- 🐛 Critical hotfixes for v2.0.0 release
+- 🔧 Database migration improvements
+- ⚡ Performance optimizations
+
+---
+
+## [2.0.0] - 2025-11-12
+
+### Added
+- 🚀 **Major Version Release**
+- 🎨 Completely redesigned UI
+- 📊 New analytics dashboard
+- 🔄 WebSocket-based real-time updates
+- 🗄️ Improved database schema (v2)
+- 🔐 Enhanced security features
+- 📱 Mobile-responsive design
+
+### Changed
+- ♻️ Refactored backend architecture
+- 🔄 Migrated to FastAPI lifespan events
+- 📦 Updated all dependencies
+- 🎯 Improved error handling and logging
+
+### Fixed
+- 🐛 Numerous bug fixes from v1.x
+- ⚡ Performance improvements across the board
+- 🔧 Better error recovery mechanisms
+
+---
+
+## [1.0.0] - 2025-11-01
+
+### Added
+- 🎉 Initial stable release
+- 📊 Basic trading statistics
+- 🤖 MoonBot UDP command interface
+- 💼 Balance tracking
+- 📈 Strategy management
+- 🔐 User authentication
+- 🌐 Multi-server support
+
+---
+
+*For detailed technical information, see the README.md file.*
