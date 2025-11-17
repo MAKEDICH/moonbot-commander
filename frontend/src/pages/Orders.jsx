@@ -13,6 +13,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0); // Прогресс загрузки (0-100)
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(30);
@@ -204,30 +205,55 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
       const offset = (pageNum - 1) * limit;
       
       if (serverId === 'all') {
-        // Загрузка ордеров со всех серверов
+        // Загрузка ордеров со всех серверов ПАРАЛЛЕЛЬНО (оптимизация)
         let allOrders = [];
         let totalCount = 0;
         const MAX_ORDERS_PER_SERVER = 100;
         
-        for (const server of serversArray) {
-          try {
-            let url = `${API_BASE_URL}/api/servers/${server.id}/orders?limit=${MAX_ORDERS_PER_SERVER}&offset=0`;
-            if (status) url += `&status=${status}`;
-            if (symbol) url += `&symbol=${symbol}`;
-            if (emulator !== 'all') {
-              url += `&emulator=${emulator === 'emulator' ? 'true' : 'false'}`;
-            }
-            
-            const response = await axios.get(url, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            allOrders = [...allOrders, ...response.data.orders];
-            totalCount += response.data.total;
-          } catch (err) {
-            console.error(`Error fetching orders from server ${server.id}:`, err);
+        // Сброс прогресса
+        setLoadingProgress(0);
+        let completedServers = 0;
+        
+        // Создаем массив промисов для параллельной загрузки
+        const fetchPromises = serversArray.map(server => {
+          let url = `${API_BASE_URL}/api/servers/${server.id}/orders?limit=${MAX_ORDERS_PER_SERVER}&offset=0`;
+          if (status) url += `&status=${status}`;
+          if (symbol) url += `&symbol=${symbol}`;
+          if (emulator !== 'all') {
+            url += `&emulator=${emulator === 'emulator' ? 'true' : 'false'}`;
           }
-        }
+          
+          return axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+            .then(response => {
+              // Обновляем прогресс
+              completedServers++;
+              setLoadingProgress(Math.round((completedServers / serversArray.length) * 100));
+              
+              return {
+                orders: response.data.orders,
+                total: response.data.total
+              };
+            })
+            .catch(err => {
+              console.error(`Error fetching orders from server ${server.id}:`, err);
+              // Обновляем прогресс даже при ошибке
+              completedServers++;
+              setLoadingProgress(Math.round((completedServers / serversArray.length) * 100));
+              
+              return { orders: [], total: 0 }; // Возвращаем пустые данные при ошибке
+            });
+        });
+        
+        // Ждем завершения всех запросов параллельно
+        const results = await Promise.all(fetchPromises);
+        
+        // Объединяем все результаты
+        results.forEach(result => {
+          allOrders = [...allOrders, ...result.orders];
+          totalCount += result.total;
+        });
         
         // Сортировка по дате (новые сверху)
         allOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -274,27 +300,35 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
       const token = localStorage.getItem('token');
       
       if (serverId === 'all') {
-        // Агрегация статистики со всех серверов
+        // Агрегация статистики со всех серверов ПАРАЛЛЕЛЬНО (оптимизация)
         let totalOrders = 0;
         let openOrders = 0;
         let closedOrders = 0;
         let totalProfit = 0;
         
-        for (const server of serversArray) {
-          try {
-            const response = await axios.get(
-              `${API_BASE_URL}/api/servers/${server.id}/orders/stats`,
-              { headers: { Authorization: `Bearer ${token}` }}
-            );
-            const data = response.data;
-            totalOrders += data.total_orders || 0;
-            openOrders += data.open_orders || 0;
-            closedOrders += data.closed_orders || 0;
-            totalProfit += data.total_profit_btc || 0;
-          } catch (err) {
-            console.error(`Error fetching stats from server ${server.id}:`, err);
-          }
-        }
+        // Создаем массив промисов для параллельной загрузки
+        const fetchPromises = serversArray.map(server =>
+          axios.get(
+            `${API_BASE_URL}/api/servers/${server.id}/orders/stats`,
+            { headers: { Authorization: `Bearer ${token}` }}
+          )
+            .then(response => response.data)
+            .catch(err => {
+              console.error(`Error fetching stats from server ${server.id}:`, err);
+              return { total_orders: 0, open_orders: 0, closed_orders: 0, total_profit_btc: 0 };
+            })
+        );
+        
+        // Ждем завершения всех запросов параллельно
+        const results = await Promise.all(fetchPromises);
+        
+        // Агрегируем результаты
+        results.forEach(data => {
+          totalOrders += data.total_orders || 0;
+          openOrders += data.open_orders || 0;
+          closedOrders += data.closed_orders || 0;
+          totalProfit += data.total_profit_btc || 0;
+        });
         
         setStats({
           total_orders: totalOrders,
@@ -698,7 +732,18 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Загрузка...</div>
+        <div className={styles.loading}>
+          Загрузка...
+          {selectedServer === 'all' && loadingProgress > 0 && (
+            <div className={styles.progressBar}>
+              <div 
+                className={styles.progressFill} 
+                style={{ width: `${loadingProgress}%` }}
+              />
+              <span className={styles.progressText}>{loadingProgress}%</span>
+            </div>
+          )}
+        </div>
       ) : orders.length === 0 ? (
         <div className={styles.empty}>
           <FaChartLine size={48} />

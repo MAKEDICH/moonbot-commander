@@ -52,14 +52,48 @@ REM ============================================================
 REM STEP 2: Get latest release info from GitHub
 REM ============================================================
 
-echo [2/13] Checking latest version on GitHub...
+echo [2/13] Fetching available versions from GitHub...
 echo.
 
-set "GITHUB_API=https://api.github.com/repos/MAKEDICH/moonbot-commander/releases/latest"
+REM Get list of all releases
+set "TEMP_RELEASES=%TEMP%\moonbot_releases.json"
+powershell -Command "try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri 'https://api.github.com/repos/MAKEDICH/moonbot-commander/releases' -OutFile '%TEMP_RELEASES%' -UseBasicParsing } catch { exit 1 }" >nul 2>&1
+
+if !errorlevel! neq 0 (
+    echo [ERROR] Failed to fetch releases list from GitHub!
+    pause
+    exit /b 1
+)
+
+REM Parse and display available versions
+echo Available versions (Current: %CURRENT_VERSION%):
+echo.
+powershell -Command "$releases = Get-Content '%TEMP_RELEASES%' | ConvertFrom-Json; for ($i=0; $i -lt $releases.Count; $i++) { $tag = $releases[$i].tag_name; $marker = if ($tag -eq 'v%CURRENT_VERSION%' -or $tag -eq '%CURRENT_VERSION%') { ' [INSTALLED]' } else { '' }; Write-Host \"  [$($i+1)] $tag - $($releases[$i].name)$marker\" }"
+echo.
+echo   [0] Enter custom version manually
+echo.
+
+REM Ask user to select version
+set /p "VERSION_CHOICE=Select version number: "
+
 set "TEMP_JSON=%TEMP%\moonbot_release.json"
 
+if "%VERSION_CHOICE%"=="0" (
+    echo.
+    set /p "SPECIFIC_VERSION=Enter version tag (e.g. v2.0.9): "
+    echo.
+    echo Fetching version !SPECIFIC_VERSION!...
+    set "GITHUB_API=https://api.github.com/repos/MAKEDICH/moonbot-commander/releases/tags/!SPECIFIC_VERSION!"
+) else (
+    echo.
+    echo Fetching selected version...
+    REM Get the selected release tag from the list
+    for /f "delims=" %%i in ('powershell -Command "$releases = Get-Content '%TEMP_RELEASES%' | ConvertFrom-Json; $selected = $releases[%VERSION_CHOICE%-1]; Write-Host $selected.tag_name"') do set "SELECTED_TAG=%%i"
+    set "GITHUB_API=https://api.github.com/repos/MAKEDICH/moonbot-commander/releases/tags/!SELECTED_TAG!"
+)
+
 REM Download release info via PowerShell
-powershell -Command "try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri '%GITHUB_API%' -OutFile '%TEMP_JSON%' -UseBasicParsing } catch { exit 1 }" >nul 2>&1
+powershell -Command "try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri '!GITHUB_API!' -OutFile '%TEMP_JSON%' -UseBasicParsing } catch { exit 1 }" >nul 2>&1
 
 if !errorlevel! neq 0 (
     echo [ERROR] Failed to connect to GitHub!

@@ -148,23 +148,30 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
       const offset = (pageNum - 1) * limit;
       
       if (serverId === 'all') {
-        // Загрузка логов со всех серверов
+        // Загрузка логов со всех серверов ПАРАЛЛЕЛЬНО (оптимизация)
         let allLogs = [];
         const MAX_LOGS_PER_SERVER = 100;
         
-        for (const server of serversArray) {
-          try {
-            const response = await axios.get(`${API_BASE_URL}/api/servers/${server.id}/sql-log?limit=${MAX_LOGS_PER_SERVER}&offset=0`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            // Добавляем server_name к каждому логу для отображения
-            const logsWithServer = response.data.logs.map(log => ({ ...log, server_name: server.name }));
-            allLogs = [...allLogs, ...logsWithServer];
-          } catch (err) {
-            console.error(`Error fetching logs from server ${server.id}:`, err);
-          }
-        }
+        // Создаем массив промисов для параллельной загрузки
+        const fetchPromises = serversArray.map(server =>
+          axios.get(`${API_BASE_URL}/api/servers/${server.id}/sql-log?limit=${MAX_LOGS_PER_SERVER}&offset=0`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+            .then(response => {
+              // Добавляем server_name к каждому логу для отображения
+              return response.data.logs.map(log => ({ ...log, server_name: server.name }));
+            })
+            .catch(err => {
+              console.error(`Error fetching logs from server ${server.id}:`, err);
+              return []; // Возвращаем пустой массив при ошибке
+            })
+        );
+        
+        // Ждем завершения всех запросов параллельно
+        const results = await Promise.all(fetchPromises);
+        
+        // Объединяем все результаты
+        allLogs = results.flat();
         
         // Сортировка по дате (новые сверху)
         allLogs.sort((a, b) => new Date(b.received_at) - new Date(a.received_at));

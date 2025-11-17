@@ -15,6 +15,7 @@ const StrategyCommander = ({ onClose }) => {
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState(null);
   const [loadingStrategies, setLoadingStrategies] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({ current: 0, max: 0, message: '' });
   
   // Состояния для изменения размера столбцов
   const [columnWidths, setColumnWidths] = useState({});
@@ -70,33 +71,45 @@ const StrategyCommander = ({ onClose }) => {
     }
     
     setLoadingStrategies(true);
+    setLoadingProgress({ current: 0, max: 30, message: 'Подготовка...' });
+    
     try {
       const { commandsAPI } = await import('../api/api');
       const api = (await import('../api/api')).default;
       
       // Очищаем старый кэш перед запросом
+      setLoadingProgress({ current: 1, max: 30, message: 'Очистка старого кэша...' });
       try {
         await api.delete(`/api/strategies/cache/${selectedServer}`);
       } catch (e) {
         console.warn('Не удалось очистить кэш:', e);
       }
       
-      // Отправляем команду
+      // Отправляем команду с увеличенным timeout
+      setLoadingProgress({ current: 2, max: 30, message: 'Отправка команды на MoonBot...' });
       await commandsAPI.send({
         server_id: selectedServer,
         command: command,
-        timeout: 15
+        timeout: 30  // Увеличен timeout до 30 секунд
       });
       
       showToast('Команда отправлена, ожидаем стратегии...', 'info');
+      setLoadingProgress({ current: 3, max: 30, message: 'Ожидание ответа от MoonBot...' });
       
       // Пытаемся получить стратегии несколько раз с задержкой
       let attempts = 0;
-      const maxAttempts = 15;
+      const maxAttempts = 30;  // Увеличено до 30 попыток
       const delayMs = 1000;
       
       while (attempts < maxAttempts) {
         attempts++;
+        
+        // Обновляем прогресс
+        setLoadingProgress({ 
+          current: 3 + attempts, 
+          max: 30 + maxAttempts, 
+          message: `Проверка данных... (попытка ${attempts}/${maxAttempts})` 
+        });
         
         // Ждём перед запросом
         await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -107,14 +120,21 @@ const StrategyCommander = ({ onClose }) => {
           const cacheData = response.data;
           
           if (cacheData.packs && cacheData.packs.length > 0) {
+            setLoadingProgress({ 
+              current: 30 + maxAttempts, 
+              max: 30 + maxAttempts, 
+              message: `Обработка ${cacheData.packs.length} пакет(ов)...` 
+            });
+            
             const fullText = cacheData.packs
               .sort((a, b) => a.pack_number - b.pack_number)
               .map(pack => pack.data)
               .join('\n');
             
             setStrategyInput(fullText);
-            showToast(`Стратегии загружены! (${cacheData.packs.length} пакет(ов))`, 'success');
+            showToast(`✅ Стратегии загружены! (${cacheData.packs.length} пакет(ов))`, 'success');
             setLoadingStrategies(false);
+            setLoadingProgress({ current: 0, max: 0, message: '' });
             return;
           }
         } catch (error) {
@@ -129,12 +149,15 @@ const StrategyCommander = ({ onClose }) => {
       }
       
       // Если после всех попыток ничего не получили
-      showToast('Стратегии не получены. Проверьте связь с Moonbot.', 'warning');
+      setLoadingProgress({ current: 0, max: 0, message: '' });
+      showToast('⚠️ Стратегии не получены за 30 секунд. Проверьте связь с Moonbot.', 'warning');
     } catch (error) {
-      showToast('Ошибка: ' + error.message, 'error');
+      setLoadingProgress({ current: 0, max: 0, message: '' });
+      showToast('❌ Ошибка: ' + error.message, 'error');
       console.error('Ошибка загрузки стратегий:', error);
     } finally {
       setLoadingStrategies(false);
+      setLoadingProgress({ current: 0, max: 0, message: '' });
     }
   };
 
@@ -733,6 +756,7 @@ const StrategyCommander = ({ onClose }) => {
               value={selectedServer || ''} 
               onChange={(e) => setSelectedServer(parseInt(e.target.value))}
               className={styles.serverSelect}
+              disabled={loadingStrategies}
             >
               <option value="">Выберите сервер...</option>
               {servers.map(server => (
@@ -758,6 +782,24 @@ const StrategyCommander = ({ onClose }) => {
               {loadingStrategies ? '⏳' : '✅'} Только активные
             </button>
           </div>
+          
+          {/* Индикатор прогресса загрузки */}
+          {loadingStrategies && loadingProgress.max > 0 && (
+            <div className={styles.loadingProgressContainer}>
+              <div className={styles.loadingProgressBar}>
+                <div 
+                  className={styles.loadingProgressFill}
+                  style={{ width: `${(loadingProgress.current / loadingProgress.max) * 100}%` }}
+                />
+              </div>
+              <div className={styles.loadingProgressText}>
+                {loadingProgress.message}
+                <span className={styles.loadingProgressPercent}>
+                  {Math.round((loadingProgress.current / loadingProgress.max) * 100)}%
+                </span>
+              </div>
+            </div>
+          )}
         </div>
         <label>Вставьте сюда текст стратегий:</label>
         <textarea

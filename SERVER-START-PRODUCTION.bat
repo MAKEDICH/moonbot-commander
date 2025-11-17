@@ -239,7 +239,7 @@ echo.
 
 set "PROJECT_DIR=%CD%"
 
-start "MoonBot Backend %APP_VERSION% [SERVER]" cmd /k "cd /d "%PROJECT_DIR%\backend" && set "MOONBOT_MODE=server" && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000 --reload"
+start "MoonBot Backend %APP_VERSION% [PRODUCTION]" cmd /k "cd /d "%PROJECT_DIR%\backend" && set "MOONBOT_MODE=server" && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000"
 timeout /t 3 /nobreak >nul
 echo [OK] Backend started
 
