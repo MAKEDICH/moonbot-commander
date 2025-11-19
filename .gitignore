@@ -94,6 +94,12 @@ $RECYCLE.BIN/
 *.temp
 *.bak
 
+# АРХИВЫ РЕЛИЗОВ
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
 # ЛОГИ CLEANUP
 AUDIT-UNUSED-FILES.txt
 PROJECT-MAP.txt
