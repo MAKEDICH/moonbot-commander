@@ -1249,15 +1249,6 @@ const CommandsNew = () => {
         {/* ПРАВО - Редактор команд + Результаты */}
         <div className={styles.commandPanel}>
           <div className={styles.topControlsRow}>
-            <label className={styles.botnameCheckbox}>
-              <input
-                type="checkbox"
-                checked={useBotname}
-                onChange={(e) => setUseBotname(e.target.checked)}
-              />
-              <span>Префикс <code>botname:</code></span>
-            </label>
-
             <div className={styles.delayInputWrapper}>
               <label 
                 title="Задержка между отправкой команд на разные боты (применяется только если выбрано больше 1 бота)"

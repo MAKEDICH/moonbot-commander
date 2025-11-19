@@ -45,3 +45,4 @@ ReadWritePaths=/path/to/moonbot-commander/frontend
 
 [Install]
 WantedBy=multi-user.target
+

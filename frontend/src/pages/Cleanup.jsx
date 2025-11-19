@@ -352,12 +352,12 @@ const Cleanup = () => {
                   checked={settings.auto_cleanup_backend_logs}
                   onChange={(e) => setSettings({ ...settings, auto_cleanup_backend_logs: e.target.checked })}
                 />
-                <span>Логи Backend (.log файлы)</span>
+                <span>Ротированные логи Backend (.log.1, .log.2, и т.д.)</span>
               </label>
 
               {settings.auto_cleanup_backend_logs && (
                 <div className={styles.inputGroup} style={{marginLeft: '2rem'}}>
-                  <label>Обрезать лог-файлы до:</label>
+                  <label>Очистить ротированные логи до:</label>
                   <input
                     type="number"
                     min="0"
@@ -366,7 +366,7 @@ const Cleanup = () => {
                     onChange={(e) => setSettings({ ...settings, backend_logs_max_size_mb: parseInt(e.target.value) || 0 })}
                     className={styles.inputField}
                   />
-                  <span>МБ (0 = удалить полностью)</span>
+                  <span>МБ (0 = удалить все ротированные)</span>
                 </div>
               )}
             </div>
@@ -443,12 +443,16 @@ const Cleanup = () => {
         </div>
 
         <div className={styles.card}>
-          <h3><FiDatabase /> Логи Backend</h3>
-          <p className={styles.help}>Файлы логов приложения (.log). Могут занимать много места при длительной работе.</p>
+          <h3><FiDatabase /> Логи Backend (ротированные)</h3>
+          <p className={styles.help}>
+            Старые ротированные логи (.log.1, .log.2, и т.д.). Активные .log файлы НЕ затрагиваются.
+            <br />
+            💡 Очистка удаляет ТОЛЬКО старые ротированные файлы, не влияя на текущую работу приложения.
+          </p>
           
           <div className={styles.flexRow}>
             <div className={styles.inputGroup}>
-              <label>Размер после обрезки:</label>
+              <label>Размер после очистки:</label>
               <input
                 type="number"
                 min="0"
@@ -458,14 +462,14 @@ const Cleanup = () => {
                 className={styles.inputField}
                 placeholder="0 = удалить"
               />
-              <span>МБ (0 = удалить полностью)</span>
+              <span>МБ (0 = удалить все ротированные)</span>
             </div>
             <button
               className={`${styles.actionButton} ${backendLogsSizeMB === 0 ? styles.danger : styles.safe}`}
               onClick={cleanupBackendLogs}
               disabled={loading}
             >
-              <FiTrash2 /> {backendLogsSizeMB === 0 ? 'Удалить логи' : `Обрезать до ${backendLogsSizeMB} МБ`}
+              <FiTrash2 /> {backendLogsSizeMB === 0 ? 'Удалить ротированные' : `Очистить до ${backendLogsSizeMB} МБ`}
             </button>
           </div>
         </div>

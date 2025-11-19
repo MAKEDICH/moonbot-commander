@@ -712,28 +712,6 @@ const Commands = () => {
 
         {/* Правая панель - Команды */}
         <div className={styles.commandPanel}>
-          {/* Опция Botname */}
-          <div className={styles.botnameSection}>
-            <label className={styles.botnameCheckbox}>
-              <input
-                type="checkbox"
-                checked={useBotname}
-                onChange={(e) => setUseBotname(e.target.checked)}
-              />
-              <span>Использовать префикс <code>botname:</code> (имя сервера)</span>
-            </label>
-            
-            {useBotname && (
-              <div className={styles.botnameHint}>
-                <small>
-                  💡 Каждая команда будет отправлена с префиксом <code>botname:ИмяСервера</code>
-                  <br />
-                  Пример для сервера "Bot1": <code>botname:Bot1 list</code>
-                </small>
-              </div>
-            )}
-          </div>
-
           {/* Форма отправки */}
           <form onSubmit={handleSendCommand} className={styles.form}>
             <div className={styles.formGroup}>

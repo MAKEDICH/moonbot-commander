@@ -600,7 +600,6 @@ const ScheduledCommands = () => {
                 )}
 
                 <div className={styles.commandSettings}>
-                  {command.use_botname && <span className={styles.settingBadge}>Префикс botname</span>}
                   {command.delay_between_bots > 0 && (
                     <span className={styles.settingBadge}>
                       Задержка: {command.delay_between_bots}с
@@ -999,17 +998,6 @@ const ScheduledCommands = () => {
                   </div>
                 </div>
               )}
-
-              <div className={styles.formGroup}>
-                <label className={styles.checkbox}>
-                  <input
-                    type="checkbox"
-                    checked={formData.useBotname}
-                    onChange={(e) => setFormData({ ...formData, useBotname: e.target.checked })}
-                  />
-                  <span>Префикс <code>botname:</code></span>
-                </label>
-              </div>
 
               <div className={styles.formGroup}>
                 <label>Задержка между ботами (сек)</label>

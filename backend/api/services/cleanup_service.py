@@ -33,35 +33,28 @@ def get_database_stats(user_id: int, db: Session) -> dict:
             else:
                 file_sizes[key] = 0
         
-        # Размер логов - показываем каждый файл отдельно и общий размер
-        logs_dir = os.path.join(backend_dir, 'logs')
+        # 🎯 НОВАЯ ЛОГИКА: Размер РОТИРОВАННЫХ логов (.log.1, .log.2, etc.)
+        # Активные .log файлы НЕ считаем (они заняты приложением)
         
-        # Проверяем логи в корне backend
-        log_files = {
-            'commander_log': os.path.join(backend_dir, 'moonbot_commander.log'),
-            'crash_log': os.path.join(backend_dir, 'backend_crash.log'),
-            'udp_log': os.path.join(backend_dir, 'udp_listener.log')
-        }
+        import glob
         
-        # Проверяем логи в директории logs
-        if os.path.exists(logs_dir):
-            # Добавляем все .log файлы из директории logs
-            for filename in os.listdir(logs_dir):
-                if filename.endswith('.log'):
-                    log_key = filename.replace('.log', '_log').replace('-', '_')
-                    log_files[log_key] = os.path.join(logs_dir, filename)
+        # Паттерны для поиска РОТИРОВАННЫХ файлов
+        log_patterns = [
+            'moonbot_commander.log.*',
+            'backend_crash.log.*',
+            'udp_listener.log.*'
+        ]
         
-        total_log_size = 0
-        for key, filepath in log_files.items():
-            if os.path.exists(filepath):
-                size = os.path.getsize(filepath)
-                file_sizes[key] = size
-                total_log_size += size
-            else:
-                file_sizes[key] = 0
+        total_rotated_logs_size = 0
         
-        # Добавляем общий размер логов
-        file_sizes['logs'] = total_log_size
+        for pattern in log_patterns:
+            pattern_path = os.path.join(backend_dir, pattern)
+            for log_file in glob.glob(pattern_path):
+                if os.path.exists(log_file):
+                    total_rotated_logs_size += os.path.getsize(log_file)
+        
+        # Добавляем общий размер РОТИРОВАННЫХ логов
+        file_sizes['logs'] = total_rotated_logs_size
         
         # Проверяем наличие других файлов в backend директории
         additional_files = {
@@ -185,10 +178,16 @@ def vacuum_database(db: Session) -> dict:
 
 
 def cleanup_backend_logs(max_size_mb: int = 0) -> dict:
-    """Очистить файлы логов backend
+    """Очистить РОТИРОВАННЫЕ файлы логов backend
+    
+    🎯 НОВАЯ ЛОГИКА:
+    - Чистим ТОЛЬКО старые ротированные файлы (.log.1, .log.2, .log.3, etc.)
+    - НЕ трогаем активные .log файлы (они заняты приложением)
+    - Если max_size_mb = 0 → удаляем ВСЕ ротированные файлы
+    - Если max_size_mb > 0 → удаляем старые файлы, пока общий размер не станет <= max_size_mb
     
     Args:
-        max_size_mb: Максимальный размер лог-файла в МБ. Если 0 - удалить полностью
+        max_size_mb: Максимальный размер РОТИРОВАННЫХ логов в МБ. Если 0 - удалить все ротированные
     
     Returns:
         dict: {'deleted_count': int, 'freed_bytes': int, 'status': str}
@@ -196,47 +195,89 @@ def cleanup_backend_logs(max_size_mb: int = 0) -> dict:
     try:
         backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
-        log_files = [
-            os.path.join(backend_dir, 'moonbot_commander.log'),
-            os.path.join(backend_dir, 'backend_crash.log'),
-            os.path.join(backend_dir, 'udp_listener.log'),
+        # Паттерны для поиска РОТИРОВАННЫХ файлов
+        log_patterns = [
+            'moonbot_commander.log.*',
+            'backend_crash.log.*',
+            'udp_listener.log.*'
         ]
         
         deleted_count = 0
         freed_bytes = 0
         
-        for log_file in log_files:
-            if not os.path.exists(log_file):
-                continue
-                
-            file_size = os.path.getsize(log_file)
-            
-            if max_size_mb == 0:
-                # Удалить файл полностью
+        import glob
+        
+        # Собираем все ротированные файлы
+        rotated_files = []
+        for pattern in log_patterns:
+            pattern_path = os.path.join(backend_dir, pattern)
+            for log_file in glob.glob(pattern_path):
+                if os.path.exists(log_file):
+                    file_size = os.path.getsize(log_file)
+                    # Получаем номер ротации (log.1, log.2, etc.)
+                    # Чем больше номер, тем старше файл
+                    import re
+                    match = re.search(r'\.(\d+)$', log_file)
+                    rotation_num = int(match.group(1)) if match else 0
+                    rotated_files.append({
+                        'path': log_file,
+                        'size': file_size,
+                        'rotation': rotation_num
+                    })
+        
+        if not rotated_files:
+            return {
+                'deleted_count': 0,
+                'freed_bytes': 0,
+                'status': 'success',
+                'message': 'Нет ротированных файлов для удаления'
+            }
+        
+        # Сортируем по номеру ротации (от самых старых к новым)
+        # Самые старые файлы имеют больший номер
+        rotated_files.sort(key=lambda x: x['rotation'], reverse=True)
+        
+        if max_size_mb == 0:
+            # Удалить ВСЕ ротированные файлы
+            for file_info in rotated_files:
                 try:
-                    os.remove(log_file)
+                    os.remove(file_info['path'])
                     deleted_count += 1
-                    freed_bytes += file_size
+                    freed_bytes += file_info['size']
+                    log(f"[CLEANUP] Deleted rotated log: {os.path.basename(file_info['path'])} ({file_info['size'] / 1024 / 1024:.2f} MB)")
                 except Exception as e:
-                    log(f"Error deleting {log_file}: {e}")
-            else:
-                # Обрезать файл если он больше max_size_mb
-                max_bytes = max_size_mb * 1024 * 1024
-                if file_size > max_bytes:
-                    try:
-                        # Читаем последние N байт файла
-                        with open(log_file, 'rb') as f:
-                            f.seek(-max_bytes, os.SEEK_END)
-                            data = f.read()
-                        
-                        # Перезаписываем файл
-                        with open(log_file, 'wb') as f:
-                            f.write(data)
-                        
-                        deleted_count += 1
-                        freed_bytes += (file_size - max_bytes)
-                    except Exception as e:
-                        log(f"Error truncating {log_file}: {e}")
+                    log(f"[CLEANUP] Error deleting {file_info['path']}: {e}", level="ERROR")
+        else:
+            # Удалять старые файлы, пока общий размер не станет <= max_size_mb
+            max_bytes = max_size_mb * 1024 * 1024
+            
+            # Сначала считаем текущий размер
+            current_size = sum(f['size'] for f in rotated_files)
+            
+            if current_size <= max_bytes:
+                # Уже в пределах лимита
+                return {
+                    'deleted_count': 0,
+                    'freed_bytes': 0,
+                    'status': 'success',
+                    'message': f'Размер ротированных логов ({current_size / 1024 / 1024:.2f} MB) уже в пределах {max_size_mb} MB'
+                }
+            
+            # Удаляем самые старые файлы, пока не достигнем цели
+            for file_info in rotated_files:
+                if current_size <= max_bytes:
+                    break
+                
+                try:
+                    os.remove(file_info['path'])
+                    deleted_count += 1
+                    freed_bytes += file_info['size']
+                    current_size -= file_info['size']
+                    log(f"[CLEANUP] Deleted old rotated log: {os.path.basename(file_info['path'])} ({file_info['size'] / 1024 / 1024:.2f} MB)")
+                except Exception as e:
+                    log(f"[CLEANUP] Error deleting {file_info['path']}: {e}", level="ERROR")
+        
+        log(f"[CLEANUP] Backend logs cleanup complete: {deleted_count} files deleted, {freed_bytes / 1024 / 1024:.2f} MB freed")
         
         return {
             'deleted_count': deleted_count,
@@ -244,7 +285,7 @@ def cleanup_backend_logs(max_size_mb: int = 0) -> dict:
             'status': 'success'
         }
     except Exception as e:
-        log(f"Error cleaning up backend logs: {e}")
+        log(f"[CLEANUP] Error cleaning up backend logs: {e}", level="ERROR")
         import traceback
         traceback.print_exc()
         return {

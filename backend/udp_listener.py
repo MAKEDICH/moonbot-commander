@@ -1345,25 +1345,68 @@ class UDPListener:
                     if not order.opened_at:
                         order.opened_at = datetime.now()
                 elif close_date > 0:
-                    # Проверяем, это дата в прошлом или в будущем
-                    current_timestamp = int(datetime.now().timestamp())
+                    # 🎯 ГЕНИАЛЬНОЕ РЕШЕНИЕ: Проверяем ВСЕ признаки закрытия ордера
+                    #
+                    # ПРОБЛЕМА: CloseDate может быть в будущем из-за:
+                    # - Разницы часовых поясов между MoonBot и Commander
+                    # - Рассинхронизации часов серверов  
+                    # - MoonBot использует UTC, Commander - локальное время
+                    #
+                    # РЕШЕНИЕ: Смотрим на СОВОКУПНОСТЬ признаков закрытия:
+                    # 1. SellReason присутствует ("Manual Sell", "Stop Loss", etc.)
+                    # 2. SellPrice > 0 (цена продажи установлена)
+                    # 3. ProfitBTC рассчитан (финальная прибыль)
+                    #
+                    # Если ВСЕ признаки есть - ордер ТОЧНО закрыт, даже если дата в будущем!
                     
-                    if close_date > current_timestamp:
-                        # Дата в будущем - это планируемое закрытие, ордер все еще открыт
-                        log(f"[UDP-LISTENER-{self.server_id}] ⚠️ CloseDate={close_date} in future for order {order.moonbot_order_id}, keeping status as Open")
-                        # НЕ меняем статус, ордер остается открытым
-                        if order.status != "Open":
-                            order.status = "Open"
-                    else:
-                        # Дата в прошлом - ордер действительно закрыт
+                    has_sell_reason = order.sell_reason and len(order.sell_reason.strip()) > 0
+                    has_sell_price = order.sell_price and order.sell_price > 0
+                    has_profit_calculated = order.profit_btc is not None
+                    
+                    # Проверяем дату
+                    current_timestamp = int(datetime.now().timestamp())
+                    is_date_in_future = close_date > current_timestamp
+                    
+                    # ЛОГИКА ОПРЕДЕЛЕНИЯ СТАТУСА:
+                    # - Если дата в прошлом → Closed (классический случай)
+                    # - Если дата в будущем, НО есть все признаки закрытия → Closed (умное определение)
+                    # - Если дата в будущем и нет признаков → Open (планируемое закрытие)
+                    
+                    if not is_date_in_future:
+                        # Классический случай: дата в прошлом - ордер закрыт
                         order.status = "Closed"
                         try:
-                            # MoonBot отправляет timestamp, который нужно интерпретировать как UTC
-                            # и сохранить без конвертации в локальное время
                             order.closed_at = datetime.utcfromtimestamp(close_date)
                         except (ValueError, OSError, OverflowError) as e:
                             log(f"[UDP-LISTENER-{self.server_id}] Warning: Invalid CloseDate={close_date}, Error: {e}")
                             order.closed_at = datetime.now()
+                        log(f"[UDP-LISTENER-{self.server_id}] ✅ Order {order.moonbot_order_id} marked as Closed (CloseDate in past)")
+                    
+                    elif has_sell_reason and has_sell_price and has_profit_calculated:
+                        # 🎯 ГЕНИАЛЬНЫЙ СЛУЧАЙ: Дата в будущем, НО есть все признаки закрытия!
+                        # Это значит ордер УЖЕ закрыт, просто часы рассинхронизированы
+                        order.status = "Closed"
+                        try:
+                            # Используем CloseDate несмотря на то, что в будущем
+                            # (это timestamp от MoonBot, которому мы доверяем больше)
+                            order.closed_at = datetime.utcfromtimestamp(close_date)
+                        except (ValueError, OSError, OverflowError) as e:
+                            # Если не можем распарсить, берём текущее время
+                            order.closed_at = datetime.now()
+                        
+                        log(f"[UDP-LISTENER-{self.server_id}] ✅ Order {order.moonbot_order_id} marked as Closed")
+                        log(f"[UDP-LISTENER-{self.server_id}]    CloseDate={close_date} is {close_date - current_timestamp}s in future (time sync issue)")
+                        log(f"[UDP-LISTENER-{self.server_id}]    BUT has all close indicators: SellReason={has_sell_reason}, SellPrice={has_sell_price}, ProfitBTC={has_profit_calculated}")
+                        log(f"[UDP-LISTENER-{self.server_id}]    → SMART DETECTION: Order is actually closed!")
+                    
+                    else:
+                        # Дата в будущем и нет всех признаков закрытия
+                        # Это действительно планируемое закрытие (редкий случай)
+                        log(f"[UDP-LISTENER-{self.server_id}] ⏳ CloseDate={close_date} in future for order {order.moonbot_order_id}")
+                        log(f"[UDP-LISTENER-{self.server_id}]    Missing close indicators: SellReason={has_sell_reason}, SellPrice={has_sell_price}, ProfitBTC={has_profit_calculated}")
+                        log(f"[UDP-LISTENER-{self.server_id}]    → Keeping status as Open (planned close)")
+                        if order.status != "Open":
+                            order.status = "Open"
 
             
             # 🎯 КРИТИЧНО: Если symbol == UNKNOWN, но есть FName - исправляем!
@@ -1372,6 +1415,26 @@ class UDPListener:
                 if extracted_symbol:
                     order.symbol = extracted_symbol
                     log(f"[UDP-LISTENER-{self.server_id}] ✅ Fixed UNKNOWN → {extracted_symbol} from FName!")
+            
+            # 🎯 ФИНАЛЬНАЯ ПРОВЕРКА: Если CloseDate не пришёл в UPDATE, но ордер имеет все признаки закрытия
+            # Это может быть второй UPDATE с только FName или другими полями
+            if 'CloseDate' not in updates and order.status == "Open":
+                # Проверяем признаки закрытия в ТЕКУЩЕМ состоянии ордера
+                has_sell_reason = order.sell_reason and len(order.sell_reason.strip()) > 0
+                has_sell_price = order.sell_price and order.sell_price > 0
+                has_profit_calculated = order.profit_btc is not None
+                
+                if has_sell_reason and has_sell_price and has_profit_calculated:
+                    # У ордера есть ВСЕ признаки закрытия, но он все еще Open
+                    # Это значит предыдущий UPDATE установил статус неправильно (CloseDate был в будущем)
+                    order.status = "Closed"
+                    
+                    # Если есть closed_at - оставляем, иначе ставим текущее время
+                    if not order.closed_at:
+                        order.closed_at = datetime.now()
+                    
+                    log(f"[UDP-LISTENER-{self.server_id}] 🔄 SMART RE-CHECK: Order {order.moonbot_order_id} has all close indicators → Changed status to Closed")
+                    log(f"[UDP-LISTENER-{self.server_id}]    Indicators: SellReason={has_sell_reason}, SellPrice={has_sell_price}, ProfitBTC={has_profit_calculated}")
             
             order.updated_at = datetime.now()
             
@@ -1608,22 +1671,40 @@ class UDPListener:
                     order.status = "Open"
                     order.closed_at = None
                 elif close_date and close_date > 0:
-                    # Проверяем, это дата в прошлом или в будущем
-                    current_timestamp = int(datetime.now().timestamp())
+                    # 🎯 УМНОЕ ОПРЕДЕЛЕНИЕ СТАТУСА (аналогично UPDATE)
+                    # Проверяем все признаки закрытия, а не только дату
                     
-                    if close_date > current_timestamp:
-                        # Дата в будущем - это планируемое закрытие, ордер все еще открыт
-                        log(f"[UDP-LISTENER-{self.server_id}] ⚠️ INSERT with future CloseDate={close_date} for order {moonbot_order_id}, setting status as Open")
-                        order.status = "Open"
-                        order.closed_at = None
-                    else:
-                        # Дата в прошлом - ордер действительно закрыт
+                    has_sell_reason = order.sell_reason and len(order.sell_reason.strip()) > 0
+                    has_sell_price = order.sell_price and order.sell_price > 0
+                    has_profit_calculated = order.profit_btc is not None
+                    
+                    current_timestamp = int(datetime.now().timestamp())
+                    is_date_in_future = close_date > current_timestamp
+                    
+                    if not is_date_in_future:
+                        # Классический случай: дата в прошлом - ордер закрыт
                         order.status = "Closed"
                         try:
-                            # MoonBot отправляет timestamp в UTC
                             order.closed_at = datetime.utcfromtimestamp(close_date)
                         except:
                             order.closed_at = datetime.now()
+                        log(f"[UDP-LISTENER-{self.server_id}] ✅ INSERT: Order {moonbot_order_id} marked as Closed (CloseDate in past)")
+                    
+                    elif has_sell_reason and has_sell_price and has_profit_calculated:
+                        # 🎯 УМНЫЙ СЛУЧАЙ: Дата в будущем, НО есть все признаки закрытия
+                        order.status = "Closed"
+                        try:
+                            order.closed_at = datetime.utcfromtimestamp(close_date)
+                        except:
+                            order.closed_at = datetime.now()
+                        log(f"[UDP-LISTENER-{self.server_id}] ✅ INSERT: Order {moonbot_order_id} marked as Closed (smart detection)")
+                        log(f"[UDP-LISTENER-{self.server_id}]    CloseDate={close_date} is {close_date - current_timestamp}s in future, but has close indicators")
+                    
+                    else:
+                        # Дата в будущем и нет всех признаков - планируемое закрытие
+                        log(f"[UDP-LISTENER-{self.server_id}] ⏳ INSERT: Future CloseDate={close_date} for order {moonbot_order_id}, setting status as Open")
+                        order.status = "Open"
+                        order.closed_at = None
             
             # Вычисляем недостающие поля
             if not order.buy_price and order.spent_btc and order.quantity and order.quantity > 0:
