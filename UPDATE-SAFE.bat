@@ -1,6 +1,5 @@
 @echo off
 setlocal enabledelayedexpansion
-chcp 65001 > nul
 title MoonBot Commander - Safe Update System
 color 0E
 
@@ -17,10 +16,7 @@ echo.
 echo ============================================================
 echo.
 
-REM ============================================================
-REM STEP 0: Check location
-REM ============================================================
-
+REM Check location
 if not exist "backend\main.py" (
     if not exist "frontend\package.json" (
         echo [ERROR] This doesn't look like MoonBot Commander folder!
@@ -36,10 +32,7 @@ if not exist "backend\main.py" (
 echo [INFO] MoonBot Commander installation detected
 echo.
 
-REM ============================================================
-REM STEP 1: Stop application
-REM ============================================================
-
+REM Stop application
 echo [1/10] Stopping application...
 echo.
 
@@ -73,10 +66,7 @@ if !errorlevel! equ 0 (
 
 echo.
 
-REM ============================================================
-REM STEP 2: Detect current version
-REM ============================================================
-
+REM Detect current version
 echo [2/10] Detecting current version...
 echo.
 
@@ -101,10 +91,7 @@ if exist "backend\intelligent_migration.py" (
 
 echo.
 
-REM ============================================================
-REM STEP 3: Create full backup
-REM ============================================================
-
+REM Create full backup
 echo [3/10] Creating full backup...
 echo.
 
@@ -120,6 +107,7 @@ set "TIMESTAMP=%YYYY%%MM%%DD%_%HH%%Min%%Sec%"
 set "FULL_BACKUP_DIR=BACKUP\full_backup_%TIMESTAMP%"
 
 mkdir "%FULL_BACKUP_DIR%" 2>nul
+mkdir "%FULL_BACKUP_DIR%\backend" 2>nul
 
 REM Backup user-specific data first
 echo Saving user data...
@@ -142,20 +130,20 @@ echo.
 echo Creating archives...
 
 REM Backend archive
-powershell -Command "& {Compress-Archive -Path 'backend\*' -DestinationPath '%FULL_BACKUP_DIR%\backend.zip' -Force}" >nul 2>&1
+powershell -Command "Compress-Archive -Path 'backend\*' -DestinationPath '%FULL_BACKUP_DIR%\backend.zip' -Force" >nul 2>&1
 if exist "%FULL_BACKUP_DIR%\backend.zip" echo   [OK] backend.zip
 
 REM Frontend archive
-powershell -Command "& {Compress-Archive -Path 'frontend\*' -DestinationPath '%FULL_BACKUP_DIR%\frontend.zip' -Force}" >nul 2>&1
+powershell -Command "Compress-Archive -Path 'frontend\*' -DestinationPath '%FULL_BACKUP_DIR%\frontend.zip' -Force" >nul 2>&1
 if exist "%FULL_BACKUP_DIR%\frontend.zip" echo   [OK] frontend.zip
 
 REM Scripts archive
-powershell -Command "& {Compress-Archive -Path '*.bat', '*.sh', '*.txt', '*.md', '*.json' -DestinationPath '%FULL_BACKUP_DIR%\scripts.zip' -Force}" >nul 2>&1
+powershell -Command "Compress-Archive -Path '*.bat', '*.sh', '*.txt', '*.md', '*.json' -DestinationPath '%FULL_BACKUP_DIR%\scripts.zip' -Force" >nul 2>&1
 if exist "%FULL_BACKUP_DIR%\scripts.zip" echo   [OK] scripts.zip
 
 REM Linux files
 if exist "linux" (
-    powershell -Command "& {Compress-Archive -Path 'linux\*' -DestinationPath '%FULL_BACKUP_DIR%\linux.zip' -Force}" >nul 2>&1
+    powershell -Command "Compress-Archive -Path 'linux\*' -DestinationPath '%FULL_BACKUP_DIR%\linux.zip' -Force" >nul 2>&1
     if exist "%FULL_BACKUP_DIR%\linux.zip" echo   [OK] linux.zip
 )
 
@@ -163,15 +151,12 @@ echo.
 echo [OK] Full backup created: %FULL_BACKUP_DIR%
 echo.
 
-REM ============================================================
-REM STEP 4: Check for latest release
-REM ============================================================
-
+REM Check for latest release
 echo [4/10] Checking for latest release...
 echo.
 
 echo Fetching release information...
-powershell -Command "& {[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri 'https://api.github.com/repos/MAKEDICH/moonbot-commander/releases/latest' -OutFile 'latest_release.json' -UseBasicParsing } catch { Write-Host 'Failed to download release info'; exit 1 }}" >nul 2>&1
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri 'https://api.github.com/repos/MAKEDICH/moonbot-commander/releases/latest' -OutFile 'latest_release.json' -UseBasicParsing } catch { Write-Host 'Failed to download release info'; exit 1 }" >nul 2>&1
 
 if not exist "latest_release.json" (
     echo [ERROR] Failed to get release information!
@@ -183,8 +168,8 @@ if not exist "latest_release.json" (
 )
 
 REM Get version and download URL
-for /f "delims=" %%a in ('powershell -Command "& {$json = Get-Content 'latest_release.json' -Raw | ConvertFrom-Json; $json.tag_name}"') do set "NEW_VERSION=%%a"
-for /f "delims=" %%a in ('powershell -Command "& {$json = Get-Content 'latest_release.json' -Raw | ConvertFrom-Json; $json.assets[0].browser_download_url}"') do set "DOWNLOAD_URL=%%a"
+for /f "delims=" %%a in ('powershell -Command "$json = Get-Content 'latest_release.json' -Raw | ConvertFrom-Json; $json.tag_name"') do set "NEW_VERSION=%%a"
+for /f "delims=" %%a in ('powershell -Command "$json = Get-Content 'latest_release.json' -Raw | ConvertFrom-Json; $json.assets[0].browser_download_url"') do set "DOWNLOAD_URL=%%a"
 
 echo Current version: !CURRENT_VERSION!
 echo Latest version: !NEW_VERSION!
@@ -203,15 +188,12 @@ if "!CURRENT_VERSION!"=="!NEW_VERSION!" (
 
 echo.
 
-REM ============================================================
-REM STEP 5: Download latest release
-REM ============================================================
-
+REM Download latest release
 echo [5/10] Downloading update...
 echo.
 
 echo Downloading from GitHub...
-powershell -Command "& {[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!DOWNLOAD_URL!' -OutFile 'moonbot_update.zip' -UseBasicParsing } catch { Write-Host 'Download failed'; exit 1 }}" >nul 2>&1
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!DOWNLOAD_URL!' -OutFile 'moonbot_update.zip' -UseBasicParsing } catch { Write-Host 'Download failed'; exit 1 }" >nul 2>&1
 
 if not exist "moonbot_update.zip" (
     echo [ERROR] Failed to download update!
@@ -226,15 +208,12 @@ if not exist "moonbot_update.zip" (
 echo [OK] Update downloaded
 echo.
 
-REM ============================================================
-REM STEP 6: Extract update
-REM ============================================================
-
+REM Extract update
 echo [6/10] Extracting update...
 echo.
 
 if exist "temp_update" rd /s /q "temp_update" 2>nul
-powershell -Command "& {Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory('moonbot_update.zip', 'temp_update')}" >nul 2>&1
+powershell -Command "Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory('moonbot_update.zip', 'temp_update')" >nul 2>&1
 
 if not exist "temp_update" (
     echo [ERROR] Failed to extract update!
@@ -262,10 +241,7 @@ if not defined UPDATE_SOURCE (
 echo [OK] Update extracted
 echo.
 
-REM ============================================================
-REM STEP 7: Update files
-REM ============================================================
-
+REM Update files
 echo [7/10] Updating application files...
 echo.
 
@@ -323,10 +299,7 @@ if exist "%FULL_BACKUP_DIR%\moonbot_commander.db" (
 echo [OK] Files updated
 echo.
 
-REM ============================================================
-REM STEP 8: Apply migrations
-REM ============================================================
-
+REM Apply migrations
 echo [8/10] Applying migrations...
 echo.
 
@@ -379,10 +352,7 @@ if exist "intelligent_migration.py" (
 cd ..
 echo.
 
-REM ============================================================
-REM STEP 9: Install dependencies
-REM ============================================================
-
+REM Install dependencies
 echo [9/10] Installing dependencies...
 echo.
 
@@ -397,10 +367,7 @@ call npm install --silent
 cd ..
 echo.
 
-REM ============================================================
-REM STEP 10: Cleanup
-REM ============================================================
-
+REM Cleanup
 echo [10/10] Cleanup...
 echo.
 
@@ -418,16 +385,12 @@ if exist "backend\intelligent_migration.py" (
     cd ..
 )
 
-REM ============================================================
-REM SUCCESS!
-REM ============================================================
-
 echo.
 echo ============================================================
 echo          UPDATE COMPLETED SUCCESSFULLY!
 echo ============================================================
 echo.
-echo Updated: v!CURRENT_VERSION! → v!NEW_VERSION!
+echo Updated: v!CURRENT_VERSION! to v!NEW_VERSION!
 echo.
 echo [BACKUP] Full backup saved in: %FULL_BACKUP_DIR%
 echo.
