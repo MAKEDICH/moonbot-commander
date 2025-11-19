@@ -73,6 +73,14 @@ def apply_critical_migrations():
     else:
         print(f"\n[INFO] Все БД в актуальном состоянии")
     
+    # Также исправляем валюты если они None
+    try:
+        from fix_currency_on_startup import fix_server_currencies
+        fix_server_currencies()
+        print("[SUCCESS] Валюты серверов проверены")
+    except Exception as e:
+        print(f"[WARNING] Не удалось исправить валюты: {e}")
+    
     return True
 
 if __name__ == "__main__":

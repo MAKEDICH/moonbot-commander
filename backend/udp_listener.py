@@ -908,6 +908,7 @@ class UDPListener:
             
             # 💱 АВТООПРЕДЕЛЕНИЕ ВАЛЮТЫ из lst
             currency = self._extract_currency(message)
+            log(f"[UDP-LISTENER-{self.server_id}] 💱 Detected currency from lst: {currency}")
             
             total_open = 0
             
@@ -974,10 +975,16 @@ class UDPListener:
                     models.Server.id == self.server_id
                 ).first()
                 
-                if server and server.default_currency != currency:
-                    server.default_currency = currency
-                    db.commit()
-                    log(f"[UDP-LISTENER-{self.server_id}] 💱 Server currency updated: {currency}")
+                if server:
+                    if server.default_currency != currency:
+                        log(f"[UDP-LISTENER-{self.server_id}] 💱 Updating server currency from {server.default_currency} to {currency}")
+                        server.default_currency = currency
+                        db.commit()
+                        log(f"[UDP-LISTENER-{self.server_id}] 💱 Server currency updated: {currency}")
+                    else:
+                        log(f"[UDP-LISTENER-{self.server_id}] 💱 Server currency already set to: {currency}")
+                else:
+                    log(f"[UDP-LISTENER-{self.server_id}] ❌ Server not found in DB!")
                 
                 # Если у нас больше открытых чем у MoonBot - закрываем старые
                 if our_open_count > total_open:

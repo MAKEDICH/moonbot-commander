@@ -25,6 +25,7 @@ from api.routers import cleanup, strategies
 from logger_utils import log, get_logger
 from update_checker import update_checker, check_update_on_startup
 from auto_migrate import run_auto_migrations
+from fix_currency_on_startup import fix_server_currencies
 
 # Автоматическое применение миграций
 try:
@@ -34,6 +35,12 @@ except Exception as e:
 
 # Создание таблиц
 models.Base.metadata.create_all(bind=engine)
+
+# Исправление валют серверов при запуске
+try:
+    fix_server_currencies()
+except Exception as e:
+    print(f"Warning: Currency fix failed: {e}")
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)

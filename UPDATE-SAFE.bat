@@ -268,6 +268,7 @@ if exist "!UPDATE_SOURCE!\backend\requirements.txt" copy "!UPDATE_SOURCE!\backen
 REM Важные новые файлы
 if exist "!UPDATE_SOURCE!\backend\auto_migrate.py" copy "!UPDATE_SOURCE!\backend\auto_migrate.py" "backend\auto_migrate.py" >nul
 if exist "!UPDATE_SOURCE!\backend\startup_migrations.py" copy "!UPDATE_SOURCE!\backend\startup_migrations.py" "backend\startup_migrations.py" >nul
+if exist "!UPDATE_SOURCE!\backend\fix_currency_on_startup.py" copy "!UPDATE_SOURCE!\backend\fix_currency_on_startup.py" "backend\fix_currency_on_startup.py" >nul
 
 REM Frontend
 echo Обновление Frontend...
