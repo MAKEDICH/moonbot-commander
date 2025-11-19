@@ -1,0 +1,44 @@
+[Unit]
+Description=MoonBot Commander Task Scheduler
+Documentation=https://github.com/MAKEDICH/moonbot-commander
+After=network.target moonbot-backend.service
+Requires=moonbot-backend.service
+
+[Service]
+Type=simple
+# ВАЖНО: Замените USERNAME на имя пользователя
+User=USERNAME
+Group=USERNAME
+
+# ВАЖНО: Замените /path/to/moonbot-commander на реальный путь
+WorkingDirectory=/path/to/moonbot-commander/backend
+
+# Переменные окружения
+Environment="MOONBOT_MODE=server"
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+# Команда запуска
+ExecStart=/bin/bash -c 'PYTHON_CMD=python3; if command -v python3.11 &>/dev/null; then PYTHON_CMD=python3.11; elif command -v python3.10 &>/dev/null; then PYTHON_CMD=python3.10; fi; exec $PYTHON_CMD scheduler.py'
+
+# Настройки перезапуска
+Restart=always
+RestartSec=10
+StartLimitBurst=5
+StartLimitInterval=60
+
+# Логирование
+StandardOutput=append:/var/log/moonbot/scheduler.log
+StandardError=append:/var/log/moonbot/scheduler-error.log
+
+# Лимиты
+LimitNOFILE=65536
+
+# Безопасность
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/path/to/moonbot-commander/backend
+
+[Install]
+WantedBy=multi-user.target

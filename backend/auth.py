@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 import os
 import sys
 from dotenv import load_dotenv
+from logger_utils import log
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,11 +16,11 @@ load_dotenv()
 # Check if SECRET_KEY is properly set
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY or SECRET_KEY == "your-secret-key-change-this-in-production":
-    print("\n" + "="*60)
-    print("  [SECURITY ERROR] SECRET_KEY not set!")
-    print("="*60)
-    print("\nRun: python init_security.py")
-    print("\nThis will generate a secure SECRET_KEY and ENCRYPTION_KEY\n")
+    log("\n" + "="*60)
+    log("  [SECURITY ERROR] SECRET_KEY not set!")
+    log("="*60)
+    log("\nRun: python init_security.py")
+    log("\nThis will generate a secure SECRET_KEY and ENCRYPTION_KEY\n")
     sys.exit(1)
 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")

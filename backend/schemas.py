@@ -83,6 +83,7 @@ class ServerBase(BaseModel):
     description: Optional[str] = Field(None, max_length=500)  # ИСПРАВЛЕНО: Ограничение длины
     group_name: Optional[str] = Field(None, max_length=200)  # Группы через запятую
     keepalive_enabled: bool = True  # Включен ли keep-alive
+    is_localhost: bool = False  # Разрешить localhost/127.0.0.1
     
     # РАЗМЫШЛЕНИЕ: Валидация host должна быть, но @validator требует Pydantic v1 syntax
     # В Pydantic v2 используется @field_validator
@@ -101,17 +102,20 @@ class ServerUpdate(BaseModel):
     group_name: Optional[str] = Field(None, max_length=200)  # Группы через запятую
     is_active: Optional[bool] = None
     keepalive_enabled: Optional[bool] = None  # Включен ли keep-alive
+    is_localhost: Optional[bool] = None  # Разрешить localhost
 
 
 class Server(ServerBase):
     id: int
     is_active: bool
+    is_localhost: bool
     created_at: datetime
     updated_at: datetime
     user_id: int
     group_name: Optional[str] = None
     password: Optional[str] = None  # UDP пароль
     keepalive_enabled: bool = True
+    default_currency: Optional[str] = 'USDT'  # Базовая валюта сервера
 
     class Config:
         from_attributes = True
@@ -315,6 +319,8 @@ class ScheduledCommandCreate(BaseModel):
     group_ids: List[int] = Field(default_factory=list)  # ID групп (если target_type=groups)
     use_botname: bool = False
     delay_between_bots: int = Field(default=0, ge=0, le=3600)
+    recurrence_type: str = Field(default="once", pattern="^(once|daily|weekly|monthly|weekly_days)$")  # Тип повторения
+    weekdays: Optional[List[int]] = Field(default=None, description="Дни недели для weekly_days: [0-6], где 0=Пн, 6=Вс")
 
 
 class ScheduledCommandUpdate(BaseModel):
@@ -327,6 +333,8 @@ class ScheduledCommandUpdate(BaseModel):
     group_ids: Optional[List[int]] = None
     use_botname: Optional[bool] = None
     delay_between_bots: Optional[int] = Field(None, ge=0, le=3600)
+    recurrence_type: Optional[str] = Field(None, pattern="^(once|daily|weekly|monthly|weekly_days)$")
+    weekdays: Optional[List[int]] = Field(None, description="Дни недели для weekly_days: [0-6]")
 
 
 class ScheduledCommand(BaseModel):
@@ -344,6 +352,8 @@ class ScheduledCommand(BaseModel):
     target_type: str
     timezone: str
     user_id: int
+    recurrence_type: str = "once"  # once, daily, weekly, monthly, weekly_days
+    weekdays: Optional[str] = None  # JSON строка для БД: "[0,2,4]"
     
     class Config:
         from_attributes = True

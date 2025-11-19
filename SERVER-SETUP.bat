@@ -204,14 +204,23 @@ if defined SERVER_IP (
 
 echo.
 echo Running database migrations...
-python migrate_add_password.py >nul 2>&1
-python migrate_add_recovery_codes.py >nul 2>&1
-python migrate_add_2fa.py >nul 2>&1
-python migrate_scheduled_commands_full.py >nul 2>&1
-python migrate_add_timezone.py >nul 2>&1
-python migrate_add_scheduler_settings.py >nul 2>&1
-python migrate_add_display_time.py >nul 2>&1
-python migrate_add_udp_listener.py >nul 2>&1
+
+REM Try intelligent migration first
+if exist intelligent_migration.py (
+    echo Using intelligent migration system...
+    python intelligent_migration.py
+    if !errorlevel! neq 0 (
+        echo [WARNING] Some migrations may have failed
+        echo [INFO] Check migration.log for details
+    )
+) else (
+    REM Fallback to dynamic discovery
+    echo [INFO] Running all migrations...
+    for %%f in (migrate_*.py) do (
+        echo   Processing: %%f
+        python %%f >nul 2>&1
+    )
+)
 echo [OK] Database ready
 
 cd ..

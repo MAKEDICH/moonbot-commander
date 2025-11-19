@@ -12,6 +12,7 @@ from typing import Dict, Set, List
 import json
 import asyncio
 from datetime import datetime
+from logger_utils import log
 
 
 class ConnectionManager:
@@ -35,12 +36,14 @@ class ConnectionManager:
         
         # Event loop (будет установлен при старте FastAPI)
         self._loop = None
+        
+        # Уведомление об обновлении (если есть)
+        self.update_notification = None
     
     def set_event_loop(self, loop):
         """Установить event loop для thread-safe вызовов"""
         self._loop = loop
-        print(f"[WS] Event loop set: {loop}")
-    
+        log(f"[WS] Event loop set: {loop}")    
     async def connect(self, websocket: WebSocket, user_id: int, connection_id: str):
         """
         Подключить нового клиента
@@ -58,8 +61,16 @@ class ConnectionManager:
             
             self.active_connections[user_id][connection_id] = websocket
         
-        print(f"[WS] User {user_id} connected (connection_id: {connection_id})")
-        print(f"[WS] Total connections for user {user_id}: {len(self.active_connections[user_id])}")
+        log(f"[WS] User {user_id} connected (connection_id: {connection_id})")
+        log(f"[WS] Total connections for user {user_id}: {len(self.active_connections[user_id])}")
+        
+        # Отправляем уведомление об обновлении если есть
+        if self.update_notification:
+            try:
+                await websocket.send_json(self.update_notification)
+                log(f"[WS] Sent update notification to user {user_id}")
+            except Exception as e:
+                log(f"[WS] Failed to send update notification: {e}")
     
     async def disconnect(self, user_id: int, connection_id: str):
         """
@@ -73,13 +84,12 @@ class ConnectionManager:
             if user_id in self.active_connections:
                 if connection_id in self.active_connections[user_id]:
                     del self.active_connections[user_id][connection_id]
-                    print(f"[WS] User {user_id} disconnected (connection_id: {connection_id})")
+                    log(f"[WS] User {user_id} disconnected (connection_id: {connection_id})")
                 
                 # Удаляем пользователя если у него нет соединений
                 if not self.active_connections[user_id]:
                     del self.active_connections[user_id]
-                    print(f"[WS] No more connections for user {user_id}")
-    
+                    log(f"[WS] No more connections for user {user_id}")    
     async def send_personal_message(self, message: dict, user_id: int):
         """
         Отправить сообщение всем соединениям конкретного пользователя
@@ -101,7 +111,7 @@ class ConnectionManager:
             try:
                 await websocket.send_json(message)
             except Exception as e:
-                print(f"[WS] Failed to send to user {user_id}, connection {connection_id}: {e}")
+                log(f"[WS] Failed to send to user {user_id}, connection {connection_id}: {e}", level="ERROR")
                 to_remove.append(connection_id)
         
         # Удаляем мертвые соединения
@@ -121,15 +131,15 @@ class ConnectionManager:
             user_id: ID пользователя
         """
         if not self._loop:
-            print(f"[WS] ⚠️ Warning: Event loop not set, cannot send message to user {user_id}")
+            log(f"[WS] ⚠️ Warning: Event loop not set, cannot send message to user {user_id}", level="WARNING")
             return
         
         if user_id not in self.active_connections:
-            print(f"[WS] ℹ️ User {user_id} has no active WebSocket connections (0 connections)")
+            log(f"[WS] ℹ️ User {user_id} has no active WebSocket connections (0 connections)")
             return
         
         connection_count = len(self.active_connections[user_id])
-        print(f"[WS] 📤 Sending message to user {user_id} ({connection_count} connections): type={message.get('type')}")
+        log(f"[WS] 📤 Sending message to user {user_id} ({connection_count} connections)")
         
         # Планируем coroutine в главном event loop
         future = asyncio.run_coroutine_threadsafe(
@@ -140,9 +150,9 @@ class ConnectionManager:
         # Ждем результат (с timeout)
         try:
             future.result(timeout=1.0)
-            print(f"[WS] ✅ Message sent successfully to user {user_id}")
+            log(f"[WS] ✅ Message sent successfully to user {user_id}")
         except Exception as e:
-            print(f"[WS] ❌ Error sending message to user {user_id}: {e}")
+            log(f"[WS] ❌ Error sending message to user {user_id}: {e}")
     
     async def send_to_all(self, message: dict):
         """

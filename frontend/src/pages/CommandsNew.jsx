@@ -2,6 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { FiSend, FiServer, FiSearch, FiCheckSquare, FiSquare, FiPlus, FiTrash2, FiEdit2, FiBook, FiSave, FiX, FiTool, FiPlayCircle, FiInfo, FiSettings } from 'react-icons/fi';
 import { serversAPI, commandsAPI, groupsAPI, quickCommandsAPI, presetsAPI, botCommandsAPI } from '../api/api';
 import styles from './CommandsNew.module.css';
+import { useNotification } from '../context/NotificationContext';
 
 // Lazy loading для тяжелой страницы StrategyCommander
 const StrategyCommander = lazy(() => import('./StrategyCommander'));
@@ -257,6 +258,7 @@ const CONSTRUCTOR_COMMANDS = [
 ];
 
 const CommandsNew = () => {
+  const { warning } = useNotification();
   const [servers, setServers] = useState([]);
   const [selectedServers, setSelectedServers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -495,7 +497,7 @@ const CommandsNew = () => {
       
       // Проверяем, что номер не превышает максимум
       if (nextNumber > 50) {
-        alert('Достигнут максимум кнопок (50). Удалите или измените номер существующей кнопки.');
+        warning('Достигнут максимум кнопок (50). Удалите или измените номер существующей кнопки.');
         return;
       }
       
@@ -904,7 +906,7 @@ const CommandsNew = () => {
   // === Быстрая отправка команды (без редактора) ===
   const handleQuickSend = async (command) => {
     if (selectedServers.length === 0) {
-      alert('Выберите хотя бы один сервер');
+      warning('Выберите хотя бы один сервер');
       return;
     }
 

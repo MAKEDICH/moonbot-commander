@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       visualizer({
-        open: true,
+        open: false,  // НЕ открывать автоматически (только по запросу)
         filename: 'bundle-stats.html',
         gzipSize: true,
         brotliSize: true,

@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaChartLine, FaSync, FaFilter, FaCheckCircle, FaTimesCircle, FaCoins } from 'react-icons/fa';
 import styles from './Orders.module.css';
+import commonStyles from '../styles/common.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
 import { ordersAPI } from '../api/api';
 import wsService from '../services/websocket';
+import { useNotification } from '../context/NotificationContext';
 
-const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter }) => {
+const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter, currencyFilter }) => {
   const API_BASE_URL = getApiBaseUrl();
+  const navigate = useNavigate();
+  const { success, error: showError, confirm } = useNotification();
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('all'); // По умолчанию "Все сервера"
   const [orders, setOrders] = useState([]);
@@ -24,12 +29,15 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
   const [error, setError] = useState(null);
   const autoRefreshRef = useRef(null);
   
+  // 🎯 ГЕНИАЛЬНО: Debounce для WebSocket событий (защита от спама)
+  const wsDebounceRef = useRef(null);
+  const WS_DEBOUNCE_MS = 300; // 300ms между обновлениями
+  
   // Сортировка
   const [sortBy, setSortBy] = useState('openedAt'); // Поле для сортировки
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' или 'desc'
   
   // Управление видимостью колонок
-  const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('orders_visible_columns');
     return saved ? JSON.parse(saved) : {
@@ -65,21 +73,18 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     localStorage.setItem('orders_visible_columns', JSON.stringify(visibleColumns));
   }, [visibleColumns]);
   
-  // Закрытие выпадающего меню при клике вне его
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showColumnSettings && !event.target.closest(`.${styles.columnSettingsWrapper}`)) {
-        setShowColumnSettings(false);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showColumnSettings]);
 
   useEffect(() => {
     fetchServers();
   }, []);
+  
+  // Обновляем данные при изменении фильтра валют
+  useEffect(() => {
+    if (servers.length > 0) {
+      fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
+      fetchStats(selectedServer, emulatorFilter);
+    }
+  }, [currencyFilter]);
 
   // Перезагрузка данных при возврате на вкладку
   useEffect(() => {
@@ -87,7 +92,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
       if (!document.hidden && selectedServer) {
         // Вкладка стала активной - обновляем данные
         fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
-        fetchStats(selectedServer);
+        fetchStats(selectedServer, emulatorFilter);
       }
     };
 
@@ -96,7 +101,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [selectedServer, page, statusFilter, symbolFilter, emulatorFilter, servers]);
+  }, [selectedServer, page, statusFilter, symbolFilter, emulatorFilter, currencyFilter, servers]);
 
   // WebSocket подключение (всегда активно для real-time обновлений)
   useEffect(() => {
@@ -107,24 +112,34 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     // Подключаемся к WebSocket
     wsService.connect();
 
-    // Подписываемся на события обновления ордеров
+    // Подписываемся на события обновления ордеров с debouncing
     const unsubscribe = wsService.on('order_update', (data) => {
       console.log('[Orders] WebSocket event received:', data);
       
       // Проверяем соответствует ли server_id выбранному серверу
       if (selectedServer === 'all' || Number(selectedServer) === data.server_id) {
-        console.log('[Orders] Refreshing orders due to WebSocket event');
-        // Обновляем ордера и статистику
-        fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
-        fetchStats(selectedServer);
+        // 🎯 ЭЛЕГАНТНО: Debouncing для защиты от спама событий
+        if (wsDebounceRef.current) {
+          clearTimeout(wsDebounceRef.current);
+        }
+        
+        wsDebounceRef.current = setTimeout(() => {
+          console.log('[Orders] Refreshing orders due to WebSocket event (debounced)');
+          // Обновляем ордера и статистику
+          fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
+          fetchStats(selectedServer, emulatorFilter);
+        }, WS_DEBOUNCE_MS);
       }
     });
 
     // Cleanup
     return () => {
+      if (wsDebounceRef.current) {
+        clearTimeout(wsDebounceRef.current);
+      }
       unsubscribe();
     };
-  }, [selectedServer, page, statusFilter, symbolFilter, emulatorFilter, servers.length]);
+  }, [selectedServer, page, statusFilter, symbolFilter, emulatorFilter, currencyFilter, servers.length]);
 
   // Автообновление: Fallback polling если WebSocket не работает
   useEffect(() => {
@@ -143,7 +158,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
       if (!wsService.isConnected()) {
         console.log('[Orders] WebSocket not connected, using polling fallback');
         fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
-        fetchStats(selectedServer);
+        fetchStats(selectedServer, emulatorFilter);
       }
     }, 30000);
 
@@ -182,7 +197,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
         console.log('[Orders] Initial load for server:', savedServer);
         // Передаем serversData напрямую, так как setServers обновляет state асинхронно
         fetchOrdersWithServers(savedServer, serversData);
-        fetchStatsWithServers(savedServer, serversData);
+        fetchStatsWithServers(savedServer, serversData, emulatorFilter);
       }
     } catch (error) {
       console.error('Error fetching servers:', error);
@@ -205,7 +220,19 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
       const offset = (pageNum - 1) * limit;
       
       if (serverId === 'all') {
-        // Загрузка ордеров со всех серверов ПАРАЛЛЕЛЬНО (оптимизация)
+        // Фильтруем серверы по выбранной валюте
+        const filteredServers = currencyFilter === 'all' 
+          ? serversArray 
+          : serversArray.filter(server => server.default_currency === currencyFilter);
+        
+        if (filteredServers.length === 0) {
+          setOrders([]);
+          setTotal(0);
+          setLoading(false);
+          return;
+        }
+        
+        // Загрузка ордеров со всех отфильтрованных серверов ПАРАЛЛЕЛЬНО (оптимизация)
         let allOrders = [];
         let totalCount = 0;
         const MAX_ORDERS_PER_SERVER = 100;
@@ -215,7 +242,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
         let completedServers = 0;
         
         // Создаем массив промисов для параллельной загрузки
-        const fetchPromises = serversArray.map(server => {
+        const fetchPromises = filteredServers.map(server => {
           let url = `${API_BASE_URL}/api/servers/${server.id}/orders?limit=${MAX_ORDERS_PER_SERVER}&offset=0`;
           if (status) url += `&status=${status}`;
           if (symbol) url += `&symbol=${symbol}`;
@@ -229,7 +256,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
             .then(response => {
               // Обновляем прогресс
               completedServers++;
-              setLoadingProgress(Math.round((completedServers / serversArray.length) * 100));
+              setLoadingProgress(Math.round((completedServers / filteredServers.length) * 100));
               
               return {
                 orders: response.data.orders,
@@ -240,7 +267,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
               console.error(`Error fetching orders from server ${server.id}:`, err);
               // Обновляем прогресс даже при ошибке
               completedServers++;
-              setLoadingProgress(Math.round((completedServers / serversArray.length) * 100));
+              setLoadingProgress(Math.round((completedServers / filteredServers.length) * 100));
               
               return { orders: [], total: 0 }; // Возвращаем пустые данные при ошибке
             });
@@ -288,58 +315,83 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     }
   };
 
-  const fetchStats = async (serverId) => {
+  const fetchStats = async (serverId, emulator = 'all') => {
     // Используем текущий state servers
-    return fetchStatsWithServers(serverId, servers);
+    return fetchStatsWithServers(serverId, servers, emulator);
   };
 
-  const fetchStatsWithServers = async (serverId, serversArray) => {
+  const fetchStatsWithServers = async (serverId, serversArray, emulator = 'all') => {
     if (!serverId) return;
     
     try {
       const token = localStorage.getItem('token');
       
+      // Построим query параметр для фильтра эмулятора
+      const emulatorParam = emulator !== 'all' ? `?emulator=${emulator}` : '';
+      
       if (serverId === 'all') {
-        // Агрегация статистики со всех серверов ПАРАЛЛЕЛЬНО (оптимизация)
-        let totalOrders = 0;
-        let openOrders = 0;
-        let closedOrders = 0;
-        let totalProfit = 0;
+        // Фильтруем серверы по выбранной валюте
+        const filteredServers = currencyFilter === 'all' 
+          ? serversArray 
+          : serversArray.filter(server => server.default_currency === currencyFilter);
+        
+        if (filteredServers.length === 0) {
+          setStats(null);
+          return;
+        }
+        
+        // 💱 Агрегация с группировкой по валютам
+        const currencyStats = {};  // { "TRY": {...}, "USDT": {...} }
         
         // Создаем массив промисов для параллельной загрузки
-        const fetchPromises = serversArray.map(server =>
+        const fetchPromises = filteredServers.map(server =>
           axios.get(
-            `${API_BASE_URL}/api/servers/${server.id}/orders/stats`,
+            `${API_BASE_URL}/api/servers/${server.id}/orders/stats${emulatorParam}`,
             { headers: { Authorization: `Bearer ${token}` }}
           )
             .then(response => response.data)
             .catch(err => {
               console.error(`Error fetching stats from server ${server.id}:`, err);
-              return { total_orders: 0, open_orders: 0, closed_orders: 0, total_profit_btc: 0 };
+              return { total_orders: 0, open_orders: 0, closed_orders: 0, total_profit_btc: 0, default_currency: 'USDT' };
             })
         );
         
         // Ждем завершения всех запросов параллельно
         const results = await Promise.all(fetchPromises);
         
-        // Агрегируем результаты
+        // Группируем по валютам
         results.forEach(data => {
-          totalOrders += data.total_orders || 0;
-          openOrders += data.open_orders || 0;
-          closedOrders += data.closed_orders || 0;
-          totalProfit += data.total_profit_btc || 0;
+          const currency = data.default_currency || 'USDT';
+          
+          if (!currencyStats[currency]) {
+            currencyStats[currency] = {
+              total_orders: 0,
+              open_orders: 0,
+              closed_orders: 0,
+              total_profit_btc: 0
+            };
+          }
+          
+          currencyStats[currency].total_orders += data.total_orders || 0;
+          currencyStats[currency].open_orders += data.open_orders || 0;
+          currencyStats[currency].closed_orders += data.closed_orders || 0;
+          currencyStats[currency].total_profit_btc += data.total_profit_btc || 0;
         });
         
+        // Устанавливаем статистику с группировкой
         setStats({
-          total_orders: totalOrders,
-          open_orders: openOrders,
-          closed_orders: closedOrders,
-          total_profit_btc: totalProfit
+          mixed_currencies: Object.keys(currencyStats).length > 1,  // ⚠️ Больше 1 валюты?
+          currencies: currencyStats,  // { "TRY": {...}, "USDT": {...} }
+          // Для обратной совместимости (если нужно)
+          total_orders: Object.values(currencyStats).reduce((sum, c) => sum + c.total_orders, 0),
+          open_orders: Object.values(currencyStats).reduce((sum, c) => sum + c.open_orders, 0),
+          closed_orders: Object.values(currencyStats).reduce((sum, c) => sum + c.closed_orders, 0),
+          total_profit_btc: Object.values(currencyStats).reduce((sum, c) => sum + c.total_profit_btc, 0)
         });
       } else {
         // Статистика с конкретного сервера
         const response = await axios.get(
-          `${API_BASE_URL}/api/servers/${serverId}/orders/stats`,
+          `${API_BASE_URL}/api/servers/${serverId}/orders/stats${emulatorParam}`,
           { headers: { Authorization: `Bearer ${token}` }}
         );
         setStats(response.data);
@@ -357,7 +409,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     setSymbolFilter('');
     // emulatorFilter НЕ сбрасываем - он общий для всех вкладок
     fetchOrders(serverId, 1, '', '', emulatorFilter);
-    fetchStats(serverId);
+    fetchStats(serverId, emulatorFilter);
   };
 
   const handleRefresh = async () => {
@@ -419,7 +471,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     
     // Загружаем данные
     fetchOrders(selectedServer, page, statusFilter, symbolFilter, emulatorFilter);
-    fetchStats(selectedServer);
+    fetchStats(selectedServer, emulatorFilter);
   };
 
   const handleFilterChange = (status, symbol, emulator = null) => {
@@ -431,6 +483,11 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     setPage(1);
     const finalEmulator = emulator !== null ? emulator : emulatorFilter;
     fetchOrders(selectedServer, 1, status, symbol, finalEmulator);
+    
+    // Обновляем статистику при изменении фильтра эмулятора
+    if (emulator !== null) {
+      fetchStats(selectedServer, finalEmulator);
+    }
   };
 
   // Обработчик клика на заголовок колонки для сортировки
@@ -478,11 +535,15 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
   });
 
   const handleClearOrders = async () => {
-    const confirmed = window.confirm(
-      selectedServer === 'all'
-        ? '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ ордера со ВСЕХ серверов?\n\nЭто действие нельзя отменить!'
-        : '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ ордера для этого сервера?\n\nЭто действие нельзя отменить!'
-    );
+    const confirmed = await confirm({
+      title: 'Удаление ордеров',
+      message: selectedServer === 'all'
+        ? 'Вы действительно хотите удалить ВСЕ ордера со ВСЕХ серверов?\n\nЭто действие нельзя отменить!'
+        : 'Вы действительно хотите удалить ВСЕ ордера для этого сервера?\n\nЭто действие нельзя отменить!',
+      type: 'danger',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена',
+    });
 
     if (!confirmed) return;
 
@@ -490,19 +551,19 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
       // Используем разные endpoints в зависимости от выбора
       if (selectedServer === 'all') {
         const response = await ordersAPI.clearAll();
-        alert(`✅ Успешно удалено ${response.data.deleted_count} ордеров со всех серверов`);
+        success(`Успешно удалено ${response.data.deleted_count} ордеров со всех серверов`);
       } else {
         const response = await ordersAPI.clearByServer(Number(selectedServer));
-        alert(`✅ Успешно удалено ${response.data.deleted_count} ордеров`);
+        success(`Успешно удалено ${response.data.deleted_count} ордеров`);
       }
       
       // Перезагружаем данные
       fetchOrders(selectedServer, 1, statusFilter, symbolFilter, emulatorFilter);
-      fetchStats(selectedServer);
+      fetchStats(selectedServer, emulatorFilter);
       setPage(1);
     } catch (error) {
       console.error('Error clearing orders:', error);
-      alert('❌ Ошибка при удалении ордеров');
+      showError('Ошибка при удалении ордеров');
     }
   };
 
@@ -516,29 +577,6 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     // Сохранение в localStorage теперь происходит в Trading.jsx
   };
   
-  const toggleColumnVisibility = (columnKey) => {
-    setVisibleColumns(prev => ({
-      ...prev,
-      [columnKey]: !prev[columnKey]
-    }));
-  };
-  
-  const columnDefinitions = [
-    { key: 'id', label: 'ID', sticky: true, alwaysVisible: true },
-    { key: 'type', label: 'Тип', sticky: false, alwaysVisible: true },
-    { key: 'status', label: 'Статус', sticky: false, alwaysVisible: true },
-    { key: 'symbol', label: 'Символ', sticky: false, alwaysVisible: true },
-    { key: 'buyPrice', label: 'Цена покупки' },
-    { key: 'sellPrice', label: 'Цена продажи' },
-    { key: 'quantity', label: 'Количество' },
-    { key: 'profitUSDT', label: 'Прибыль USDT' },
-    { key: 'profitPercent', label: 'Прибыль %' },
-    { key: 'delta1h', label: 'Δ 1h %' },
-    { key: 'delta24h', label: 'Δ 24h %' },
-    { key: 'strategy', label: 'Стратегия / Task ID' },
-    { key: 'openedAt', label: 'Открыт' },
-    { key: 'closedAt', label: 'Закрыт' },
-  ];
 
   const totalPages = Math.ceil(total / limit);
 
@@ -577,7 +615,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
       
       <div className={styles.header}>
         <div className={styles.titleSection}>
-          <FaChartLine className={styles.icon} />
+          <span className={styles.icon}>📊</span>
           <h1>MoonBot Orders</h1>
         </div>
 
@@ -587,7 +625,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
             <select 
               value={selectedServer} 
               onChange={(e) => handleServerChange(e.target.value)}
-              className={styles.select}
+              className={commonStyles.selectField}
             >
               <option value="all">Все сервера</option>
               {Array.isArray(servers) && servers.map(server => (
@@ -615,41 +653,12 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
           
           <div className={styles.columnSettingsWrapper}>
             <button 
-              onClick={() => setShowColumnSettings(!showColumnSettings)} 
+              onClick={() => navigate('/column-settings')} 
               className={styles.columnSettingsBtn}
               title="Настройка колонок"
             >
-              ⚙️ Колонки
+              <span style={{filter: 'grayscale(0)', fontSize: '16px', marginRight: '6px'}}>⚙️</span> Колонки
             </button>
-            
-            {showColumnSettings && (
-              <div className={styles.columnSettingsDropdown}>
-                <div className={styles.columnSettingsHeader}>
-                  <span>Показать колонки</span>
-                  <button 
-                    onClick={() => setShowColumnSettings(false)}
-                    className={styles.closeDropdown}
-                  >
-                    ×
-                  </button>
-                </div>
-                <div className={styles.columnSettingsList}>
-                  {columnDefinitions.map(col => (
-                    <label key={col.key} className={styles.columnSettingItem}>
-                      <input
-                        type="checkbox"
-                        checked={visibleColumns[col.key]}
-                        onChange={() => toggleColumnVisibility(col.key)}
-                        disabled={col.alwaysVisible} // Всегда видимые колонки нельзя отключить
-                      />
-                      <span className={col.alwaysVisible ? styles.alwaysVisibleLabel : ''}>
-                        {col.label} {col.alwaysVisible && '📌'}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           
           <button 
@@ -658,37 +667,60 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
             disabled={loading}
             title={selectedServer === 'all' ? 'Очистить ордера со всех серверов' : 'Очистить все ордера сервера'}
           >
-            🗑️
+            <span style={{fontSize: '18px'}}>🗑️</span>
           </button>
         </div>
       </div>
 
       {stats && (
         <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statLabel}>Всего ордеров</div>
+          <div className={`${styles.statCard} ${selectedServer === 'all' ? styles.allServers : ''}`}>
+            <div className={styles.statLabel}>📈 ВСЕГО ОРДЕРОВ</div>
             <div className={styles.statValue}>{stats.total_orders}</div>
           </div>
-          <div className={styles.statCard}>
+          <div className={`${styles.statCard} ${selectedServer === 'all' ? styles.allServers : ''}`}>
             <div className={styles.statLabel}>
-              <FaTimesCircle className={styles.iconOpen} /> Открытых
+              <span className={styles.iconOpen}>⭕</span> ОТКРЫТЫХ
             </div>
             <div className={styles.statValue}>{stats.open_orders}</div>
           </div>
-          <div className={styles.statCard}>
+          <div className={`${styles.statCard} ${selectedServer === 'all' ? styles.allServers : ''}`}>
             <div className={styles.statLabel}>
-              <FaCheckCircle className={styles.iconClosed} /> Закрытых
+              <span className={styles.iconClosed}>✅</span> ЗАКРЫТЫХ
             </div>
             <div className={styles.statValue}>{stats.closed_orders}</div>
           </div>
-          <div className={styles.statCard}>
-            <div className={styles.statLabel}>
-              <FaCoins /> Общая прибыль
+          
+          {/* 💱 Карточка прибыли с поддержкой валют */}
+          {stats.mixed_currencies ? (
+            // Несколько валют - показываем группировку
+            <div className={`${styles.statCard} ${styles.multiCurrencyCard} ${selectedServer === 'all' ? styles.allServers : ''}`}>
+              <div className={styles.statLabel}>
+                💰 ПРИБЫЛЬ
+              </div>
+              <div className={styles.currencyBreakdown}>
+                {Object.entries(stats.currencies || {}).map(([currency, data]) => (
+                  <div key={currency} className={styles.currencyRow}>
+                    <span className={styles.currencyLabel}>{currency}:</span>
+                    <span className={`${styles.currencyValue} ${data.total_profit_btc >= 0 ? styles.profitPositive : styles.profitNegative}`}>
+                      {data.total_profit_btc.toFixed(2)}
+                    </span>
+                    <span className={styles.currencyOrders}>({data.total_orders})</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className={`${styles.statValue} ${stats.total_profit_btc >= 0 ? styles.profitPositive : styles.profitNegative}`}>
-              {stats.total_profit_btc?.toFixed(2) || '0.00'} USDT
+          ) : (
+            // Одна валюта - обычное отображение
+            <div className={`${styles.statCard} ${selectedServer === 'all' ? styles.allServers : ''}`}>
+              <div className={styles.statLabel}>
+                💰 ОБЩАЯ ПРИБЫЛЬ
+              </div>
+              <div className={`${styles.statValue} ${stats.total_profit_btc >= 0 ? styles.profitPositive : styles.profitNegative}`}>
+                {stats.total_profit_btc?.toFixed(2) || '0.00'} {stats.default_currency || 'USDT'}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -698,7 +730,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
           <select 
             value={statusFilter}
             onChange={(e) => handleFilterChange(e.target.value, symbolFilter, null)}
-            className={styles.filterSelect}
+            className={commonStyles.selectField}
           >
             <option value="">Все</option>
             <option value="Open">Открытые</option>
@@ -722,7 +754,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
           <select 
             value={emulatorFilter}
             onChange={(e) => handleFilterChange(statusFilter, symbolFilter, e.target.value)}
-            className={styles.filterSelect}
+            className={commonStyles.selectField}
           >
             <option value="all">Все</option>
             <option value="real">Реальные</option>

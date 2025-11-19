@@ -332,18 +332,30 @@ const Dashboard = () => {
 
       {/* Статистические карточки */}
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statIcon} style={{background: 'rgba(0, 245, 255, 0.1)'}}>
-            <FiServer style={{color: 'var(--accent-primary)'}} />
+        <div className={styles.statCard} style={{
+          '--card-glow': 'rgba(0, 245, 255, 0.15)',
+          '--icon-bg-start': 'rgba(0, 245, 255, 0.2)',
+          '--icon-bg-end': 'rgba(0, 200, 255, 0.05)',
+          '--icon-shadow': 'rgba(0, 245, 255, 0.4)',
+          '--icon-glow': '#00f5ff'
+        }}>
+          <div className={styles.statIcon}>
+            <FiServer style={{color: '#00f5ff'}} />
           </div>
           <div className={styles.statInfo}>
             <h3>{stats.total_servers}</h3>
-            <p>Всего серверов</p>
+            <p>Серверов</p>
           </div>
         </div>
 
-        <div className={styles.statCard}>
-          <div className={styles.statIcon} style={{background: 'rgba(0, 255, 136, 0.1)'}}>
+        <div className={styles.statCard} style={{
+          '--card-glow': 'rgba(0, 255, 136, 0.15)',
+          '--icon-bg-start': 'rgba(0, 255, 136, 0.2)',
+          '--icon-bg-end': 'rgba(0, 255, 136, 0.05)',
+          '--icon-shadow': 'rgba(0, 255, 136, 0.4)',
+          '--icon-glow': '#00ff88'
+        }}>
+          <div className={styles.statIcon}>
             <FiCheckCircle style={{color: '#00ff88'}} />
           </div>
           <div className={styles.statInfo}>
@@ -352,8 +364,14 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className={styles.statCard}>
-          <div className={styles.statIcon} style={{background: 'rgba(255, 0, 85, 0.1)'}}>
+        <div className={styles.statCard} style={{
+          '--card-glow': 'rgba(255, 0, 85, 0.15)',
+          '--icon-bg-start': 'rgba(255, 0, 85, 0.2)',
+          '--icon-bg-end': 'rgba(255, 0, 85, 0.05)',
+          '--icon-shadow': 'rgba(255, 0, 85, 0.4)',
+          '--icon-glow': '#ff0055'
+        }}>
+          <div className={styles.statIcon}>
             <FiXCircle style={{color: '#ff0055'}} />
           </div>
           <div className={styles.statInfo}>
@@ -362,28 +380,46 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className={styles.statCard}>
-          <div className={styles.statIcon} style={{background: 'rgba(138, 101, 255, 0.1)'}}>
-            <FiClock style={{color: '#8a65ff'}} />
+        <div className={styles.statCard} style={{
+          '--card-glow': 'rgba(180, 0, 255, 0.15)',
+          '--icon-bg-start': 'rgba(180, 0, 255, 0.2)',
+          '--icon-bg-end': 'rgba(138, 101, 255, 0.05)',
+          '--icon-shadow': 'rgba(138, 101, 255, 0.4)',
+          '--icon-glow': '#b400ff'
+        }}>
+          <div className={styles.statIcon}>
+            <FiClock style={{color: '#b400ff'}} />
           </div>
           <div className={styles.statInfo}>
             <h3>{stats.total_commands_all_time}</h3>
-            <p>Всего команд</p>
+            <p>Всего</p>
           </div>
         </div>
 
-        <div className={styles.statCard}>
-          <div className={styles.statIcon} style={{background: 'rgba(255, 107, 0, 0.1)'}}>
+        <div className={styles.statCard} style={{
+          '--card-glow': 'rgba(255, 107, 0, 0.15)',
+          '--icon-bg-start': 'rgba(255, 107, 0, 0.2)',
+          '--icon-bg-end': 'rgba(255, 107, 0, 0.05)',
+          '--icon-shadow': 'rgba(255, 107, 0, 0.4)',
+          '--icon-glow': '#ff6b00'
+        }}>
+          <div className={styles.statIcon}>
             <FiTrendingUp style={{color: '#ff6b00'}} />
           </div>
           <div className={styles.statInfo}>
             <h3>{stats.total_commands_today}</h3>
-            <p>Команд сегодня</p>
+            <p>Сегодня</p>
           </div>
         </div>
 
-        <div className={styles.statCard}>
-          <div className={styles.statIcon} style={{background: 'rgba(0, 200, 255, 0.1)'}}>
+        <div className={styles.statCard} style={{
+          '--card-glow': 'rgba(0, 200, 255, 0.15)',
+          '--icon-bg-start': 'rgba(0, 200, 255, 0.2)',
+          '--icon-bg-end': 'rgba(0, 200, 255, 0.05)',
+          '--icon-shadow': 'rgba(0, 200, 255, 0.4)',
+          '--icon-glow': '#00c8ff'
+        }}>
+          <div className={styles.statIcon}>
             <FiCheckCircle style={{color: '#00c8ff'}} />
           </div>
           <div className={styles.statInfo}>
@@ -392,13 +428,19 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className={styles.statCard}>
-          <div className={styles.statIcon} style={{background: 'rgba(255, 200, 0, 0.1)'}}>
+        <div className={styles.statCard} style={{
+          '--card-glow': 'rgba(255, 200, 0, 0.15)',
+          '--icon-bg-start': 'rgba(255, 200, 0, 0.2)',
+          '--icon-bg-end': 'rgba(255, 200, 0, 0.05)',
+          '--icon-shadow': 'rgba(255, 200, 0, 0.4)',
+          '--icon-glow': '#ffc800'
+        }}>
+          <div className={styles.statIcon}>
             <FiClock style={{color: '#ffc800'}} />
           </div>
           <div className={styles.statInfo}>
-            <h3>{stats.avg_response_time ? `${stats.avg_response_time.toFixed(0)}ms` : 'N/A'}</h3>
-            <p>Среднее время</p>
+            <h3>{stats.avg_response_time ? `${stats.avg_response_time.toFixed(0)}ms` : '-'}</h3>
+            <p>Ср. время</p>
           </div>
         </div>
       </div>

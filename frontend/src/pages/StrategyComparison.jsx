@@ -4,7 +4,7 @@ import { FiTrendingUp, FiTrendingDown, FiRefreshCw, FiAward, FiTarget } from 're
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import styles from './StrategyComparison.module.css';
 
-const StrategyComparison = ({ emulatorFilter, setEmulatorFilter }) => {
+const StrategyComparison = ({ emulatorFilter, setEmulatorFilter, currencyFilter }) => {
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('all');
   const [strategies, setStrategies] = useState([]);
@@ -14,7 +14,7 @@ const StrategyComparison = ({ emulatorFilter, setEmulatorFilter }) => {
 
   useEffect(() => {
     loadServers();
-  }, []);
+  }, [currencyFilter]);
 
   useEffect(() => {
     if (servers.length > 0) {
@@ -25,7 +25,16 @@ const StrategyComparison = ({ emulatorFilter, setEmulatorFilter }) => {
   const loadServers = async () => {
     try {
       const response = await api.get('/api/servers');
-      setServers(response.data);
+      // Фильтруем серверы по валюте
+      const filteredServers = currencyFilter === 'all' 
+        ? response.data 
+        : response.data.filter(server => server.default_currency === currencyFilter);
+      setServers(filteredServers);
+      
+      // Если выбранный сервер больше не доступен, сбрасываем на 'all'
+      if (selectedServer !== 'all' && !filteredServers.find(s => s.id === parseInt(selectedServer))) {
+        setSelectedServer('all');
+      }
     } catch (error) {
       console.error('Error loading servers:', error);
     }
@@ -46,7 +55,14 @@ const StrategyComparison = ({ emulatorFilter, setEmulatorFilter }) => {
       const urlSuffix = queryString ? `?${queryString}` : '';
       
       if (selectedServer === 'all') {
-        response = await api.get(`/api/strategies/comparison-all${urlSuffix}`);
+        // Фильтруем стратегии только по серверам с нужной валютой
+        const serverIds = servers.map(s => s.id).join(',');
+        if (serverIds) {
+          response = await api.get(`/api/strategies/comparison-all${urlSuffix}${queryString ? '&' : '?'}server_ids=${serverIds}`);
+        } else {
+          // Если нет серверов с нужной валютой
+          response = { data: { strategies: [] } };
+        }
         setStrategies(response.data.strategies || []);
       } else {
         response = await api.get(`/api/servers/${selectedServer}/strategies/comparison${urlSuffix}`);

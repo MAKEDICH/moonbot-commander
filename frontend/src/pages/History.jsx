@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiClock, FiServer, FiTrash2, FiCheckCircle, FiXCircle, FiSearch } from 'react-icons/fi';
 import { commandsAPI, serversAPI, botCommandsAPI } from '../api/api';
 import styles from './History.module.css';
+import commonStyles from '../styles/common.module.css';
+import { useNotification } from '../context/NotificationContext';
 
 // Параметры стратегий для автокомплита (из CommandsNew.jsx)
 const STRATEGY_PARAMS = [
@@ -85,6 +87,7 @@ const STRATEGY_PARAMS = [
 ];
 
 const History = () => {
+  const { confirm, showError } = useNotification();
   const [history, setHistory] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [servers, setServers] = useState([]);
@@ -255,13 +258,14 @@ const History = () => {
   };
 
   const handleClearHistory = async () => {
-    if (!confirm('Вы уверены, что хотите очистить историю команд?')) return;
+    const confirmed = await confirm('Вы уверены, что хотите очистить историю команд?');
+    if (!confirmed) return;
     
     try {
       await commandsAPI.clearHistory(selectedServer === 'all' ? null : Number(selectedServer));
       await loadData();
     } catch (error) {
-      alert('Ошибка очистки истории');
+      showError('Ошибка очистки истории');
     }
   };
 
@@ -303,7 +307,6 @@ const History = () => {
         {/* Поиск по командам */}
         <div className={styles.searchGroup}>
           <div className={styles.searchWrapper}>
-            <FiSearch className={styles.searchIcon} />
             <input
               ref={commandInputRef}
               type="text"
@@ -315,6 +318,7 @@ const History = () => {
               onBlur={() => setTimeout(() => setShowCommandSuggestions(false), 200)}
               className={styles.searchInput}
             />
+            <FiSearch className={styles.searchIcon} />
             {searchCommand && (
               <button 
                 onClick={() => setSearchCommand('')} 
@@ -349,7 +353,6 @@ const History = () => {
         {/* Поиск по параметрам */}
         <div className={styles.searchGroup}>
           <div className={styles.searchWrapper}>
-            <FiSearch className={styles.searchIcon} />
             <input
               ref={paramInputRef}
               type="text"
@@ -361,6 +364,7 @@ const History = () => {
               onBlur={() => setTimeout(() => setShowParamSuggestions(false), 200)}
               className={styles.searchInput}
             />
+            <FiSearch className={styles.searchIcon} />
             {searchParams && (
               <button 
                 onClick={() => setSearchParams('')} 

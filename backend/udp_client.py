@@ -5,6 +5,7 @@ import hashlib
 import time
 from typing import Optional, Tuple, List
 from udp_pool import udp_socket_pool
+from logger_utils import log
 
 
 class UDPClient:
@@ -196,13 +197,13 @@ class UDPClient:
             if password:
                 password_masked = f"{password[:4]}****{password[-4:]}" if len(password) > 8 else "****"
                 hmac_hash = self.generate_hmac(command, password)
-                print(f"[UDP-CLIENT] 📤 Sending to {host}:{port}")
-                print(f"  Command: {command}")
-                print(f"  Password: {password_masked}")
-                print(f"  HMAC: {hmac_hash[:16]}...")
+                log(f"[UDP-CLIENT] 📤 Sending to {host}:{port}")
+                log(f"  Command: {command}")
+                log(f"  Password: {password_masked}")
+                log(f"  HMAC: {hmac_hash[:16]}...")
             else:
-                print(f"[UDP-CLIENT] 📤 Sending to {host}:{port} (no password)")
-                print(f"  Command: {command}")
+                log(f"[UDP-CLIENT] 📤 Sending to {host}:{port} (no password)")
+                log(f"  Command: {command}")
             
             # Отправляем команду
             sock.sendto(encoded_message, (host, port))
@@ -213,17 +214,17 @@ class UDPClient:
                 response = data.decode('utf-8', errors='replace')  # ИСПРАВЛЕНО: errors='replace'
                 
                 # ДИАГНОСТИКА: Логируем ответ
-                print(f"[UDP-CLIENT] 📥 Received from {response_addr}:{response_port}")
-                print(f"  Response: {response[:100]}...")
+                log(f"[UDP-CLIENT] 📥 Received from {response_addr}:{response_port}")
+                log(f"  Response: {response[:100]}...")
                 
                 sock.close()
                 
                 # Проверяем на ошибки MoonBot
                 if response.startswith('ERR'):
-                    print(f"[UDP-CLIENT] ❌ ERROR from MoonBot: {response}")
+                    log(f"[UDP-CLIENT] ❌ ERROR from MoonBot: {response}")
                     return False, response
                 
-                print(f"[UDP-CLIENT] ✅ SUCCESS")
+                log(f"[UDP-CLIENT] ✅ SUCCESS")
                 return True, response
             except socket.timeout:
                 sock.close()

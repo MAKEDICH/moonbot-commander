@@ -3,7 +3,7 @@ import api from '../api/api';
 import { FiRefreshCw, FiClock, FiActivity } from 'react-icons/fi';
 import styles from './ActivityHeatmap.module.css';
 
-const ActivityHeatmap = ({ emulatorFilter, setEmulatorFilter }) => {
+const ActivityHeatmap = ({ emulatorFilter, setEmulatorFilter, currencyFilter }) => {
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('all');
   const [heatmapData, setHeatmapData] = useState([]);
@@ -12,7 +12,7 @@ const ActivityHeatmap = ({ emulatorFilter, setEmulatorFilter }) => {
 
   useEffect(() => {
     loadServers();
-  }, []);
+  }, [currencyFilter]);
 
   useEffect(() => {
     if (servers.length > 0) {
@@ -23,7 +23,16 @@ const ActivityHeatmap = ({ emulatorFilter, setEmulatorFilter }) => {
   const loadServers = async () => {
     try {
       const response = await api.get('/api/servers');
-      setServers(response.data);
+      // Фильтруем серверы по валюте
+      const filteredServers = currencyFilter === 'all' 
+        ? response.data 
+        : response.data.filter(server => server.default_currency === currencyFilter);
+      setServers(filteredServers);
+      
+      // Если выбранный сервер больше не доступен, сбрасываем на 'all'
+      if (selectedServer !== 'all' && !filteredServers.find(s => s.id === parseInt(selectedServer))) {
+        setSelectedServer('all');
+      }
     } catch (error) {
       console.error('Error loading servers:', error);
     }
@@ -44,7 +53,14 @@ const ActivityHeatmap = ({ emulatorFilter, setEmulatorFilter }) => {
       const urlSuffix = queryString ? `?${queryString}` : '';
       
       if (selectedServer === 'all') {
-        response = await api.get(`/api/heatmap-all${urlSuffix}`);
+        // Фильтруем данные только по серверам с нужной валютой
+        const serverIds = servers.map(s => s.id).join(',');
+        if (serverIds) {
+          response = await api.get(`/api/heatmap-all${urlSuffix}${queryString ? '&' : '?'}server_ids=${serverIds}`);
+        } else {
+          // Если нет серверов с нужной валютой
+          response = { data: { data: [] } };
+        }
         setHeatmapData(response.data.data || []);
       } else {
         response = await api.get(`/api/servers/${selectedServer}/heatmap${urlSuffix}`);

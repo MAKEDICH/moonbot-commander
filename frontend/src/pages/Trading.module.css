@@ -7,6 +7,11 @@
 
 .header {
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .header h1 {
@@ -16,37 +21,158 @@
   text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
+.currencyFilter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.currencyFilter label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #b0b0b0;
+}
+
+.filterSelect {
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filterSelect:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: #00ff88;
+  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+}
+
+.currencyButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.currencyButton {
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  color: #b0b0b0;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.currencyButton:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+  color: #e0e0e0;
+  transform: translateY(-1px);
+}
+
+.currencyButton.active {
+  background: #00ff88;
+  border-color: #00ff88;
+  color: #000;
+  font-weight: 600;
+}
+
+.currencyButton.active:hover {
+  background: #00cc6a;
+  border-color: #00cc6a;
+}
+
 .tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid rgba(0, 255, 136, 0.2);
-  padding-bottom: 0;
+  gap: 4px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: slideInFromBottom 0.5s ease-out;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tab {
-  padding: 12px 24px;
+  padding: 10px 20px;
   background: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
-  color: #b0b0b0;
-  font-size: 1rem;
+  border-radius: 12px;
+  color: #94a3b8;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  bottom: -2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .tab:hover {
-  color: #00ff88;
-  background: rgba(0, 255, 136, 0.05);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
 }
 
 .tab.active {
-  color: #00ff88;
-  border-bottom-color: #00ff88;
-  background: rgba(0, 255, 136, 0.1);
+  color: #ffffff;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  box-shadow: 
+    0 4px 12px rgba(99, 102, 241, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: none;
+}
+
+.tab.active:hover {
+  transform: none;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+}
+
+/* Анимация появления вкладок */
+.tab:nth-child(1) { animation: fadeInTab 0.5s ease-out 0.1s both; }
+.tab:nth-child(2) { animation: fadeInTab 0.5s ease-out 0.2s both; }
+.tab:nth-child(3) { animation: fadeInTab 0.5s ease-out 0.3s both; }
+.tab:nth-child(4) { animation: fadeInTab 0.5s ease-out 0.4s both; }
+.tab:nth-child(5) { animation: fadeInTab 0.5s ease-out 0.5s both; }
+
+@keyframes fadeInTab {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .content {
@@ -57,20 +183,20 @@
 /* Адаптивность */
 @media (max-width: 768px) {
   .tabs {
-    flex-direction: column;
-    gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .tabs::-webkit-scrollbar {
+    display: none;
   }
 
   .tab {
-    text-align: left;
-    border-left: 3px solid transparent;
-    border-bottom: none;
+    text-align: center;
     padding: 10px 16px;
-  }
-
-  .tab.active {
-    border-left-color: #00ff88;
-    border-bottom-color: transparent;
+    flex: 1;
+    font-size: 13px;
   }
 }
 

@@ -15,13 +15,15 @@ import time
 import re
 import asyncio
 import queue
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Dict
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from database import SessionLocal
 import models
 import encryption
 import udp_protocol
+from logger_utils import log
 
 # Глобальный словарь активных listeners
 active_listeners: Dict[int, 'UDPListener'] = {}
@@ -73,19 +75,19 @@ class UDPListener:
             self.local_port = 0  # Эфемерный порт (система выберет случайный)
             self.keepalive_enabled = True  # Keep-alive ОБЯЗАТЕЛЬНО
             self.use_global_socket = False
-            print(f"[UDP-LISTENER-{self.server_id}] 🏠 MODE: LOCAL (ephemeral port + keep-alive)")
+            log(f"[UDP-LISTENER-{self.server_id}] MODE: LOCAL (ephemeral port + keep-alive)")
         elif moonbot_mode == 'server':
             # СЕРВЕР: использует глобальный сокет + без keep-alive
             self.local_port = 0  # Не используется (используется глобальный сокет)
             self.keepalive_enabled = False  # Keep-alive ОТКЛЮЧЁН
             self.use_global_socket = True
-            print(f"[UDP-LISTENER-{self.server_id}] [MODE]  MODE: SERVER (global socket, no keep-alive)")
+            log(f"[UDP-LISTENER-{self.server_id}] [MODE]  MODE: SERVER (global socket, no keep-alive)")
         else:
             # АВТОМАТИЧЕСКИЙ РЕЖИМ (по параметрам)
             self.local_port = local_port
             self.keepalive_enabled = keepalive_enabled
             self.use_global_socket = False
-            print(f"[UDP-LISTENER-{self.server_id}] 🤖 MODE: AUTO (local_port={local_port}, keepalive={keepalive_enabled})")
+            log(f"[UDP-LISTENER-{self.server_id}] MODE: AUTO (local_port={local_port}, keepalive={keepalive_enabled})")
         
         self.running = False
         self.sock = None
@@ -97,6 +99,7 @@ class UDPListener:
         self.command_response_queue = queue.Queue()
         self.waiting_for_response = False
         self.keepalive_timer = None  # Таймер для keep-alive
+        self._initial_lst_pending = False  # Флаг для отслеживания initial lst
         
         # Буфер для сборки фрагментированных gzip-пакетов
         self.fragment_buffer = bytearray()
@@ -106,7 +109,7 @@ class UDPListener:
     def start(self):
         """Запустить listener в отдельном потоке"""
         if self.running:
-            print(f"[UDP-LISTENER-{self.server_id}] Already running")
+            log(f"[UDP-LISTENER-{self.server_id}] Already running")
             return False
         
         self.running = True
@@ -116,7 +119,7 @@ class UDPListener:
             # Обновляем статус в БД
             self._update_status(is_running=True, started_at=datetime.utcnow())
             
-            print(f"[UDP-LISTENER-{self.server_id}] Started (using global socket) for {self.host}:{self.port}")
+            log(f"[UDP-LISTENER-{self.server_id}] Started (using global socket) for {self.host}:{self.port}")
             return True
         
         # В LOCAL/AUTO режиме - создаем свой поток с собственным сокетом
@@ -130,15 +133,15 @@ class UDPListener:
         # Обновляем статус в БД
         self._update_status(is_running=True, started_at=datetime.utcnow())
         
-        print(f"[UDP-LISTENER-{self.server_id}] Started for {self.host}:{self.port}")
+        log(f"[UDP-LISTENER-{self.server_id}] Started for {self.host}:{self.port}")
         
         # Запускаем keep-alive (только если включено)
         # Первая "lst" отправляется из _listen_loop сразу после создания сокета
         if self.keepalive_enabled:
             self._start_keepalive()
-            print(f"[UDP-LISTENER-{self.server_id}] [OK] Keep-alive is ENABLED")
+            log(f"[UDP-LISTENER-{self.server_id}] [OK] Keep-alive is ENABLED")
         else:
-            print(f"[UDP-LISTENER-{self.server_id}] ⏸️  Keep-alive is DISABLED (server mode with fixed port)")
+            log(f"[UDP-LISTENER-{self.server_id}] ⏸️  Keep-alive is DISABLED (server mode with fixed port)")
         
         return True
     
@@ -163,7 +166,7 @@ class UDPListener:
         # Обновляем статус в БД
         self._update_status(is_running=False)
         
-        print(f"[UDP-LISTENER-{self.server_id}] Stopped")
+        log(f"[UDP-LISTENER-{self.server_id}] Stopped")
         return True
     
     def send_command(self, command: str):
@@ -191,7 +194,7 @@ class UDPListener:
                 self.sock.bind(("", listen_port))
             except OSError as e:
                 if e.errno == 10048:  # Address already in use (Windows)
-                    print(f"[UDP-LISTENER-{self.server_id}] [WARN]  Port {listen_port} already in use, using ephemeral port")
+                    log(f"[UDP-LISTENER-{self.server_id}] [WARN]  Port {listen_port} already in use, using ephemeral port")
                     self.sock.bind(("", 0))  # Fallback на эфемерный
                 else:
                     raise
@@ -200,40 +203,26 @@ class UDPListener:
             
             local_addr = self.sock.getsockname()
             if listen_port == 0:
-                print(f"[UDP-LISTENER-{self.server_id}] [BIND] Listening on EPHEMERAL port {local_addr[1]}")
+                log(f"[UDP-LISTENER-{self.server_id}] [BIND] Listening on EPHEMERAL port {local_addr[1]}")
             else:
-                print(f"[UDP-LISTENER-{self.server_id}] [BIND] Listening on FIXED port {local_addr[1]} (same as Moonbot)")
-            print(f"[UDP-LISTENER-{self.server_id}] Will send commands to {self.host}:{self.port}")
-            print(f"[UDP-LISTENER-{self.server_id}] Moonbot will reply to our port {local_addr[1]}")
+                log(f"[UDP-LISTENER-{self.server_id}] [BIND] Listening on FIXED port {local_addr[1]} (same as Moonbot)")
+            log(f"[UDP-LISTENER-{self.server_id}] Will send commands to {self.host}:{self.port}")
+            log(f"[UDP-LISTENER-{self.server_id}] Moonbot will reply to our port {local_addr[1]}")
             
             # ВАЖНО: Отправляем первую команду "lst" для установки UDP контакта с сервером
             # Это создаёт NAT mapping и позволяет Moonbot отправлять обновления
             try:
                 time.sleep(0.5)  # Даём больше времени на инициализацию
-                print(f"[UDP-LISTENER-{self.server_id}] 📡 Sending initial 'lst' to establish UDP connection...")
+                log(f"[UDP-LISTENER-{self.server_id}] 📡 Sending initial 'lst' to establish UDP connection...")
                 
-                # Отправляем напрямую через сокет (без проверки self.sock, т.к. мы точно знаем что он создан)
-                import hmac
-                import hashlib
+                # Устанавливаем флаг что это initial lst
+                self._initial_lst_pending = True
                 
-                if self.password:
-                    h = hmac.new(
-                        self.password.encode('utf-8'),
-                        "lst".encode('utf-8'),
-                        hashlib.sha256
-                    )
-                    hmac_hex = h.hexdigest()
-                    payload = f"{hmac_hex} lst"
-                else:
-                    payload = "lst"
-                
-                self.sock.sendto(
-                    payload.encode('utf-8'),
-                    (self.host, self.port)
-                )
-                print(f"[UDP-LISTENER-{self.server_id}] [OK] Initial 'lst' sent to {self.host}:{self.port}")
+                # Используем тот же метод, что и при отправке через API
+                self._send_command_from_listener("lst")
+                log(f"[UDP-LISTENER-{self.server_id}] [OK] Initial 'lst' sent to {self.host}:{self.port}")
             except Exception as e:
-                print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Error sending initial 'lst': {e}")
+                log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Error sending initial 'lst': {e}")
                 import traceback
                 traceback.print_exc()
             
@@ -251,9 +240,9 @@ class UDPListener:
                         self._process_message(data, addr, port)
                     except EOFError as e:
                         # Фрагментированный UDP пакет - игнорируем (Moonbot пришлёт полный пакет отдельно)
-                        print(f"[UDP-LISTENER-{self.server_id}] [WARN] Incomplete UDP packet (fragmented), skipped")
+                        log(f"[UDP-LISTENER-{self.server_id}] [WARN] Incomplete UDP packet (fragmented), skipped")
                     except Exception as e:
-                        print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Message processing error: {e}")
+                        log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Message processing error: {e}")
                         # НЕ падаем, продолжаем работу!
                     
                     # Увеличиваем счетчик
@@ -267,7 +256,7 @@ class UDPListener:
                                 last_message_at=datetime.utcnow()
                             )
                         except Exception as e:
-                            print(f"[UDP-LISTENER-{self.server_id}] Status update error: {e}")
+                            log(f"[UDP-LISTENER-{self.server_id}] Status update error: {e}")
                     
                 except socket.timeout:
                     # Timeout - это нормально, продолжаем цикл
@@ -275,19 +264,19 @@ class UDPListener:
                 
                 except Exception as e:
                     if self.running:  # Логируем только если не останавливаемся
-                        print(f"[UDP-LISTENER-{self.server_id}] Receive error: {e}")
+                        log(f"[UDP-LISTENER-{self.server_id}] Receive error: {e}")
                         self.last_error = str(e)
                         time.sleep(1)  # Небольшая пауза перед retry
         
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] Fatal error: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] Fatal error: {e}")
             self.last_error = str(e)
             self._update_status(is_running=False, last_error=str(e))
         
         finally:
             if self.sock:
                 self.sock.close()
-            print(f"[UDP-LISTENER-{self.server_id}] Loop ended")
+            log(f"[UDP-LISTENER-{self.server_id}] Loop ended")
     
     def _send_command_from_listener(self, command: str):
         """
@@ -309,9 +298,9 @@ class UDPListener:
                     password=self.password
                 )
                 if success:
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] Command sent via global socket")
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] Command sent via global socket")
                 else:
-                    print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to send via global socket")
+                    log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to send via global socket")
                 return
             
             # В LOCAL/AUTO режиме используем свой сокет
@@ -327,16 +316,16 @@ class UDPListener:
                 
                 # ДИАГНОСТИКА: Логируем отправку (пароль замаскирован!)
                 password_masked = f"{self.password[:4]}****{self.password[-4:]}" if len(self.password) > 8 else "****"
-                print(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending command from listener:")
-                print(f"  Command: {command}")
-                print(f"  Target: {self.host}:{self.port}")
-                print(f"  Password: {password_masked}")
-                print(f"  HMAC: {hmac_hex[:16]}...")
+                log(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending command from listener:")
+                log(f"  Command: {command}")
+                log(f"  Target: {self.host}:{self.port}")
+                log(f"  Password: {password_masked}")
+                log(f"  HMAC: {hmac_hex[:16]}...")
             else:
                 payload = command
-                print(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending command (no password):")
-                print(f"  Command: {command}")
-                print(f"  Target: {self.host}:{self.port}")
+                log(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending command (no password):")
+                log(f"  Command: {command}")
+                log(f"  Target: {self.host}:{self.port}")
             
             # Отправляем через listener сокет
             if self.sock:
@@ -344,9 +333,29 @@ class UDPListener:
                     payload.encode('utf-8'),
                     (self.host, self.port)
                 )
-                print(f"[UDP-LISTENER-{self.server_id}] [OK] Command sent successfully")
+                log(f"[UDP-LISTENER-{self.server_id}] [OK] Command sent successfully")
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to send command: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to send command: {e}")
+    
+    def _send_follow_up_lst(self):
+        """Отправляет follow-up lst для получения информации о валюте"""
+        try:
+            time.sleep(0.5)  # Небольшая задержка
+            log(f"[UDP-LISTENER-{self.server_id}] 📊 Sending follow-up 'lst' to get currency info...")
+            
+            # Отправляем lst и ждём ответ
+            success, response = self.send_command_with_response("lst", timeout=3.0)
+            
+            if success and response:
+                log(f"[UDP-LISTENER-{self.server_id}] [OK] Follow-up response received: {response[:100]}...")
+                # Обрабатываем ответ для извлечения валюты
+                if "Open Sell Orders:" in response or "Open Buy Orders:" in response:
+                    self._process_lst_response(response)
+            else:
+                log(f"[UDP-LISTENER-{self.server_id}] [WARN] No response to follow-up lst")
+                
+        except Exception as e:
+            log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Error in follow-up lst: {e}")
     
     def send_command(self, command: str):
         """
@@ -403,16 +412,16 @@ class UDPListener:
                 payload = f"{hmac_hex} {command}"
                 
                 password_masked = f"{self.password[:4]}****{self.password[-4:]}" if len(self.password) > 8 else "****"
-                print(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending command with response:")
-                print(f"  Command: {command}")
-                print(f"  Target: {self.host}:{self.port}")
-                print(f"  Password: {password_masked}")
-                print(f"  HMAC: {hmac_hex[:16]}...")
+                log(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending command with response:")
+                log(f"  Command: {command}")
+                log(f"  Target: {self.host}:{self.port}")
+                log(f"  Password: {password_masked}")
+                log(f"  HMAC: {hmac_hex[:16]}...")
             else:
                 payload = command
-                print(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending command with response (no password):")
-                print(f"  Command: {command}")
-                print(f"  Target: {self.host}:{self.port}")
+                log(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending command with response (no password):")
+                log(f"  Command: {command}")
+                log(f"  Target: {self.host}:{self.port}")
             
             # Отправляем команду - через глобальный или свой сокет
             if self.use_global_socket and self.global_socket:
@@ -426,12 +435,12 @@ class UDPListener:
                     (self.host, self.port)
                 )
             
-            print(f"[UDP-LISTENER-{self.server_id}] [OK] Command sent, waiting for response in queue...")
+            log(f"[UDP-LISTENER-{self.server_id}] [OK] Command sent, waiting for response in queue...")
             
             # Ждём ответ из queue (listener положит его туда)
             try:
                 response = self.command_response_queue.get(timeout=timeout)
-                print(f"[UDP-LISTENER-{self.server_id}] 📥 Response received from queue: {response[:100]}...")
+                log(f"[UDP-LISTENER-{self.server_id}] 📥 Response received from queue: {response[:100]}...")
                 
                 # Проверяем на ошибки MoonBot
                 if response.startswith('ERR'):
@@ -440,13 +449,13 @@ class UDPListener:
                 return True, response
                 
             except queue.Empty:
-                print(f"[UDP-LISTENER-{self.server_id}] ⏱️ Timeout waiting for response in queue")
+                log(f"[UDP-LISTENER-{self.server_id}] ⏱️ Timeout waiting for response in queue")
                 return False, "Timeout: не получен ответ от сервера"
             finally:
                 self.waiting_for_response = False
                 
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to send command with response: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to send command with response: {e}")
             self.waiting_for_response = False
             return False, f"Ошибка: {str(e)}"
     
@@ -463,14 +472,14 @@ class UDPListener:
             decompressed = gzip.decompress(bytes(self.fragment_buffer))
             decompressed_text = decompressed.decode('utf-8', errors='replace')
             
-            print(f"[UDP-LISTENER-{self.server_id}] [OK] Method 1: Successfully decompressed {len(self.fragment_buffer)} bytes -> {len(decompressed)} bytes")
-            print(f"[UDP-LISTENER-{self.server_id}] 📄 First 200 chars: {decompressed_text[:200]}")
+            log(f"[UDP-LISTENER-{self.server_id}] [OK] Method 1: Successfully decompressed {len(self.fragment_buffer)} bytes -> {len(decompressed)} bytes")
+            log(f"[UDP-LISTENER-{self.server_id}] 📄 First 200 chars: {decompressed_text[:200]}")
             
             # Пробуем распарсить как JSON
             import json
             try:
                 payload = json.loads(decompressed_text)
-                print(f"[UDP-LISTENER-{self.server_id}] 📋 JSON parsed, cmd={payload.get('cmd', 'unknown')}")
+                log(f"[UDP-LISTENER-{self.server_id}] 📋 JSON parsed, cmd={payload.get('cmd', 'unknown')}")
                 
                 # Обрабатываем как обычный пакет
                 cmd = payload.get('cmd', '').lower()
@@ -482,30 +491,30 @@ class UDPListener:
                 elif cmd == "acc":
                     self._process_balance_update(payload)
                 else:
-                    print(f"[UDP-LISTENER-{self.server_id}] [WARN] Unknown command in reassembled packet: {cmd}")
+                    log(f"[UDP-LISTENER-{self.server_id}] [WARN] Unknown command in reassembled packet: {cmd}")
                 
                 return True  # Успешно обработано!
                     
             except json.JSONDecodeError as e:
-                print(f"[UDP-LISTENER-{self.server_id}] [WARN] Decompressed data is not JSON: {e}")
-                print(f"[UDP-LISTENER-{self.server_id}] First 200 chars: {decompressed_text[:200]}")
+                log(f"[UDP-LISTENER-{self.server_id}] [WARN] Decompressed data is not JSON: {e}")
+                log(f"[UDP-LISTENER-{self.server_id}] First 200 chars: {decompressed_text[:200]}")
                 return False
                 
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] [WARN] Method 1 failed: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] [WARN] Method 1 failed: {e}")
         
         # МЕТОД 2: Ищем все GZIP-заголовки и декомпрессируем каждый блок
-        print(f"[UDP-LISTENER-{self.server_id}] 🔍 Trying Method 2: Find GZIP headers...")
+        log(f"[UDP-LISTENER-{self.server_id}] 🔍 Trying Method 2: Find GZIP headers...")
         gzip_starts = []
         for i in range(len(self.fragment_buffer) - 1):
             if self.fragment_buffer[i:i+2] == b'\x1f\x8b':
                 gzip_starts.append(i)
         
-        print(f"[UDP-LISTENER-{self.server_id}] [INFO] Found {len(gzip_starts)} GZIP headers at positions: {gzip_starts[:10]}...")
+        log(f"[UDP-LISTENER-{self.server_id}] [INFO] Found {len(gzip_starts)} GZIP headers at positions: {gzip_starts[:10]}...")
         
         # МЕТОД 4: Попробуем декомпрессировать ТОЛЬКО ПЕРВЫЙ блок для диагностики
         if len(gzip_starts) >= 1:
-            print(f"[UDP-LISTENER-{self.server_id}] 🔍 Trying Method 4: Decompress FIRST block only (diagnostic)...")
+            log(f"[UDP-LISTENER-{self.server_id}] 🔍 Trying Method 4: Decompress FIRST block only (diagnostic)...")
             first_block = self.fragment_buffer[0:2048]
             
             # Попробуем zlib decompress (без GZIP wrapper)
@@ -515,23 +524,23 @@ class UDPListener:
             try:
                 decompressed = gzip.decompress(bytes(first_block))
                 decompressed_text = decompressed.decode('utf-8', errors='replace')
-                print(f"[UDP-LISTENER-{self.server_id}] [OK] GZIP: First block decompressed: {len(decompressed)} bytes")
-                print(f"[UDP-LISTENER-{self.server_id}] 📄 Content: {decompressed_text[:200]}")
+                log(f"[UDP-LISTENER-{self.server_id}] [OK] GZIP: First block decompressed: {len(decompressed)} bytes")
+                log(f"[UDP-LISTENER-{self.server_id}] 📄 Content: {decompressed_text[:200]}")
             except Exception as e:
-                print(f"[UDP-LISTENER-{self.server_id}] [ERROR] GZIP failed: {e}")
+                log(f"[UDP-LISTENER-{self.server_id}] [ERROR] GZIP failed: {e}")
                 
                 # Попытка 2: Raw DEFLATE (без headers)
                 try:
                     decompressed = zlib.decompress(bytes(first_block), -zlib.MAX_WBITS)
                     decompressed_text = decompressed.decode('utf-8', errors='replace')
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] DEFLATE: First block decompressed: {len(decompressed)} bytes")
-                    print(f"[UDP-LISTENER-{self.server_id}] 📄 Content: {decompressed_text[:200]}")
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] DEFLATE: First block decompressed: {len(decompressed)} bytes")
+                    log(f"[UDP-LISTENER-{self.server_id}] 📄 Content: {decompressed_text[:200]}")
                 except Exception as e2:
-                    print(f"[UDP-LISTENER-{self.server_id}] [ERROR] DEFLATE failed: {e2}")
+                    log(f"[UDP-LISTENER-{self.server_id}] [ERROR] DEFLATE failed: {e2}")
                     
                     # Попытка 3: Raw data (без декомпрессии)
                     raw_text = first_block.decode('utf-8', errors='replace')
-                    print(f"[UDP-LISTENER-{self.server_id}] 📄 RAW (first 200 bytes): {raw_text[:200]}")
+                    log(f"[UDP-LISTENER-{self.server_id}] 📄 RAW (first 200 bytes): {raw_text[:200]}")
         
         return False
     
@@ -545,7 +554,7 @@ class UDPListener:
         
         # Проверяем источник
         if addr != self.host:
-            print(f"[UDP-LISTENER-{self.server_id}] [WARN] WARNING: Wrong host {addr}")
+            log(f"[UDP-LISTENER-{self.server_id}] [WARN] WARNING: Wrong host {addr}")
             return
         
         # Декодируем пакет (поддержка gzip + JSON) - передаём RAW BYTES!
@@ -558,31 +567,31 @@ class UDPListener:
             # ВАЖНО: Проверяем таймаут между пакетами (N=1, N=2, N=3...)
             # Если прошло >2 секунды с последнего фрагмента - это НОВЫЙ пакет (N+1)!
             if self.fragment_buffer and (current_time_ms - self.last_fragment_time) > 2000:
-                print(f"[UDP-LISTENER-{self.server_id}] ⏱️ 2 second gap detected - processing previous pack...")
+                log(f"[UDP-LISTENER-{self.server_id}] ⏱️ 2 second gap detected - processing previous pack...")
                 success = self._try_decompress_buffer(addr, port)
                 if success:
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] Pack N processed successfully!")
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] Pack N processed successfully!")
                 else:
-                    print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to process pack N")
+                    log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to process pack N")
                 self.fragment_buffer = bytearray()
             
             # Добавляем RAW DATA (не декодированные байты) в буфер
             self.fragment_buffer.extend(data)
             self.last_fragment_time = current_time_ms
             
-            print(f"[UDP-LISTENER-{self.server_id}] 🧩 Fragment #{len(self.fragment_buffer) // 2048}: {len(data)} bytes (buffer: {len(self.fragment_buffer)} bytes)")
+            log(f"[UDP-LISTENER-{self.server_id}] 🧩 Fragment #{len(self.fragment_buffer) // 2048}: {len(data)} bytes (buffer: {len(self.fragment_buffer)} bytes)")
             
             return  # Ждём следующих фрагментов или обычного пакета
         
         # Если есть накопленные фрагменты и пришёл обычный пакет - обрабатываем их!
         if self.fragment_buffer:
-            print(f"[UDP-LISTENER-{self.server_id}] [BIND] End of fragment stream detected (got complete packet)")
-            print(f"[UDP-LISTENER-{self.server_id}] 🔍 Attempting decompression of {len(self.fragment_buffer)} bytes...")
+            log(f"[UDP-LISTENER-{self.server_id}] [BIND] End of fragment stream detected (got complete packet)")
+            log(f"[UDP-LISTENER-{self.server_id}] 🔍 Attempting decompression of {len(self.fragment_buffer)} bytes...")
             success = self._try_decompress_buffer(addr, port)
             if not success:
-                print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to decompress buffer")
+                log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to decompress buffer")
             else:
-                print(f"[UDP-LISTENER-{self.server_id}] [OK] Strategy pack processed!")
+                log(f"[UDP-LISTENER-{self.server_id}] [OK] Strategy pack processed!")
             self.fragment_buffer = bytearray()
         
         if not packet.payload:
@@ -593,7 +602,7 @@ class UDPListener:
         # Новый формат - JSON
         cmd = udp_protocol.get_packet_command(packet)
         
-        print(f"[UDP-LISTENER-{self.server_id}] [OK] {timestamp} [{addr}:{port}] cmd={cmd}")
+        log(f"[UDP-LISTENER-{self.server_id}] [OK] {timestamp} [{addr}:{port}] cmd={cmd}")
         
         if cmd == "order":
             self._process_order_update(packet.payload)
@@ -603,7 +612,19 @@ class UDPListener:
             self._process_strategies_response(packet.payload)
         elif cmd == "replay":
             # Ответ на первую "lst" - просто логируем
-            print(f"[UDP-LISTENER-{self.server_id}] 📡 Moonbot acknowledged connection (replay)")
+            log(f"[UDP-LISTENER-{self.server_id}] 📡 Moonbot acknowledged connection (replay)")
+            
+            # Если это ответ на initial lst, нужно отправить ещё один lst для получения валюты
+            is_initial_response = hasattr(self, '_initial_lst_pending') and self._initial_lst_pending
+            if is_initial_response:
+                self._initial_lst_pending = False
+                # Отправляем второй lst для получения информации о валюте
+                threading.Thread(
+                    target=self._send_follow_up_lst,
+                    daemon=True,
+                    name=f"FollowUpLst-{self.server_id}"
+                ).start()
+            
             # Если кто-то ждёт ответ - отдаём
             if self.waiting_for_response:
                 preferred_text = udp_protocol.extract_preferred_text(packet)
@@ -623,25 +644,29 @@ class UDPListener:
         
         # Проверяем источник сообщения - только IP
         if addr != self.host:
-            print(f"[UDP-LISTENER-{self.server_id}] [WARN] WARNING: Received message from WRONG HOST!")
-            print(f"[UDP-LISTENER-{self.server_id}]   Expected: {self.host}:{self.port}")
-            print(f"[UDP-LISTENER-{self.server_id}]   Got from: {addr}:{port}")
+            log(f"[UDP-LISTENER-{self.server_id}] [WARN] WARNING: Received message from WRONG HOST!")
+            log(f"[UDP-LISTENER-{self.server_id}]   Expected: {self.host}:{self.port}")
+            log(f"[UDP-LISTENER-{self.server_id}]   Got from: {addr}:{port}")
             return
         
         # Если это бинарный мусор (фрагментированный gzip), не логируем подробно
         message_clean = message.strip()
         if not message_clean or (len(message_clean) > 0 and ord(message_clean[0]) < 32 and message_clean[0] not in '\n\r\t'):
-            print(f"[UDP-LISTENER-{self.server_id}] [WARN] Skipped binary/fragmented data ({len(message)} bytes)")
+            log(f"[UDP-LISTENER-{self.server_id}] [WARN] Skipped binary/fragmented data ({len(message)} bytes)")
             return
         
         # Логируем только читаемый текст
-        print(f"[UDP-LISTENER-{self.server_id}] [OK] {timestamp} [{addr}:{port}] -> {message[:100]}...")
+        log(f"[UDP-LISTENER-{self.server_id}] [OK] {timestamp} [{addr}:{port}] -> {message[:100]}...")
         
         # Если ждём ответ на команду - кладём в queue
         if self.waiting_for_response:
-            print(f"[UDP-LISTENER-{self.server_id}] 📦 Putting response into queue for API")
+            log(f"[UDP-LISTENER-{self.server_id}] 📦 Putting response into queue for API")
             self.command_response_queue.put(message)
-            return
+            # НЕ возвращаемся сразу - нужно обработать lst для обновления валюты!
+            
+            # Сбрасываем флаг если это ответ на lst с валютой
+            if "Open Sell Orders:" in message or "Open Buy Orders:" in message:
+                self.waiting_for_response = False
         
         # Проверяем это SQL команда?
         if "[SQLCommand" in message:
@@ -660,7 +685,7 @@ class UDPListener:
         sql = packet.get("sql", "")
         bot_name = packet.get("bot", "")
         
-        print(f"[UDP-LISTENER-{self.server_id}] 📦 Order update: oid={oid}, bot={bot_name}")
+        log(f"[UDP-LISTENER-{self.server_id}] 📦 Order update: oid={oid}, bot={bot_name}")
         
         if sql:
             self._process_sql_command(sql, moonbot_order_id=oid)
@@ -713,9 +738,9 @@ class UDPListener:
             balance.updated_at = datetime.now()
             
             db.commit()
-            print(f"[UDP-LISTENER-{self.server_id}] 💰 Balance: Available={available:.2f}, Total={total:.2f}")
+            log(f"[UDP-LISTENER-{self.server_id}] 💰 Balance: Available={available:.2f}, Total={total:.2f}")
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] Balance update error: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] Balance update error: {e}")
             db.rollback()
         finally:
             db.close()
@@ -732,7 +757,7 @@ class UDPListener:
         data = packet.get("data", "")
         bot_name = packet.get("bot", "")
         
-        print(f"[UDP-LISTENER-{self.server_id}] 📋 Strategies pack #{pack_number} from {bot_name}")
+        log(f"[UDP-LISTENER-{self.server_id}] 📋 Strategies pack #{pack_number} from {bot_name}")
         
         # Сохраняем в кэш/БД
         db = SessionLocal()
@@ -755,12 +780,115 @@ class UDPListener:
             strat_cache.received_at = datetime.utcnow()
             
             db.commit()
-            print(f"[UDP-LISTENER-{self.server_id}] [OK] Strategies saved (pack {pack_number})")
+            log(f"[UDP-LISTENER-{self.server_id}] [OK] Strategies saved (pack {pack_number})")
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] Strategies save error: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] Strategies save error: {e}")
             db.rollback()
         finally:
             db.close()
+    
+    def _extract_currency(self, message: str) -> str:
+        """
+        Гениальное извлечение валюты из lst ответа
+        
+        Поддерживает любые валюты от 2 до 10 символов (только буквы).
+        Примеры: USD, USDT, USDC, TRY, EUR, RUB, BTC, ETH, BNB, SOL, POLYGON и т.д.
+        
+        Приоритеты определения:
+        1. Явное упоминание валюты рядом с числом (высший приоритет)
+        2. Валюта в контексте баланса/доступных средств  
+        3. Знак $ как индикатор USD-подобной валюты (но не сразу USDT!)
+        4. Fallback на USDT только если ничего не найдено
+        
+        Примеры работы:
+        - "Total: 2997.46$ Available USDC: 2903.4$" → "USDC" (явное упоминание)
+        - "Total: 565285 TRY  Доступно TRY: 108.4k" → "TRY"
+        - "Available: 8410.60$  Total: 8412.58$" → "USDT" (только $, нет явной валюты)
+        - "Balance: 1000 BNB" → "BNB"
+        
+        Returns:
+            Код валюты (TRY, USDC, USDT, BTC, ETH, etc.)
+        """
+        import re
+        
+        log(f"[UDP-LISTENER-{self.server_id}] 🔍 Analyzing currency from: {message[:100]}...")
+        
+        # Список исключений - слова, которые не являются валютами
+        excluded_words = {
+            'TOTAL', 'OPEN', 'SELL', 'BUY', 'ORDERS', 'AVAILABLE',
+            'PRICE', 'AMOUNT', 'VOLUME', 'HIGH', 'LOW', 'CLOSE',
+            'PROFIT', 'LOSS', 'BALANCE', 'MARGIN', 'EQUITY',
+            'FREE', 'USED', 'LOCKED', 'PENDING', 'STATUS', 'SPOT'
+        }
+        
+        # Известные стейблкоины и их приоритет при наличии $
+        stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI', 'TUSD', 'USDP', 'GUSD']
+        
+        # Собираем все найденные валюты с их позициями
+        found_currencies = []
+        
+        # Паттерны для поиска валюты (упорядочены по приоритету)
+        patterns = [
+            # 1. Валюта непосредственно перед числом со знаком $ - высший приоритет
+            (r'([A-Z]{2,10})[:：]?\s*[\d,\.]+\s*\$', 100),  # "USDC: 2903.4$" или "USDC 2903.4$"
+            
+            # 2. "Available/Доступно + валюта" - очень высокий приоритет
+            (r'(?:Available|Доступно)\s+([A-Z]{2,10})[:：]', 90),  # "Available USDC:"
+            
+            # 3. Валюта после числа
+            (r'[\d,\.]+\s+([A-Z]{2,10})(?:\s|$)', 80),  # "565285 TRY"
+            
+            # 4. Валюта перед числом  
+            (r'([A-Z]{2,10})\s*[:：]\s*[\d,\.]+', 70),  # "TRY: 108.4k"
+            
+            # 5. Balance/Total с валютой
+            (r'(?:Balance|Total|Баланс):\s*[\d,\.]+\s+([A-Z]{2,10})', 60),  # "Total: 1000 BTC"
+            
+            # 6. Изолированная валюта (может быть в заголовке)
+            (r'\b([A-Z]{2,10})\b', 30),  # Любое слово из заглавных букв
+        ]
+        
+        # Ищем все валюты
+        for pattern, priority in patterns:
+            for match in re.finditer(pattern, message, re.IGNORECASE | re.MULTILINE):
+                currency = match.group(1).upper()
+                
+                # Пропускаем исключения
+                if currency in excluded_words:
+                    continue
+                
+                # Проверяем что это похоже на валюту
+                if 2 <= len(currency) <= 10 and currency.isalpha():
+                    position = match.start()
+                    found_currencies.append((currency, priority, position))
+                    log(f"[UDP-LISTENER-{self.server_id}] 💡 Found potential currency: {currency} (priority={priority}, pos={position})")
+        
+        # Специальная логика для $ без явной валюты
+        has_dollar_sign = bool(re.search(r'\$', message))
+        
+        if found_currencies:
+            # Сортируем по приоритету (больше = важнее), затем по позиции (раньше = важнее)
+            found_currencies.sort(key=lambda x: (-x[1], x[2]))
+            best_currency = found_currencies[0][0]
+            
+            # Если есть $ и найденная валюта не стейблкоин, проверяем наличие стейблкоинов
+            if has_dollar_sign and best_currency not in stablecoins:
+                stablecoin_found = next((c[0] for c in found_currencies if c[0] in stablecoins), None)
+                if stablecoin_found:
+                    log(f"[UDP-LISTENER-{self.server_id}] 💱 Detected stablecoin with $: {stablecoin_found}")
+                    return stablecoin_found
+            
+            log(f"[UDP-LISTENER-{self.server_id}] 💱 Detected currency: {best_currency}")
+            return best_currency
+        
+        # Если есть только $ без явной валюты - возвращаем USDT
+        if has_dollar_sign:
+            log(f"[UDP-LISTENER-{self.server_id}] 💱 Only $ sign found, defaulting to USDT")
+            return 'USDT'
+        
+        # Default fallback
+        log(f"[UDP-LISTENER-{self.server_id}] 💱 No currency detected, using default: USDT")
+        return 'USDT'
     
     def _process_lst_response(self, message: str):
         """
@@ -778,6 +906,9 @@ class UDPListener:
             # Парсим количество открытых ордеров
             import re
             
+            # 💱 АВТООПРЕДЕЛЕНИЕ ВАЛЮТЫ из lst
+            currency = self._extract_currency(message)
+            
             total_open = 0
             
             # Ищем "Open Sell Orders: N"
@@ -790,7 +921,7 @@ class UDPListener:
             if buy_match:
                 total_open += int(buy_match.group(1))
             
-            print(f"[UDP-LISTENER-{self.server_id}] MoonBot reports {total_open} open orders")
+            log(f"[UDP-LISTENER-{self.server_id}] MoonBot reports {total_open} open orders")
             
             # Парсим символы открытых ордеров
             # Формат: "BTC  ( +0.52$ +104.8%)" или "SOL  ( -0.79$ -58.5%)"
@@ -806,7 +937,7 @@ class UDPListener:
                         # Проверяем что это похоже на символ (2-10 букв)
                         if 2 <= len(symbol) <= 10 and symbol.isalpha():
                             symbols_found.append(symbol.upper())
-                            print(f"[UDP-LISTENER-{self.server_id}]   Found symbol: {symbol.upper()}")
+                            log(f"[UDP-LISTENER-{self.server_id}]   Found symbol: {symbol.upper()}")
             
             # Проверяем сколько у нас открытых в БД
             db = SessionLocal()
@@ -816,7 +947,7 @@ class UDPListener:
                     models.MoonBotOrder.status == "Open"
                 ).count()
                 
-                print(f"[UDP-LISTENER-{self.server_id}] Our DB has {our_open_count} open orders")
+                log(f"[UDP-LISTENER-{self.server_id}] Our DB has {our_open_count} open orders")
                 
                 # Обновляем символы для открытых ордеров с UNKNOWN или NULL
                 if symbols_found:
@@ -834,14 +965,24 @@ class UDPListener:
                     for i, order in enumerate(unknown_orders):
                         if i < len(symbols_found):
                             order.symbol = symbols_found[i]
-                            print(f"[UDP-LISTENER-{self.server_id}]   Updated order #{order.moonbot_order_id} symbol to {symbols_found[i]}")
+                            log(f"[UDP-LISTENER-{self.server_id}]   Updated order #{order.moonbot_order_id} symbol to {symbols_found[i]}")
                     
                     db.commit()
+                
+                # 💱 Обновляем валюту сервера
+                server = db.query(models.Server).filter(
+                    models.Server.id == self.server_id
+                ).first()
+                
+                if server and server.default_currency != currency:
+                    server.default_currency = currency
+                    db.commit()
+                    log(f"[UDP-LISTENER-{self.server_id}] 💱 Server currency updated: {currency}")
                 
                 # Если у нас больше открытых чем у MoonBot - закрываем старые
                 if our_open_count > total_open:
                     excess = our_open_count - total_open
-                    print(f"[UDP-LISTENER-{self.server_id}] Closing {excess} excess orders...")
+                    log(f"[UDP-LISTENER-{self.server_id}] Closing {excess} excess orders...")
                     
                     # Находим самые старые открытые ордера (которые давно не обновлялись)
                     old_orders = db.query(models.MoonBotOrder).filter(
@@ -853,19 +994,19 @@ class UDPListener:
                         order.status = "Closed"
                         order.closed_at = datetime.utcnow()
                         order.updated_at = datetime.now()
-                        print(f"[UDP-LISTENER-{self.server_id}]   - Closed order #{order.moonbot_order_id} (last update: {order.updated_at})")
+                        log(f"[UDP-LISTENER-{self.server_id}]   - Closed order #{order.moonbot_order_id} (last update: {order.updated_at})")
                     
                     db.commit()
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] Closed {excess} orders")
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] Closed {excess} orders")
                 
             except Exception as e:
-                print(f"[UDP-LISTENER-{self.server_id}] Error processing lst response: {e}")
+                log(f"[UDP-LISTENER-{self.server_id}] Error processing lst response: {e}")
                 db.rollback()
             finally:
                 db.close()
         
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] Error parsing lst response: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] Error parsing lst response: {e}")
     
     def _process_sql_command(self, sql_text: str, moonbot_order_id: int = None):
         """
@@ -884,12 +1025,12 @@ class UDPListener:
             if match:
                 command_id = int(match.group(1))
                 sql_body = sql_text[match.end():].strip()
-                print(f"[UDP-LISTENER-{self.server_id}] [SQL] SQL [{command_id}]: {sql_body[:100]}...")
+                log(f"[UDP-LISTENER-{self.server_id}] [SQL] SQL [{command_id}]: {sql_body[:100]}...")
             else:
                 # Нет ID - сохраняем как есть с автоинкрементным ID
                 command_id = 0
                 sql_body = sql_text.strip()
-                print(f"[UDP-LISTENER-{self.server_id}] [SQL] SQL (no ID): {sql_body[:100]}...")
+                log(f"[UDP-LISTENER-{self.server_id}] [SQL] SQL (no ID): {sql_body[:100]}...")
             
             # Сохраняем в БД
             db = SessionLocal()
@@ -918,7 +1059,7 @@ class UDPListener:
                 if user_id:
                     from websocket_manager import notify_sql_log_sync, notify_order_update_sync
                     
-                    print(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending WebSocket notification to user_id={user_id}")
+                    log(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending WebSocket notification to user_id={user_id}")
                     
                     # Формируем данные для SQL лога
                     log_data = {
@@ -932,17 +1073,17 @@ class UDPListener:
                     
                     # Отправляем уведомление о SQL логе
                     notify_sql_log_sync(user_id, self.server_id, log_data)
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] SQL log notification sent")
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] SQL log notification sent")
                     
                     # Если это ордер - отправляем дополнительное уведомление
                     if "Orders" in sql_body:
                         notify_order_update_sync(user_id, self.server_id)
-                        print(f"[UDP-LISTENER-{self.server_id}] [OK] Order update notification sent")
+                        log(f"[UDP-LISTENER-{self.server_id}] [OK] Order update notification sent")
                 else:
-                    print(f"[UDP-LISTENER-{self.server_id}] [WARN] No user_id found, cannot send WebSocket notification")
+                    log(f"[UDP-LISTENER-{self.server_id}] [WARN] No user_id found, cannot send WebSocket notification")
                 
             except Exception as e:
-                print(f"[UDP-LISTENER-{self.server_id}] DB Error: {e}")
+                log(f"[UDP-LISTENER-{self.server_id}] DB Error: {e}")
                 import traceback
                 traceback.print_exc()
                 db.rollback()
@@ -950,7 +1091,7 @@ class UDPListener:
                 db.close()
         
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] Parse error: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] Parse error: {e}")
             import traceback
             traceback.print_exc()
     
@@ -987,7 +1128,7 @@ class UDPListener:
                 pass
         
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] Order parse error: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] Order parse error: {e}")
     
     def _parse_update_order(self, db: Session, sql: str, moonbot_order_id: int = None):
         """
@@ -1002,7 +1143,7 @@ class UDPListener:
             id_match = re.search(r'\[?ID\]?\s*=\s*(\d+)', sql, re.IGNORECASE)
             if not id_match:
                 # Если нет ID, возможно это обновление по другому условию
-                print(f"[UDP-LISTENER-{self.server_id}] UPDATE без ID: {sql[:100]}")
+                log(f"[UDP-LISTENER-{self.server_id}] UPDATE без ID: {sql[:100]}")
                 return
             
             moonbot_order_id = int(id_match.group(1))
@@ -1069,53 +1210,62 @@ class UDPListener:
             ).first()
             
             if not order:
-                # UPDATE пришел раньше INSERT - создаем ордер из данных UPDATE
-                symbol = updates.get('Coin') or updates.get('Symbol', 'UNKNOWN')
+                # UPDATE пришел раньше INSERT или с другим ID
+                # 🧠 ГЕНИАЛЬНОЕ РЕШЕНИЕ: Fingerprint Matching!
+                log(f"[UDP-LISTENER-{self.server_id}] ⚠️ UPDATE для несуществующего ордера ID={moonbot_order_id}")
+                log(f"[UDP-LISTENER-{self.server_id}] 🔍 Применяем FINGERPRINT MATCHING...")
                 
-                print(f"[UDP-LISTENER-{self.server_id}] [WARN] UPDATE arrived before INSERT for {symbol} (ID={moonbot_order_id})")
-                print(f"[UDP-LISTENER-{self.server_id}] [INFO] Creating order from UPDATE data, waiting for INSERT to complete")
+                # Извлекаем ключевые данные из UPDATE
+                quantity = self._safe_float(updates.get('Quantity'))
+                spent_btc = self._safe_float(updates.get('SpentBTC'))
+                gained_btc = self._safe_float(updates.get('GainedBTC'))
                 
-                order = models.MoonBotOrder(
-                    server_id=self.server_id,
-                    moonbot_order_id=moonbot_order_id,
-                    symbol=symbol,
-                    # status будет установлен ниже в цикле обновления на основе CloseDate
-                    # Данные из UPDATE (выход из позиции)
-                    sell_price=self._safe_float(updates.get('SellPrice')),
-                    quantity=self._safe_float(updates.get('Quantity')),
-                    spent_btc=self._safe_float(updates.get('SpentBTC')),
-                    gained_btc=self._safe_float(updates.get('GainedBTC')),
-                    profit_btc=self._safe_float(updates.get('ProfitBTC')),
-                    close_date=self._parse_timestamp(updates.get('CloseDate', 0)),
-                    sell_reason=updates.get('SellReason', ''),
-                    is_emulator=self._safe_bool(updates.get('Emulator', 0)),
-                    # Поля которые заполнит INSERT (если придет)
-                    buy_date=None,
-                    buy_price=None,
-                    # Флаг что создан из UPDATE
-                    created_from_update=True
-                )
-                db.add(order)
-                
-                # RACE CONDITION FIX: Flush чтобы сразу записать в БД и поймать дубликат
-                try:
-                    db.flush()
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] Order {symbol} created from UPDATE with partial data")
-                except Exception as e:
-                    # Если возникла IntegrityError (дубликат) - перечитываем ордер
-                    if "UNIQUE constraint failed" in str(e) or "IntegrityError" in str(type(e).__name__):
-                        print(f"[UDP-LISTENER-{self.server_id}] [INFO] Order {moonbot_order_id} already exists (race condition), re-fetching...")
-                        db.rollback()
-                        order = db.query(models.MoonBotOrder).filter(
-                            models.MoonBotOrder.server_id == self.server_id,
-                            models.MoonBotOrder.moonbot_order_id == moonbot_order_id
-                        ).first()
-                        if not order:
-                            print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to fetch order after race condition")
-                            return
+                if quantity:
+                    # Ищем недавние ордера с похожим quantity
+                    time_threshold = datetime.now() - timedelta(seconds=120)  # 2 минуты
+                    
+                    candidates = db.query(models.MoonBotOrder)\
+                        .filter(models.MoonBotOrder.server_id == self.server_id)\
+                        .filter(models.MoonBotOrder.created_at >= time_threshold)\
+                        .filter(
+                            func.abs(models.MoonBotOrder.quantity - quantity) < 1.0  # погрешность < 1
+                        )\
+                        .order_by(models.MoonBotOrder.created_at.desc())\
+                        .all()
+                    
+                    log(f"[UDP-LISTENER-{self.server_id}] 📊 Найдено {len(candidates)} кандидатов с quantity ≈ {quantity}")
+                    
+                    # Уточняем поиск по SpentBTC если есть
+                    best_match = None
+                    if spent_btc and candidates:
+                        for candidate in candidates:
+                            if candidate.spent_btc and abs(candidate.spent_btc - spent_btc) < 1.0:
+                                best_match = candidate
+                                break
+                    
+                    # Или просто берем первого кандидата
+                    if not best_match and candidates:
+                        best_match = candidates[0]
+                    
+                    if best_match:
+                        log(f"[UDP-LISTENER-{self.server_id}] ✅ НАЙДЕН ордер по fingerprint!")
+                        log(f"[UDP-LISTENER-{self.server_id}]    Symbol: {best_match.symbol}")
+                        log(f"[UDP-LISTENER-{self.server_id}]    Original ID: {best_match.moonbot_order_id}")
+                        log(f"[UDP-LISTENER-{self.server_id}]    New ID: {moonbot_order_id}")
+                        
+                        # Обновляем moonbot_order_id на правильный
+                        best_match.moonbot_order_id = moonbot_order_id
+                        order = best_match
+                        
+                        # Теперь продолжаем обновление найденного ордера
                     else:
-                        # Другая ошибка - пробрасываем дальше
-                        raise
+                        log(f"[UDP-LISTENER-{self.server_id}] ❌ Не найдено подходящих ордеров")
+                        log(f"[UDP-LISTENER-{self.server_id}] ⏭️ Пропускаем UPDATE")
+                        return
+                else:
+                    log(f"[UDP-LISTENER-{self.server_id}] ❌ Нет Quantity для fingerprint matching")
+                    log(f"[UDP-LISTENER-{self.server_id}] ⏭️ Пропускаем UPDATE")
+                    return
             
             # Обновляем поля (все доступные из UPDATE)
             field_mapping = {
@@ -1157,7 +1307,7 @@ class UDPListener:
                         if value is not None:
                             setattr(order, model_field, value)
                     except Exception as e:
-                        print(f"[UDP-LISTENER-{self.server_id}] Error setting {model_field}: {e}")
+                        log(f"[UDP-LISTENER-{self.server_id}] Error setting {model_field}: {e}")
             
             # Обрабатываем Lev как Leverage (если нет Quantity)
             if 'Lev' in updates and not order.quantity:
@@ -1187,23 +1337,41 @@ class UDPListener:
                     order.closed_at = None
                     if not order.opened_at:
                         order.opened_at = datetime.now()
-                else:
-                    order.status = "Closed"
-                    try:
-                        # MoonBot отправляет timestamp, который нужно интерпретировать как UTC
-                        # и сохранить без конвертации в локальное время
-                        order.closed_at = datetime.utcfromtimestamp(close_date)
-                    except (ValueError, OSError, OverflowError) as e:
-                        print(f"[UDP-LISTENER-{self.server_id}] Warning: Invalid CloseDate={close_date}, Error: {e}")
-                        order.closed_at = datetime.now()
+                elif close_date > 0:
+                    # Проверяем, это дата в прошлом или в будущем
+                    current_timestamp = int(datetime.now().timestamp())
+                    
+                    if close_date > current_timestamp:
+                        # Дата в будущем - это планируемое закрытие, ордер все еще открыт
+                        log(f"[UDP-LISTENER-{self.server_id}] ⚠️ CloseDate={close_date} in future for order {order.moonbot_order_id}, keeping status as Open")
+                        # НЕ меняем статус, ордер остается открытым
+                        if order.status != "Open":
+                            order.status = "Open"
+                    else:
+                        # Дата в прошлом - ордер действительно закрыт
+                        order.status = "Closed"
+                        try:
+                            # MoonBot отправляет timestamp, который нужно интерпретировать как UTC
+                            # и сохранить без конвертации в локальное время
+                            order.closed_at = datetime.utcfromtimestamp(close_date)
+                        except (ValueError, OSError, OverflowError) as e:
+                            log(f"[UDP-LISTENER-{self.server_id}] Warning: Invalid CloseDate={close_date}, Error: {e}")
+                            order.closed_at = datetime.now()
 
+            
+            # 🎯 КРИТИЧНО: Если symbol == UNKNOWN, но есть FName - исправляем!
+            if order.symbol == 'UNKNOWN' and 'FName' in updates:
+                extracted_symbol = self._extract_symbol_from_fname(updates['FName'])
+                if extracted_symbol:
+                    order.symbol = extracted_symbol
+                    log(f"[UDP-LISTENER-{self.server_id}] ✅ Fixed UNKNOWN → {extracted_symbol} from FName!")
             
             order.updated_at = datetime.now()
             
-            print(f"[UDP-LISTENER-{self.server_id}] Updated order {moonbot_order_id}: {len(updates)} fields")
+            log(f"[UDP-LISTENER-{self.server_id}] Updated order {moonbot_order_id}: {len(updates)} fields")
         
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] UPDATE parse error: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] UPDATE parse error: {e}")
             import traceback
             traceback.print_exc()
             # Откатываем транзакцию чтобы не блокировать БД
@@ -1230,7 +1398,7 @@ class UDPListener:
             # Извлекаем список полей
             fields_match = re.search(r'insert\s+into\s+Orders\s*\(([^)]+)\)', sql, re.IGNORECASE)
             if not fields_match:
-                print(f"[UDP-LISTENER-{self.server_id}] INSERT без полей: {sql[:100]}")
+                log(f"[UDP-LISTENER-{self.server_id}] INSERT без полей: {sql[:100]}")
                 return
             
             fields_str = fields_match.group(1)
@@ -1240,7 +1408,7 @@ class UDPListener:
             # Извлекаем значения - СЛОЖНЫЙ парсер для вложенных кавычек!
             values_match = re.search(r'values\s*\((.*)\)', sql, re.IGNORECASE | re.DOTALL)
             if not values_match:
-                print(f"[UDP-LISTENER-{self.server_id}] INSERT без values: {sql[:100]}")
+                log(f"[UDP-LISTENER-{self.server_id}] INSERT без values: {sql[:100]}")
                 return
             
             values_str = values_match.group(1).strip()
@@ -1287,20 +1455,42 @@ class UDPListener:
             
             # Создаём словарь поле -> значение
             if len(fields) != len(values):
-                print(f"[UDP-LISTENER-{self.server_id}] INSERT mismatch: {len(fields)} fields vs {len(values)} values")
-                print(f"  Fields: {fields[:10]}...")
-                print(f"  Values: {values[:10]}...")
+                log(f"[UDP-LISTENER-{self.server_id}] INSERT mismatch: {len(fields)} fields vs {len(values)} values")
+                log(f"  Fields: {fields[:10]}...")
+                log(f"  Values: {values[:10]}...")
                 return
             
             data = dict(zip(fields, values))
             
-            # Используем moonbot_order_id из параметра (oid из пакета order)
-            # Если не передан - fallback на command_id
+            # 🧠 ГЕНИАЛЬНОЕ РЕШЕНИЕ: Извлекаем TaskID из данных - это реальный ID ордера!
+            task_id = None
+            if 'TaskID' in data:
+                try:
+                    task_id_raw = data['TaskID'].strip()
+                    # TaskID может быть числом или строкой типа "Task #123"
+                    if task_id_raw.isdigit():
+                        task_id = int(task_id_raw)
+                    else:
+                        # Ищем число в строке
+                        task_id_match = re.search(r'(\d+)', task_id_raw)
+                        if task_id_match:
+                            task_id = int(task_id_match.group(1))
+                except:
+                    pass
+            
+            # Приоритеты определения ID:
+            # 1. moonbot_order_id из параметра (oid из JSON пакета)
+            # 2. TaskID из SQL данных (новое!)
+            # 3. command_id из [SQLCommand XXX]
             if moonbot_order_id is None:
-                moonbot_order_id = command_id
+                if task_id and task_id > 0:
+                    moonbot_order_id = task_id
+                    log(f"[UDP-LISTENER-{self.server_id}] 🧠 Using TaskID as moonbot_order_id: {task_id}")
+                else:
+                    moonbot_order_id = command_id
             
             if not moonbot_order_id:
-                print(f"[UDP-LISTENER-{self.server_id}] [WARN] No order ID available for INSERT, skipping...")
+                log(f"[UDP-LISTENER-{self.server_id}] [WARN] No order ID available for INSERT, skipping...")
                 return
             
             # Проверяем не существует ли уже такой ордер
@@ -1312,11 +1502,11 @@ class UDPListener:
             if existing_order:
                 # Проверяем был ли ордер создан из UPDATE
                 if getattr(existing_order, 'created_from_update', False):
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] INSERT arrived for UPDATE-created order (ID={moonbot_order_id})")
-                    print(f"[UDP-LISTENER-{self.server_id}] [INFO] Completing order with missing data (BuyDate, BuyPrice...)")
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] INSERT arrived for UPDATE-created order (ID={moonbot_order_id})")
+                    log(f"[UDP-LISTENER-{self.server_id}] [INFO] Completing order with missing data (BuyDate, BuyPrice...)")
                     existing_order.created_from_update = False  # Теперь полный ордер
                 else:
-                    print(f"[UDP-LISTENER-{self.server_id}] Order {moonbot_order_id} already exists, updating from INSERT...")
+                    log(f"[UDP-LISTENER-{self.server_id}] Order {moonbot_order_id} already exists, updating from INSERT...")
                 # Обновляем существующий ордер данными из INSERT
                 order = existing_order
             else:
@@ -1411,12 +1601,22 @@ class UDPListener:
                     order.status = "Open"
                     order.closed_at = None
                 elif close_date and close_date > 0:
-                    order.status = "Closed"
-                    try:
-                        # MoonBot отправляет timestamp в UTC
-                        order.closed_at = datetime.utcfromtimestamp(close_date)
-                    except:
-                        order.closed_at = datetime.now()
+                    # Проверяем, это дата в прошлом или в будущем
+                    current_timestamp = int(datetime.now().timestamp())
+                    
+                    if close_date > current_timestamp:
+                        # Дата в будущем - это планируемое закрытие, ордер все еще открыт
+                        log(f"[UDP-LISTENER-{self.server_id}] ⚠️ INSERT with future CloseDate={close_date} for order {moonbot_order_id}, setting status as Open")
+                        order.status = "Open"
+                        order.closed_at = None
+                    else:
+                        # Дата в прошлом - ордер действительно закрыт
+                        order.status = "Closed"
+                        try:
+                            # MoonBot отправляет timestamp в UTC
+                            order.closed_at = datetime.utcfromtimestamp(close_date)
+                        except:
+                            order.closed_at = datetime.now()
             
             # Вычисляем недостающие поля
             if not order.buy_price and order.spent_btc and order.quantity and order.quantity > 0:
@@ -1430,10 +1630,10 @@ class UDPListener:
             
             order.updated_at = datetime.now()
             
-            print(f"[UDP-LISTENER-{self.server_id}] {'Updated' if existing_order else 'Created'} order {moonbot_order_id}: {order.symbol} (Qty:{order.quantity}, Strategy:{order.strategy})")
+            log(f"[UDP-LISTENER-{self.server_id}] {'Updated' if existing_order else 'Created'} order {moonbot_order_id}: {order.symbol} (Qty:{order.quantity}, Strategy:{order.strategy})")
             
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] INSERT parse error: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] INSERT parse error: {e}")
             import traceback
             traceback.print_exc()
             # Откатываем транзакцию чтобы не блокировать БД
@@ -1480,6 +1680,50 @@ class UDPListener:
         except:
             return None
     
+    def _extract_symbol_from_fname(self, fname: str) -> Optional[str]:
+        """
+        Извлечение Symbol из FName (КРИТИЧЕСКОЕ РЕШЕНИЕ проблемы UNKNOWN!)
+        
+        FName формат: {Exchange}{Type}_{BaseCurrency}-{SYMBOL}_{DateTime}.bin
+        
+        Примеры:
+        - BinanceF_USDT-SAPIEN_18-11-2025 19-23-11_2.bin → SAPIEN
+        - BinanceS_TRY-AXS_18-11-2025 12-42-19_2.bin → AXS
+        - BybitS_USDT-XTER_18-11-2025 11-05-11_2.bin → XTER
+        
+        Args:
+            fname: Значение поля FName из UPDATE команды
+        
+        Returns:
+            Symbol или None если не удалось извлечь
+        """
+        if not fname:
+            return None
+        
+        try:
+            # Универсальный паттерн для всех бирж и баз валют
+            # Формат: {что-то}_{БАЗА}-{SYMBOL}_{дата-время}
+            match = re.search(r'_([A-Z]{2,6})-([A-Z0-9]{2,20})_', str(fname), re.IGNORECASE)
+            if match:
+                base_currency = match.group(1).upper()
+                symbol = match.group(2).upper()
+                
+                # Валидация: symbol не должен быть числом или датой
+                if symbol.isdigit():
+                    return None
+                
+                if re.match(r'^\d{2}-\d{2}', symbol):  # Защита от дат (18-11)
+                    return None
+                
+                # Symbol валиден!
+                log(f"[UDP-LISTENER-{self.server_id}] ✅ Extracted Symbol from FName: {symbol} (base: {base_currency})")
+                return symbol
+            
+        except Exception as e:
+            log(f"[UDP-LISTENER-{self.server_id}] ⚠️ Error extracting symbol from FName '{fname}': {e}")
+        
+        return None
+    
     def _start_keepalive(self):
         """Запустить keep-alive таймер для сохранения NAT mapping (только для локалки)"""
         import threading
@@ -1493,7 +1737,7 @@ class UDPListener:
                     if not self.running:
                         break
                     
-                    print(f"[UDP-LISTENER-{self.server_id}] [KEEPALIVE] Recreating socket with NEW ephemeral port...")
+                    log(f"[UDP-LISTENER-{self.server_id}] [KEEPALIVE] Recreating socket with NEW ephemeral port...")
                     
                     # Создаем НОВЫЙ UDP сокет на новом эфемерном порту
                     new_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -1501,14 +1745,14 @@ class UDPListener:
                     new_sock.bind(("", 0))  # 0 = система выберет свободный эфемерный порт
                     
                     local_addr = new_sock.getsockname()
-                    print(f"[UDP-LISTENER-{self.server_id}] [KEEPALIVE] New ephemeral port: {local_addr[1]}")
+                    log(f"[UDP-LISTENER-{self.server_id}] [KEEPALIVE] New ephemeral port: {local_addr[1]}")
                     
                     # Закрываем СТАРЫЙ сокет
                     old_sock = self.sock
                     if old_sock:
                         try:
                             old_sock.close()
-                            print(f"[UDP-LISTENER-{self.server_id}] [CLOSE] Old socket closed")
+                            log(f"[UDP-LISTENER-{self.server_id}] [CLOSE] Old socket closed")
                         except:
                             pass
                     
@@ -1516,16 +1760,16 @@ class UDPListener:
                     # Listener thread будет использовать новый сокет при следующем recvfrom()
                     self.sock = new_sock
                     
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] Listener switched to NEW port {local_addr[1]}")
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] Listener switched to NEW port {local_addr[1]}")
                     
                     # Отправляем lst с НОВОГО порта -> Moonbot запомнит новый порт
-                    print(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending 'lst' from new port...")
+                    log(f"[UDP-LISTENER-{self.server_id}] [SEND] Sending 'lst' from new port...")
                     self._send_command_from_listener("lst")
                     
-                    print(f"[UDP-LISTENER-{self.server_id}] [OK] Keep-alive sent! Moonbot will now send to port {local_addr[1]}")
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] Keep-alive sent! Moonbot will now send to port {local_addr[1]}")
                     
                 except Exception as e:
-                    print(f"[UDP-LISTENER-{self.server_id}] [ERROR] Keep-alive error: {e}")
+                    log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Keep-alive error: {e}")
                     import traceback
                     traceback.print_exc()
         
@@ -1535,7 +1779,7 @@ class UDPListener:
             name=f"KeepAlive-{self.server_id}"
         )
         self.keepalive_timer.start()
-        print(f"[UDP-LISTENER-{self.server_id}] [KEEPALIVE] Keep-alive scheduled (port rotation every 1 min)")
+        log(f"[UDP-LISTENER-{self.server_id}] [KEEPALIVE] Keep-alive scheduled (port rotation every 1 min)")
     
     def _update_status(self, **kwargs):
         """
@@ -1562,7 +1806,7 @@ class UDPListener:
             
             db.commit()
         except Exception as e:
-            print(f"[UDP-LISTENER-{self.server_id}] Status update error: {e}")
+            log(f"[UDP-LISTENER-{self.server_id}] Status update error: {e}")
             db.rollback()
         finally:
             db.close()
@@ -1625,7 +1869,7 @@ class GlobalUDPSocket:
         normalized_host = normalize_localhost_ip(listener.host)
         key = (normalized_host, listener.port)
         self.ip_port_to_listener[key] = listener
-        print(f"[GLOBAL-UDP] Registered listener for {listener.host}:{listener.port} (normalized: {normalized_host}:{listener.port}, server_id={listener.server_id})")
+        log(f"[GLOBAL-UDP] Registered listener for {listener.host}:{listener.port} (normalized: {normalized_host}:{listener.port}, server_id={listener.server_id})")
     
     def unregister_listener(self, listener: 'UDPListener'):
         """
@@ -1639,12 +1883,12 @@ class GlobalUDPSocket:
         key = (normalized_host, listener.port)
         if key in self.ip_port_to_listener:
             del self.ip_port_to_listener[key]
-            print(f"[GLOBAL-UDP] Unregistered listener for {listener.host}:{listener.port} (normalized: {normalized_host}:{listener.port}, server_id={listener.server_id})")
+            log(f"[GLOBAL-UDP] Unregistered listener for {listener.host}:{listener.port} (normalized: {normalized_host}:{listener.port}, server_id={listener.server_id})")
     
     def start(self):
         """Запустить глобальный UDP сокет"""
         if self.running:
-            print(f"[GLOBAL-UDP] Already running on port {self.port}")
+            log(f"[GLOBAL-UDP] Already running on port {self.port}")
             return True
         
         try:
@@ -1656,7 +1900,7 @@ class GlobalUDPSocket:
             self.sock.bind(("", self.port))
             self.sock.settimeout(1.0)
             
-            print(f"[GLOBAL-UDP] [BIND] Bound to port {self.port}")
+            log(f"[GLOBAL-UDP] [BIND] Bound to port {self.port}")
             
             # Запускаем поток прослушивания
             self.running = True
@@ -1667,11 +1911,11 @@ class GlobalUDPSocket:
             )
             self.thread.start()
             
-            print(f"[GLOBAL-UDP] [OK] Started successfully on port {self.port}")
+            log(f"[GLOBAL-UDP] [OK] Started successfully on port {self.port}")
             return True
             
         except Exception as e:
-            print(f"[GLOBAL-UDP] [ERROR] Failed to start: {e}")
+            log(f"[GLOBAL-UDP] [ERROR] Failed to start: {e}")
             self.last_error = str(e)
             self.running = False
             if self.sock:
@@ -1686,7 +1930,7 @@ class GlobalUDPSocket:
         if not self.running:
             return False
         
-        print(f"[GLOBAL-UDP] Stopping...")
+        log(f"[GLOBAL-UDP] Stopping...")
         
         self.running = False
         
@@ -1701,12 +1945,12 @@ class GlobalUDPSocket:
         if self.thread and self.thread.is_alive():
             self.thread.join(timeout=5)
         
-        print(f"[GLOBAL-UDP] Stopped")
+        log(f"[GLOBAL-UDP] Stopped")
         return True
     
     def _listen_loop(self):
         """Основной цикл прослушивания"""
-        print(f"[GLOBAL-UDP] Listen loop started")
+        log(f"[GLOBAL-UDP] Listen loop started")
         
         try:
             while self.running:
@@ -1740,22 +1984,22 @@ class GlobalUDPSocket:
                         if len(possible_listeners) == 1:
                             listener = possible_listeners[0][1]
                             original_key = possible_listeners[0][0]
-                            print(f"[GLOBAL-UDP] [LOOPBACK] Packet from {source_ip}:{source_port} matched to {original_key} (UDP loopback detected)")
+                            log(f"[GLOBAL-UDP] [LOOPBACK] Packet from {source_ip}:{source_port} matched to {original_key} (UDP loopback detected)")
                         elif len(possible_listeners) > 1:
                             # Несколько listeners на этом порту - не можем определить какой нужен
-                            print(f"[GLOBAL-UDP] [WARN] Ambiguous loopback from {source_ip}:{source_port} - {len(possible_listeners)} listeners on port {source_port}")
-                            print(f"[GLOBAL-UDP]   Possible matches: {[k for k, l in possible_listeners]}")
+                            log(f"[GLOBAL-UDP] [WARN] Ambiguous loopback from {source_ip}:{source_port} - {len(possible_listeners)} listeners on port {source_port}")
+                            log(f"[GLOBAL-UDP]   Possible matches: {[k for k, l in possible_listeners]}")
                     
                     if listener:
                         # Передаем пакет в listener для обработки
                         try:
                             listener._process_message(data, source_ip, source_port)
                         except Exception as e:
-                            print(f"[GLOBAL-UDP] Error processing packet from {source_ip}:{source_port} (normalized: {normalized_ip}): {e}")
+                            log(f"[GLOBAL-UDP] Error processing packet from {source_ip}:{source_port} (normalized: {normalized_ip}): {e}")
                     else:
                         # Пакет от неизвестной комбинации (IP, PORT)
-                        print(f"[GLOBAL-UDP] [WARN] Received packet from unknown source: {source_ip}:{source_port} (normalized: {normalized_ip}:{source_port})")
-                        print(f"[GLOBAL-UDP]   Known servers: {list(self.ip_port_to_listener.keys())}")
+                        log(f"[GLOBAL-UDP] [WARN] Received packet from unknown source: {source_ip}:{source_port} (normalized: {normalized_ip}:{source_port})")
+                        log(f"[GLOBAL-UDP]   Known servers: {list(self.ip_port_to_listener.keys())}")
                 
                 except socket.timeout:
                     # Timeout - это нормально, продолжаем
@@ -1763,18 +2007,18 @@ class GlobalUDPSocket:
                 
                 except Exception as e:
                     if self.running:  # Логируем только если не останавливаемся
-                        print(f"[GLOBAL-UDP] Receive error: {e}")
+                        log(f"[GLOBAL-UDP] Receive error: {e}")
                         self.last_error = str(e)
                         time.sleep(1)
         
         except Exception as e:
-            print(f"[GLOBAL-UDP] Fatal error: {e}")
+            log(f"[GLOBAL-UDP] Fatal error: {e}")
             self.last_error = str(e)
         
         finally:
             if self.sock:
                 self.sock.close()
-            print(f"[GLOBAL-UDP] Listen loop ended (total packets: {self.total_packets})")
+            log(f"[GLOBAL-UDP] Listen loop ended (total packets: {self.total_packets})")
     
     def send_command(self, command: str, target_host: str, target_port: int, password: Optional[str] = None) -> bool:
         """
@@ -1791,7 +2035,7 @@ class GlobalUDPSocket:
         """
         try:
             if not self.sock:
-                print(f"[GLOBAL-UDP] [ERROR] Socket not initialized")
+                log(f"[GLOBAL-UDP] [ERROR] Socket not initialized")
                 return False
             
             import hmac
@@ -1818,7 +2062,7 @@ class GlobalUDPSocket:
             return True
             
         except Exception as e:
-            print(f"[GLOBAL-UDP] [ERROR] Failed to send command: {e}")
+            log(f"[GLOBAL-UDP] [ERROR] Failed to send command: {e}")
             return False
 
 
@@ -1844,7 +2088,7 @@ def start_listener(server_id: int, host: str, port: int, password: Optional[str]
     if server_id in active_listeners:
         existing = active_listeners[server_id]
         if existing.running:
-            print(f"[UDP-LISTENER] Server {server_id} already has active listener - returning success")
+            log(f"[UDP-LISTENER] Server {server_id} already has active listener - returning success")
             return True
         # Если есть но не running - удаляем старый
         del active_listeners[server_id]
@@ -1859,22 +2103,22 @@ def start_listener(server_id: int, host: str, port: int, password: Optional[str]
         if global_udp_socket is None or not global_udp_socket.running:
             # Если объект существует но сокет не запущен - обнуляем
             if global_udp_socket and not global_udp_socket.running:
-                print(f"[UDP-LISTENER] [WARN] Previous global socket failed, recreating...")
+                log(f"[UDP-LISTENER] [WARN] Previous global socket failed, recreating...")
                 global_udp_socket = None
             
-            print(f"[UDP-LISTENER] Creating global UDP socket on port 2500...")
+            log(f"[UDP-LISTENER] Creating global UDP socket on port 2500...")
             global_udp_socket = GlobalUDPSocket(port=2500)
             success = global_udp_socket.start()
             
             if not success:
-                print(f"[UDP-LISTENER] [ERROR] Failed to start global socket")
+                log(f"[UDP-LISTENER] [ERROR] Failed to start global socket")
                 # Обнуляем объект чтобы следующий сервер мог попробовать снова
                 global_udp_socket = None
                 return False
         
         # Проверяем что глобальный сокет действительно работает
         if not global_udp_socket or not global_udp_socket.running or not global_udp_socket.sock:
-            print(f"[UDP-LISTENER] [ERROR] Global socket is not running properly")
+            log(f"[UDP-LISTENER] [ERROR] Global socket is not running properly")
             return False
         
         # Создаем listener с ссылкой на глобальный сокет
@@ -1895,7 +2139,7 @@ def start_listener(server_id: int, host: str, port: int, password: Optional[str]
         
         if success:
             active_listeners[server_id] = listener
-            print(f"[UDP-LISTENER] [OK] Registered server {server_id} ({host}) with global socket")
+            log(f"[UDP-LISTENER] [OK] Registered server {server_id} ({host}) with global socket")
             return True
         else:
             global_udp_socket.unregister_listener(listener)
@@ -1935,7 +2179,7 @@ def stop_listener(server_id: int) -> bool:
     global active_listeners, global_udp_socket
     
     if server_id not in active_listeners:
-        print(f"[UDP-LISTENER] No active listener for server {server_id}")
+        log(f"[UDP-LISTENER] No active listener for server {server_id}")
         return False
     
     listener = active_listeners[server_id]
@@ -1982,16 +2226,16 @@ def stop_all_listeners():
     """Остановить все активные listeners"""
     global active_listeners, global_udp_socket
     
-    print("[UDP-LISTENER] Stopping all listeners...")
+    log("[UDP-LISTENER] Stopping all listeners...")
     
     for server_id in list(active_listeners.keys()):
         stop_listener(server_id)
     
     # Останавливаем глобальный сокет если он был создан
     if global_udp_socket:
-        print("[UDP-LISTENER] Stopping global UDP socket...")
+        log("[UDP-LISTENER] Stopping global UDP socket...")
         global_udp_socket.stop()
         global_udp_socket = None
     
-    print("[UDP-LISTENER] All listeners stopped")
+    log("[UDP-LISTENER] All listeners stopped")
 

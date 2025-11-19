@@ -3,8 +3,10 @@ import { FiClock, FiTrash2, FiEdit2, FiX, FiCheck, FiPlus, FiCalendar, FiServer 
 import { scheduledCommandsAPI, serversAPI, groupsAPI, presetsAPI } from '../api/api';
 import api from '../api/api';
 import styles from './ScheduledCommands.module.css';
+import { useNotification } from '../context/NotificationContext';
 
 const ScheduledCommands = () => {
+  const { success, error: showError, warning, confirm } = useNotification();
   const [scheduledCommands, setScheduledCommands] = useState([]);
   const [servers, setServers] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -38,6 +40,8 @@ const ScheduledCommands = () => {
     groupIds: [],
     useBotname: false,
     delayBetweenBots: 0,
+    recurrenceType: 'once', // Новое: once, daily, weekly, monthly, weekly_days
+    weekdays: [], // Новое: массив дней недели [0-6], где 0=Пн, 6=Вс
   });
 
   useEffect(() => {
@@ -133,27 +137,31 @@ const ScheduledCommands = () => {
       console.log(`Scheduler ${newEnabled ? 'enabled' : 'disabled'}`);
     } catch (error) {
       console.error('Error toggling scheduler:', error);
-      alert(error.response?.data?.detail || 'Ошибка изменения состояния планировщика');
+      showError(error.response?.data?.detail || 'Ошибка изменения состояния планировщика');
     }
   };
 
   const handleSystemReset = async () => {
     if (resetCode.toLowerCase() !== 'aezakmi') {
-      alert('Неверный код доступа');
+      showError('Неверный код доступа');
       return;
     }
 
-    const finalConfirm = confirm(
-      '⚠️ ВНИМАНИЕ!\n\nЭто действие:\n' +
-      '• Удалит ВСЕ аккаунты пользователей\n' +
-      '• Удалит ВСЕ данные о серверах\n' +
-      '• Удалит ВСЕ команды и историю\n' +
-      '• Удалит ВСЕ отложенные команды\n' +
-      '• Удалит ВСЕ группы\n' +
-      '• Очистит всю базу данных\n\n' +
-      'Это действие НЕОБРАТИМО!\n\n' +
-      'Продолжить?'
-    );
+    const finalConfirm = await confirm({
+      title: 'СБРОС СИСТЕМЫ',
+      message: 'Это действие:\n' +
+        '• Удалит ВСЕ аккаунты пользователей\n' +
+        '• Удалит ВСЕ данные о серверах\n' +
+        '• Удалит ВСЕ команды и историю\n' +
+        '• Удалит ВСЕ отложенные команды\n' +
+        '• Удалит ВСЕ группы\n' +
+        '• Очистит всю базу данных\n\n' +
+        'Это действие НЕОБРАТИМО!\n\n' +
+        'Продолжить?',
+      type: 'danger',
+      confirmText: 'Сбросить систему',
+      cancelText: 'Отмена',
+    });
 
     if (!finalConfirm) {
       setShowResetModal(false);
@@ -168,7 +176,7 @@ const ScheduledCommands = () => {
       const response = await api.post('/api/system/reset', { code: resetCode });
 
       if (response.data.success) {
-        alert('✅ Система успешно сброшена. Все данные удалены.\n\nВы будете перенаправлены на страницу регистрации.');
+        success('Система успешно сброшена. Все данные удалены.\n\nВы будете перенаправлены на страницу регистрации.');
         
         // Очищаем localStorage
         localStorage.clear();
@@ -180,9 +188,9 @@ const ScheduledCommands = () => {
       console.error('System reset error:', error);
       console.error('Error response:', error.response);
       if (error.response?.status === 403) {
-        alert('Ошибка: Неверный код доступа');
+        showError('Ошибка: Неверный код доступа');
       } else {
-        alert('Ошибка при сбросе системы: ' + (error.response?.data?.detail || error.message));
+        showError('Ошибка при сбросе системы: ' + (error.response?.data?.detail || error.message));
       }
     } finally {
       setLoading(false);
@@ -197,10 +205,10 @@ const ScheduledCommands = () => {
       await scheduledCommandsAPI.updateSettings({ check_interval: settingsInterval });
       await loadSchedulerSettings();
       setShowSettingsModal(false);
-      alert('Настройки сохранены! Изменения применятся автоматически в течение нескольких секунд.');
+      success('Настройки сохранены! Изменения применятся автоматически в течение нескольких секунд.');
     } catch (error) {
       console.error('Error saving settings:', error);
-      alert(error.response?.data?.detail || 'Ошибка сохранения настроек');
+      showError(error.response?.data?.detail || 'Ошибка сохранения настроек');
     } finally {
       setLoading(false);
     }
@@ -208,6 +216,13 @@ const ScheduledCommands = () => {
 
   const handleCreateCommand = async (e) => {
     e.preventDefault();
+    
+    // Валидация дней недели
+    if (formData.recurrenceType === 'weekly_days' && formData.weekdays.length === 0) {
+      warning('Пожалуйста, выберите хотя бы один день недели');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -282,7 +297,7 @@ const ScheduledCommands = () => {
           minute: '2-digit',
           second: '2-digit'
         });
-        alert(`Ошибка: Выбранное время (${userTimeString} ${formData.timezone}) уже прошло. Выберите будущее время.`);
+        showError(`Ошибка: Выбранное время (${userTimeString} ${formData.timezone}) уже прошло. Выберите будущее время.`);
         setLoading(false);
         return;
       }
@@ -311,6 +326,8 @@ const ScheduledCommands = () => {
         group_ids: formData.targetType === 'groups' ? formData.groupIds : [],
         use_botname: formData.useBotname,
         delay_between_bots: parseInt(formData.delayBetweenBots) || 0,
+        recurrence_type: formData.recurrenceType || 'once', // Новое: тип повторения
+        weekdays: formData.recurrenceType === 'weekly_days' ? formData.weekdays : null, // Новое: дни недели
       };
 
       if (editingCommand) {
@@ -321,9 +338,10 @@ const ScheduledCommands = () => {
 
       await loadScheduledCommands();
       resetForm();
+      success('Команда успешно сохранена');
     } catch (error) {
       console.error('Error saving scheduled command:', error);
-      alert(error.response?.data?.detail || 'Ошибка сохранения');
+      showError(error.response?.data?.detail || 'Ошибка сохранения');
     } finally {
       setLoading(false);
     }
@@ -367,6 +385,8 @@ const ScheduledCommands = () => {
       groupIds: command.group_ids || [],
       useBotname: command.use_botname,
       delayBetweenBots: command.delay_between_bots,
+      recurrenceType: command.recurrence_type || 'once',
+      weekdays: command.weekdays ? JSON.parse(command.weekdays) : [],
     });
     
     setEditingCommand(command);
@@ -403,6 +423,8 @@ const ScheduledCommands = () => {
       groupIds: [],
       useBotname: false,
       delayBetweenBots: 0,
+      recurrenceType: 'once',
+      weekdays: [],
     });
     setEditingCommand(null);
     setShowCreateModal(false);
@@ -545,6 +567,26 @@ const ScheduledCommands = () => {
                   <pre>{command.commands}</pre>
                 </div>
 
+                {/* Режим выполнения */}
+                {command.recurrence_type && (
+                  <div className={styles.detailRow}>
+                    <strong>Режим:</strong>{' '}
+                    {command.recurrence_type === 'once' && 'Один раз'}
+                    {command.recurrence_type === 'daily' && 'Ежедневно'}
+                    {command.recurrence_type === 'weekly' && 'Еженедельно (каждые 7 дней)'}
+                    {command.recurrence_type === 'monthly' && 'Ежемесячно (то же число)'}
+                    {command.recurrence_type === 'weekly_days' && (() => {
+                      try {
+                        const weekdays = JSON.parse(command.weekdays || '[]');
+                        const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+                        return `По дням недели: ${weekdays.map(d => dayNames[d]).join(', ')}`;
+                      } catch {
+                        return 'По дням недели';
+                      }
+                    })()}
+                  </div>
+                )}
+
                 {command.executed_at && (
                   <div className={styles.detailRow}>
                     <span>Выполнено: {formatDateTime(command.executed_at)}</span>
@@ -683,16 +725,151 @@ const ScheduledCommands = () => {
                 />
               </div>
 
+              <div className={styles.formGroup}>
+                <label>Режим выполнения *</label>
+                <select
+                  value={formData.recurrenceType}
+                  onChange={(e) => {
+                    const newType = e.target.value;
+                    setFormData({ 
+                      ...formData, 
+                      recurrenceType: newType, 
+                      weekdays: [],
+                      // Очищаем дату для daily и weekly_days
+                      scheduledDate: (newType === 'daily' || newType === 'weekly_days') ? '' : formData.scheduledDate
+                    });
+                  }}
+                  className={styles.timezoneSelect}
+                  required
+                >
+                  <option value="once">Один раз (в указанные дату и время)</option>
+                  <option value="daily">Ежедневно (каждый день в указанное время)</option>
+                  <option value="weekly">Еженедельно (раз в 7 дней)</option>
+                  <option value="monthly">Ежемесячно (в тот же день каждого месяца)</option>
+                  <option value="weekly_days">По дням недели (выбрать конкретные дни)</option>
+                </select>
+                <small>
+                  {formData.recurrenceType === 'once' && 'Команда выполнится один раз и будет помечена как выполненная'}
+                  {formData.recurrenceType === 'daily' && 'Команда будет выполняться каждый день в указанное время'}
+                  {formData.recurrenceType === 'weekly' && 'Команда будет выполняться раз в неделю в указанное время'}
+                  {formData.recurrenceType === 'monthly' && 'Команда будет выполняться каждый месяц в тот же день (или последний день месяца)'}
+                  {formData.recurrenceType === 'weekly_days' && 'Выберите дни недели ниже - команда будет выполняться только в выбранные дни'}
+                </small>
+              </div>
+
+              {formData.recurrenceType === 'weekly_days' && (
+                <div className={styles.formGroup}>
+                  <label>Выберите дни недели *</label>
+                  
+                  {/* Быстрые пресеты */}
+                  <div className={styles.weekdayPresets}>
+                    <button
+                      type="button"
+                      className={styles.presetButton}
+                      onClick={() => setFormData({ ...formData, weekdays: [0, 1, 2, 3, 4] })}
+                      title="Понедельник - Пятница"
+                    >
+                      Рабочие дни
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.presetButton}
+                      onClick={() => setFormData({ ...formData, weekdays: [5, 6] })}
+                      title="Суббота - Воскресенье"
+                    >
+                      Выходные
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.presetButton}
+                      onClick={() => setFormData({ ...formData, weekdays: [] })}
+                      title="Сбросить выбор"
+                    >
+                      Очистить
+                    </button>
+                  </div>
+
+                  {/* Дни недели */}
+                  <div className={styles.weekdaysSelector}>
+                    {[
+                      { value: 0, label: 'Пн', fullName: 'Понедельник' },
+                      { value: 1, label: 'Вт', fullName: 'Вторник' },
+                      { value: 2, label: 'Ср', fullName: 'Среда' },
+                      { value: 3, label: 'Чт', fullName: 'Четверг' },
+                      { value: 4, label: 'Пт', fullName: 'Пятница' },
+                      { value: 5, label: 'Сб', fullName: 'Суббота' },
+                      { value: 6, label: 'Вс', fullName: 'Воскресенье' },
+                    ].map((day) => {
+                      const isSelected = formData.weekdays.includes(day.value);
+                      return (
+                        <button
+                          key={day.value}
+                          type="button"
+                          className={`${styles.weekdayButton} ${isSelected ? styles.weekdayButtonActive : ''}`}
+                          onClick={() => {
+                            if (isSelected) {
+                              setFormData({ ...formData, weekdays: formData.weekdays.filter(d => d !== day.value) });
+                            } else {
+                              setFormData({ ...formData, weekdays: [...formData.weekdays, day.value].sort() });
+                            }
+                          }}
+                          title={day.fullName}
+                        >
+                          {day.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <small className={styles.weekdayHint}>
+                    {formData.weekdays.length === 0 && '⚠️ Выберите хотя бы один день недели'}
+                    {formData.weekdays.length > 0 && (
+                      <>
+                        ✓ Выбрано: {formData.weekdays.length} {
+                          formData.weekdays.length === 1 ? 'день' :
+                          formData.weekdays.length < 5 ? 'дня' : 'дней'
+                        }
+                      </>
+                    )}
+                  </small>
+                </div>
+              )}
+
               <div className={styles.dateTimeGroup}>
                 <div className={styles.formGroup}>
-                  <label>Дата выполнения *</label>
-                  <input
-                    type="date"
-                    value={formData.scheduledDate}
-                    onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-                    min={new Date().toISOString().split('T')[0]}
-                    required
-                  />
+                  <label>
+                    Дата выполнения {(formData.recurrenceType === 'once' || formData.recurrenceType === 'weekly' || formData.recurrenceType === 'monthly') ? '*' : ''}
+                    {(formData.recurrenceType === 'daily' || formData.recurrenceType === 'weekly_days') && (
+                      <span className={styles.labelNote}>(не требуется)</span>
+                    )}
+                  </label>
+                  <div className={styles.inputWrapper}>
+                    <input
+                      type="date"
+                      value={formData.scheduledDate}
+                      onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
+                      required={formData.recurrenceType === 'once' || formData.recurrenceType === 'weekly' || formData.recurrenceType === 'monthly'}
+                      disabled={formData.recurrenceType === 'daily' || formData.recurrenceType === 'weekly_days'}
+                      className={`${(formData.recurrenceType === 'daily' || formData.recurrenceType === 'weekly_days') ? styles.inputDisabled : ''}`}
+                    />
+                    {(formData.recurrenceType === 'daily' || formData.recurrenceType === 'weekly_days') && (
+                      <div className={styles.disabledOverlay}>
+                        <span className={styles.disabledIcon}>🔒</span>
+                        <span className={styles.disabledText}>
+                          {formData.recurrenceType === 'daily' && 'Выполняется каждый день'}
+                          {formData.recurrenceType === 'weekly_days' && 'Выполняется в выбранные дни'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <small>
+                    {formData.recurrenceType === 'once' && 'Команда выполнится один раз в эту дату'}
+                    {formData.recurrenceType === 'daily' && '⚡ Дата не нужна - команда будет выполняться каждый день'}
+                    {formData.recurrenceType === 'weekly' && 'Дата первого запуска, далее каждые 7 дней'}
+                    {formData.recurrenceType === 'monthly' && 'Дата первого запуска, далее каждый месяц в это число'}
+                    {formData.recurrenceType === 'weekly_days' && '⚡ Дата не нужна - команда будет выполняться в выбранные дни недели'}
+                  </small>
                 </div>
 
                 <div className={styles.formGroup}>

@@ -1,0 +1,311 @@
+/* Общие стили для UI компонентов */
+
+/* Современный стиль для выпадающих списков валют */
+.currencySelect {
+  padding: 10px 36px 10px 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 100px;
+  position: relative;
+  
+  /* Убираем стандартную стрелку */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
+  /* Кастомная стрелка с градиентом */
+  background-image: 
+    url("data:image/svg+xml;utf8,<svg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M1 1.5L6 6.5L11 1.5' stroke='url(%23gradient)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><defs><linearGradient id='gradient' x1='1' y1='4' x2='11' y2='4' gradientUnits='userSpaceOnUse'><stop stop-color='%236366f1'/><stop offset='1' stop-color='%238b5cf6'/></linearGradient></defs></svg>"),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background-repeat: no-repeat;
+  background-position: right 12px center, center;
+  background-size: 12px, cover;
+  
+  /* Тень для глубины */
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  
+  /* Добавляем backdrop blur для современного вида */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.currencySelect:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.currencySelect:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.8);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  box-shadow: 
+    0 0 0 3px rgba(99, 102, 241, 0.2),
+    0 4px 12px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.currencySelect:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Стили для option элементов */
+.currencySelect option {
+  background-color: #1a1b3a !important;
+  color: #ffffff !important;
+  padding: 12px 16px;
+  font-weight: 400;
+}
+
+.currencySelect option:hover {
+  background-color: #252748 !important;
+}
+
+.currencySelect option:checked,
+.currencySelect option:active,
+.currencySelect option:focus {
+  background-color: #2a2c5a !important;
+  color: #ffffff !important;
+}
+
+/* Контейнер для валютного фильтра */
+.currencyFilterContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.currencyFilterContainer:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.currencyFilterLabel {
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Анимация появления */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.currencySelect {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Кнопки выбора валют */
+.currencyButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.currencyButton {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.currencyButton:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(99, 102, 241, 0.5);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 8px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.currencyButton.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-color: transparent;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 
+    0 4px 12px rgba(99, 102, 241, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.currencyButton.active:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 16px rgba(99, 102, 241, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Общий стиль для всех select элементов */
+.selectField {
+  padding: 10px 36px 10px 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 100px;
+  
+  /* Убираем стандартную стрелку */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
+  /* Кастомная стрелка */
+  background-image: 
+    url("data:image/svg+xml;utf8,<svg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M1 1.5L6 6.5L11 1.5' stroke='%23b0b0b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background-repeat: no-repeat;
+  background-position: right 12px center, center;
+  background-size: 12px, cover;
+  
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.selectField:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.selectField:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.8);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  box-shadow: 
+    0 0 0 3px rgba(99, 102, 241, 0.2),
+    0 4px 12px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.selectField option {
+  background-color: #1a1b3a !important;
+  color: #ffffff !important;
+  padding: 12px 16px;
+  border: none;
+}
+
+/* Убираем градиент для option, так как он не поддерживается в большинстве браузеров */
+.selectField option:hover {
+  background-color: #252748 !important;
+}
+
+.selectField option:checked,
+.selectField option:active,
+.selectField option:focus {
+  background-color: #2a2c5a !important;
+  color: #ffffff !important;
+}
+
+/* Исправление белой полосы после закрытия select */
+.selectField::-webkit-scrollbar {
+  width: 8px;
+  background: #1a1b3a;
+}
+
+.selectField::-webkit-scrollbar-thumb {
+  background: #6366f1;
+  border-radius: 4px;
+}
+
+.selectField::-webkit-scrollbar-track {
+  background: #1a1b3a;
+}
+
+.currencySelect::-webkit-scrollbar {
+  width: 8px;
+  background: #1a1b3a;
+}
+
+.currencySelect::-webkit-scrollbar-thumb {
+  background: #6366f1;
+  border-radius: 4px;
+}
+
+.currencySelect::-webkit-scrollbar-track {
+  background: #1a1b3a;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .currencySelect,
+  .selectField {
+    min-width: 120px;
+    padding: 8px 32px 8px 14px;
+    font-size: 13px;
+  }
+  
+  .currencyFilterContainer {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  
+  .currencyButton {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .currencyButtons {
+    padding: 10px 16px;
+    gap: 6px;
+  }
+}

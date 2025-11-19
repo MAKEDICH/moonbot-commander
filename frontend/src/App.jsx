@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -23,6 +24,8 @@ import Trading from './pages/Trading';
 import Layout from './components/Layout';
 import InstallPWA from './components/InstallPWA';
 import NetworkStatus from './components/NetworkStatus';
+import ColumnSettings from './pages/ColumnSettings';
+import UpdateNotification from './components/UpdateNotification';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -69,6 +72,7 @@ function AppRoutes() {
         <Route path="scheduled-commands" element={<ScheduledCommands />} />
         <Route path="history" element={<History />} />
         <Route path="trading/*" element={<Trading />} />
+        <Route path="column-settings" element={<ColumnSettings />} />
         <Route path="change-password" element={<ChangePassword />} />
         <Route path="2fa-setup" element={<TwoFactorSetup />} />
       </Route>
@@ -78,17 +82,28 @@ function AppRoutes() {
   );
 }
 
+function AppContent() {
+  const { token } = useAuth();
+  
+  return (
+    <NotificationProvider>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <NetworkStatus />
+        <AppRoutes />
+        <InstallPWA />
+        {token && <UpdateNotification token={token} />}
+      </Router>
+    </NotificationProvider>
+  );
+}
+
 function App() {
   // РАЗМЫШЛЕНИЕ: ErrorBoundary должен обернуть ВСЕ приложение,
   // чтобы любая ошибка в любом компоненте была поймана
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <NetworkStatus />
-          <AppRoutes />
-          <InstallPWA />
-        </Router>
+        <AppContent />
       </AuthProvider>
     </ErrorBoundary>
   );

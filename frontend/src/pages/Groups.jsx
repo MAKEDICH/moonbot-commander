@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FiUsers, FiPlus, FiEdit2, FiTrash2, FiMove, FiCheck, FiX, FiChevronDown, FiChevronRight } from 'react-icons/fi';
 import { serversAPI, groupsAPI } from '../api/api';
 import styles from './Groups.module.css';
+import { useNotification } from '../context/NotificationContext';
 
 const Groups = () => {
+  const { showError } = useNotification();
   const [servers, setServers] = useState([]);
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -129,7 +131,7 @@ const Groups = () => {
       setSelectedServers([]);
     } catch (error) {
       console.error('Error creating group:', error);
-      alert('Ошибка создания группы');
+      showError('Ошибка создания группы');
     }
   };
 
@@ -167,7 +169,7 @@ const Groups = () => {
       setNewRenameValue('');
     } catch (error) {
       console.error('Error renaming group:', error);
-      alert('Ошибка переименования группы');
+      showError('Ошибка переименования группы');
     }
   };
 
@@ -215,7 +217,7 @@ const Groups = () => {
       setDeletingGroup(null);
     } catch (error) {
       console.error('Error deleting group:', error);
-      alert('Ошибка удаления группы');
+      showError('Ошибка удаления группы');
     }
   };
 
@@ -260,7 +262,7 @@ const Groups = () => {
       setTargetGroup('');
     } catch (error) {
       console.error('Error moving servers:', error);
-      alert('Ошибка добавления серверов');
+      showError('Ошибка добавления серверов');
     }
   };
 
@@ -485,7 +487,7 @@ const Groups = () => {
                               await loadServers();
                             } catch (error) {
                               console.error('Error removing server from group:', error);
-                              alert('Ошибка удаления сервера из группы');
+                              showError('Ошибка удаления сервера из группы');
                             }
                           }}
                           title="Удалить из этой группы"

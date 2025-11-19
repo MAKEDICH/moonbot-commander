@@ -5,8 +5,10 @@ import { FiHome, FiServer, FiCommand, FiClock, FiLogOut, FiUsers, FiKey, FiCalen
 import { FaTelegramPlane } from 'react-icons/fa';
 import styles from './Layout.module.css';
 import moonbotIcon from '../assets/moonbot-icon.png';
+import { useNotification } from '../context/NotificationContext';
 
 const Layout = () => {
+  const { warning } = useNotification();
   const { user, logout } = useAuth();
   const [showDonateModal, setShowDonateModal] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(null);
@@ -41,13 +43,13 @@ const Layout = () => {
         }
       } catch (err) {
         console.error('Fallback copy failed:', err);
-        alert('Не удалось скопировать. Скопируйте вручную: ' + text);
+        warning('Не удалось скопировать. Скопируйте вручную: ' + text);
       }
       
       document.body.removeChild(textArea);
     } catch (err) {
       console.error('Failed to copy:', err);
-      alert('Не удалось скопировать. Скопируйте вручную: ' + text);
+      warning('Не удалось скопировать. Скопируйте вручную: ' + text);
     }
   };
 

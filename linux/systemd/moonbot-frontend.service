@@ -1,0 +1,47 @@
+[Unit]
+Description=MoonBot Commander Web Frontend
+Documentation=https://github.com/MAKEDICH/moonbot-commander
+After=network.target moonbot-backend.service
+Wants=moonbot-backend.service
+
+[Service]
+Type=simple
+# ВАЖНО: Замените USERNAME на имя пользователя
+User=USERNAME
+Group=USERNAME
+
+# ВАЖНО: Замените /path/to/moonbot-commander на реальный путь
+WorkingDirectory=/path/to/moonbot-commander/frontend
+
+# Переменные окружения
+Environment="NODE_ENV=production"
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+# Сборка перед запуском (только если изменились файлы)
+ExecStartPre=/bin/bash -c 'if [ ! -d "dist" ] || [ -n "$(find src -newer dist -print -quit 2>/dev/null)" ]; then echo "Building frontend..." && npm run build; fi'
+
+# Команда запуска production сервера
+ExecStart=/usr/bin/npm run preview -- --host 0.0.0.0 --port 3000
+
+# Настройки перезапуска
+Restart=always
+RestartSec=10
+StartLimitBurst=5
+StartLimitInterval=60
+
+# Логирование
+StandardOutput=append:/var/log/moonbot/frontend.log
+StandardError=append:/var/log/moonbot/frontend-error.log
+
+# Лимиты
+LimitNOFILE=65536
+
+# Безопасность
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/path/to/moonbot-commander/frontend
+
+[Install]
+WantedBy=multi-user.target

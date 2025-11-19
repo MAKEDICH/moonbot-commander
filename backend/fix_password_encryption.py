@@ -8,6 +8,7 @@ import sqlite3
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
 import os
+from logger_utils import log
 
 load_dotenv()
 key = os.getenv('ENCRYPTION_KEY')
@@ -20,11 +21,11 @@ cursor = conn.cursor()
 cursor.execute('SELECT id, name, password FROM servers WHERE password IS NOT NULL AND password != ""')
 servers = cursor.fetchall()
 
-print(f'=== FIXING {len(servers)} SERVERS ===')
-print()
+log(f'=== FIXING {len(servers)} SERVERS ===', level="INFO")
+log('')
 
 for server_id, server_name, encrypted_pass in servers:
-    print(f'Server {server_id} ({server_name}):')
+    log(f'Server {server_id} ({server_name}):', level="INFO")
     
     # Multi-level decrypt
     current = encrypted_pass
@@ -35,8 +36,8 @@ for server_id, server_name, encrypted_pass in servers:
         try:
             current = f.decrypt(current.encode()).decode()
         except Exception as e:
-            print(f'  [ERROR] Decryption failed at level {level}: {e}')
-            print(f'  Skipping this server')
+            log(f'  [ERROR] Decryption failed at level {level}: {e}', level="ERROR")
+            log(f'  Skipping this server', level="WARNING")
             current = None
             break
     
@@ -44,22 +45,23 @@ for server_id, server_name, encrypted_pass in servers:
         continue
     
     real_password = current
-    print(f'  Real password: {real_password}')
-    print(f'  Was encrypted {level} times!')
+    # SECURITY: НЕ выводим реальный пароль в логи!
+    log(f'  Password length: {len(real_password)} characters', level="INFO")
+    log(f'  Was encrypted {level} times!', level="INFO")
     
     # Re-encrypt properly (just once)
     new_encrypted = f.encrypt(real_password.encode()).decode()
     
     # Update in database
     cursor.execute('UPDATE servers SET password = ? WHERE id = ?', (new_encrypted, server_id))
-    print(f'  [OK] Fixed and updated!')
-    print()
+    log(f'  [OK] Fixed and updated!', level="INFO")
+    log('')
 
 conn.commit()
 conn.close()
 
-print('=== ALL DONE ===')
-print('Please restart the application')
+log('=== ALL DONE ===', level="INFO")
+log('Please restart the application', level="INFO")
 
 
 

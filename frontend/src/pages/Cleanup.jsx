@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FiTrash2, FiDatabase, FiHardDrive, FiAlertTriangle, FiCheckCircle, FiSettings, FiClock } from 'react-icons/fi';
 import styles from './Cleanup.module.css';
 import api from '../api/api';
+import { useNotification } from '../context/NotificationContext';
 
 const Cleanup = () => {
+  const { success, error: showError, warning, confirm } = useNotification();
   const [settings, setSettings] = useState({
     enabled: false,
     trigger_type: 'time',
@@ -79,7 +81,7 @@ const Cleanup = () => {
       ? 'Удалить ВСЕ SQL логи? Это действие необратимо!' 
       : `Удалить SQL логи старше ${days} дней?`;
     
-    if (!confirm(confirmText)) return;
+    if (!(await confirm({ message: confirmText, type: 'danger', confirmText: 'Удалить' }))) return;
     
     setLoading(true);
     try {
@@ -99,7 +101,7 @@ const Cleanup = () => {
       ? 'Удалить ВСЮ историю команд? Это действие необратимо!'
       : `Удалить историю команд старше ${days} дней?`;
     
-    if (!confirm(confirmText)) return;
+    if (!(await confirm({ message: confirmText, type: 'danger', confirmText: 'Удалить' }))) return;
     
     setLoading(true);
     try {
@@ -114,7 +116,7 @@ const Cleanup = () => {
   };
 
   const vacuumDatabase = async () => {
-    if (!confirm('Оптимизировать базу данных? Это может занять время.')) return;
+    if (!(await confirm({ message: 'Оптимизировать базу данных? Это может занять время.', type: 'warning' }))) return;
     setLoading(true);
     try {
       const response = await api.post('/api/cleanup/vacuum');
@@ -133,7 +135,7 @@ const Cleanup = () => {
       ? 'Удалить ВСЕ файлы логов backend (.log)? Это действие необратимо!'
       : `Обрезать файлы логов до ${maxSize} МБ?`;
     
-    if (!confirm(confirmText)) return;
+    if (!(await confirm({ message: confirmText, type: 'danger', confirmText: 'Удалить' }))) return;
     
     setLoading(true);
     try {
@@ -149,19 +151,22 @@ const Cleanup = () => {
   };
 
   const fullCleanup = async () => {
-    const confirmed = confirm(
-      '⚠️ ПОЛНАЯ ОЧИСТКА ВРЕМЕННЫХ ДАННЫХ\n\n' +
-      'Будет удалено:\n' +
-      '• ВСЕ SQL логи\n' +
-      '• ВСЯ история команд\n\n' +
-      'НЕ будет затронуто (защищённые данные):\n' +
-      '✓ Аккаунты пользователей\n' +
-      '✓ Добавленные серверы\n' +
-      '✓ Ордера\n' +
-      '✓ Настройки\n' +
-      '✓ Группы серверов\n\n' +
-      'Продолжить?'
-    );
+    const confirmed = await confirm({
+      title: 'ПОЛНАЯ ОЧИСТКА',
+      message: 'Будет удалено:\n' +
+        '• ВСЕ SQL логи\n' +
+        '• ВСЯ история команд\n\n' +
+        'НЕ будет затронуто (защищённые данные):\n' +
+        '• Пользователи\n' +
+        '• Серверы\n' +
+        '• Отложенные команды\n' +
+        '• Группы\n\n' +
+        'Продолжить?',
+      type: 'danger',
+      confirmText: 'Очистить',
+      cancelText: 'Отмена',
+    });
+    
     if (!confirmed) return;
 
     setLoading(true);
@@ -500,36 +505,157 @@ const Cleanup = () => {
         <h2><FiDatabase /> Статистика</h2>
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
-            <h3>Записи в таблицах</h3>
-            {stats && stats.tables && (
+            <h3>📄 Записи в таблицах</h3>
+            {stats && stats.tables ? (
               <>
-                <p>SQL логи: <strong>{stats.tables.sql_logs || 0}</strong></p>
-                <p>История команд: <strong>{stats.tables.command_history || 0}</strong></p>
-                <p>Ордера: <strong className={styles.protected}>{stats.tables.orders || 0}</strong> (защищены)</p>
+                <div className={styles.statItem}>
+                  <span>SQL логи:</span>
+                  <strong>{stats.tables.sql_logs || 0}</strong>
+                </div>
+                <div className={styles.statItem}>
+                  <span>История команд:</span>
+                  <strong>{stats.tables.command_history || 0}</strong>
+                </div>
+                <div className={styles.statItem}>
+                  <span>Ордера:</span>
+                  <strong className={styles.protected}>
+                    {stats.tables.orders || 0} 
+                    {stats.tables.orders > 0 && <span style={{marginLeft: '0.3rem'}}>🔒</span>}
+                  </strong>
+                </div>
               </>
+            ) : (
+              <p className={styles.help}>Загрузка...</p>
             )}
           </div>
 
           <div className={styles.statCard}>
-            <h3>Размер файлов</h3>
-            {stats && stats.files && (
+            <h3>📋 Размер файлов</h3>
+            {stats && stats.files ? (
               <>
-                <p>moonbot.db: <strong>{formatBytes(stats.files.moonbot_db)}</strong></p>
-                <p>moonbot_commander.db: <strong>{formatBytes(stats.files.commander_db)}</strong></p>
-                <p>Логи: <strong>{formatBytes(stats.files.logs)}</strong></p>
+                {Object.entries(stats.files)
+                  .sort(([a], [b]) => {
+                    // Сортируем: сначала базы данных, потом логи, потом остальное
+                    const order = ['moonbot_db', 'commander_db', 'logs', 'moonbot_log', 'commander_log', 'crash_log', 'udp_log'];
+                    return order.indexOf(a) - order.indexOf(b);
+                  })
+                  .filter(([key, size]) => size > 0) // Показываем только существующие файлы
+                  .map(([key, size]) => {
+                    let displayName = key;
+                    let icon = '📄';
+                    
+                    switch (key) {
+                      case 'moonbot_db':
+                        displayName = 'moonbot.db';
+                        icon = '🗄️';
+                        break;
+                      case 'commander_db':
+                        displayName = 'moonbot_commander.db';
+                        icon = '🗄️';
+                        break;
+                      case 'commander_log':
+                        displayName = 'moonbot_commander.log';
+                        icon = '📝';
+                        break;
+                      case 'crash_log':
+                        displayName = 'backend_crash.log';
+                        icon = '⚠️';
+                        break;
+                      case 'udp_log':
+                        displayName = 'udp_listener.log';
+                        icon = '📝';
+                        break;
+                      case 'moonbot_log':
+                        displayName = 'moonbot.log';
+                        icon = '📡';
+                        break;
+                      case 'logs':
+                        displayName = 'ОБЩИЙ РАЗМЕР ЛОГОВ';
+                        icon = '📊';
+                        break;
+                      case 'alembic.ini':
+                        displayName = 'alembic.ini';
+                        icon = '⚙️';
+                        break;
+                      case '.env':
+                        displayName = '.env';
+                        icon = '🔐';
+                        break;
+                      default:
+                        // Преобразуем имя файла в читабельный вид
+                        if (key.endsWith('_log')) {
+                          displayName = key.replace('_log', '.log').replace(/_/g, '-');
+                          icon = '📝';
+                        } else {
+                          displayName = key.replace(/_/g, ' ');
+                        }
+                    }
+                    
+                    // Не отображаем служебные файлы
+                    if (key === 'alembic.ini' || key === '.env') {
+                      return null;
+                    }
+                    
+                    return (
+                      <div key={key} className={styles.statItem}>
+                        <span>{icon} {displayName}:</span>
+                        <strong className={
+                          size > 100 * 1024 * 1024 ? styles.danger : 
+                          size > 50 * 1024 * 1024 ? styles.warning : ''
+                        }>
+                          {formatBytes(size)}
+                        </strong>
+                      </div>
+                    );
+                  })
+                  .filter(Boolean) // Убираем null значения
+                }
+                
+                {/* Общий размер всех файлов (без служебных и дублирующей logs) */}
+                <div className={styles.statItem} style={{marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '2px solid rgba(255, 255, 255, 0.1)'}}>
+                  <span style={{fontWeight: 600, fontSize: '0.95rem'}}>💾 ВСЕГО:</span>
+                  <strong style={{fontSize: '1.1rem', color: '#00f5ff'}}>
+                    {formatBytes(
+                      Object.entries(stats.files)
+                        .filter(([key]) => !['alembic.ini', '.env', 'logs'].includes(key))
+                        .reduce((total, [, size]) => total + size, 0)
+                    )}
+                  </strong>
+                </div>
               </>
+            ) : (
+              <p className={styles.help}>Нет данных о файлах</p>
             )}
           </div>
 
           <div className={styles.statCard}>
-            <h3>Диск</h3>
-            {stats && stats.disk && (
+            <h3>💾 Диск</h3>
+            {stats && stats.disk ? (
               <>
-                <p>Всего: <strong>{formatBytes(stats.disk.total)}</strong></p>
-                <p>Использовано: <strong>{formatBytes(stats.disk.used)}</strong></p>
-                <p>Свободно: <strong>{formatBytes(stats.disk.free)}</strong></p>
-                <p>Заполнение: <strong className={stats.disk.percent > 80 ? styles.warning : ''}>{stats.disk.percent?.toFixed(1)}%</strong></p>
+                <div className={styles.statItem}>
+                  <span>Всего:</span>
+                  <strong>{formatBytes(stats.disk.total)}</strong>
+                </div>
+                <div className={styles.statItem}>
+                  <span>Использовано:</span>
+                  <strong>{formatBytes(stats.disk.used)}</strong>
+                </div>
+                <div className={styles.statItem}>
+                  <span>Свободно:</span>
+                  <strong className={styles.success}>{formatBytes(stats.disk.free)}</strong>
+                </div>
+                <div className={styles.statItem}>
+                  <span>Заполнение:</span>
+                  <strong className={
+                    stats.disk.percent > 90 ? styles.danger :
+                    stats.disk.percent > 80 ? styles.warning : styles.success
+                  }>
+                    {stats.disk.percent?.toFixed(1)}%
+                  </strong>
+                </div>
               </>
+            ) : (
+              <p className={styles.help}>Загрузка...</p>
             )}
           </div>
         </div>

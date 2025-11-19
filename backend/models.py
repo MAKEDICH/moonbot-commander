@@ -66,6 +66,8 @@ class Server(Base):
     group_name = Column(String, nullable=True)  # Группа сервера
     is_active = Column(Boolean, default=True)
     keepalive_enabled = Column(Boolean, default=True)  # Включен ли keep-alive для этого сервера
+    is_localhost = Column(Boolean, default=False)  # Разрешить localhost/127.0.0.1 для этого сервера
+    default_currency = Column(String, default='USDT')  # Валюта сервера (автоопределение из lst)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     
@@ -169,7 +171,14 @@ class ScheduledCommand(Base):
     target_type = Column(String, default="servers", nullable=False)  # servers или groups
     
     # Часовой пояс для отображения
-    timezone = Column(String, default="UTC", nullable=False)  # Часовой пояс, выбранный пользователем
+    timezone = Column(String, default="UTC", nullable=False)
+    
+    # Тип повторения: once (один раз), daily (ежедневно), weekly (еженедельно), monthly (ежемесячно), weekly_days (по дням недели)
+    recurrence_type = Column(String, default="once", nullable=False)
+    
+    # Дни недели для recurrence_type='weekly_days' (JSON строка: "[0,2,4]" = Пн, Ср, Пт)
+    # 0=Понедельник, 1=Вторник, 2=Среда, 3=Четверг, 4=Пятница, 5=Суббота, 6=Воскресенье
+    weekdays = Column(Text, nullable=True)
     
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="scheduled_commands")

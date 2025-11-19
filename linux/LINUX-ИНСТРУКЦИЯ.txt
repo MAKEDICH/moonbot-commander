@@ -1,0 +1,184 @@
+================================================================
+        MOONBOT COMMANDER - ИНСТРУКЦИЯ ДЛЯ LINUX
+================================================================
+
+ОБНОВЛЕНИЕ СО СТАРЫХ ВЕРСИЙ
+============================
+
+1. ПОДГОТОВКА К ОБНОВЛЕНИЮ
+
+   a) Скачайте необходимые файлы из релиза:
+      - intelligent_migration.py (поместить в backend/)
+      - update-safe.sh (поместить в корень проекта)
+      - server-start-safe.sh (поместить в linux/)
+      - install-systemd-services.sh (поместить в linux/)
+
+   b) Сделайте их исполняемыми:
+      chmod +x update-safe.sh
+      chmod +x linux/server-start-safe.sh  
+      chmod +x linux/install-systemd-services.sh
+
+   c) Скопируйте intelligent_migration.py:
+      cp intelligent_migration.py backend/
+
+2. ОСТАНОВКА ПРИЛОЖЕНИЯ
+
+   Если запущено вручную:
+      - Закройте все терминалы с приложением
+      - Или используйте: ./linux/kill-all-processes.sh
+
+   Если запущено через systemd:
+      sudo systemctl stop moonbot-backend moonbot-scheduler moonbot-frontend
+
+3. ЗАПУСК ОБНОВЛЕНИЯ
+
+   ./update-safe.sh
+
+   Что произойдет:
+   - Создастся полный бэкап в папке full_backups/
+   - Покажется список версий с GitHub
+   - Выберите нужную версию (обычно последнюю)
+   - Система скачает файлы и применит все необходимые миграции
+   - Ваши данные (.env, БД) будут сохранены
+
+4. ПРОВЕРКА
+
+   После обновления проверьте:
+   - backend/migration.log - лог миграций
+   - Если были ошибки - используйте ./linux/rollback.sh
+
+
+УСТАНОВКА НА СЕРВЕР (Production)
+=================================
+
+1. ПЕРВИЧНАЯ УСТАНОВКА
+
+   sudo ./linux/server-setup.sh
+
+   Это установит:
+   - Python 3.11 (если нет)
+   - Node.js 18+ (если нет)
+   - Все зависимости
+   - Настройки firewall
+
+2. ЗАПУСК
+
+   ВАРИАНТ 1: Через systemd (рекомендуется)
+   
+      sudo ./linux/install-systemd-services.sh
+      
+      После этого управление через:
+      - sudo systemctl start moonbot-backend
+      - sudo systemctl status moonbot-backend
+      - sudo systemctl stop moonbot-backend
+      - sudo journalctl -u moonbot-backend -f
+
+   ВАРИАНТ 2: Вручную
+   
+      sudo ./linux/server-start-safe.sh
+      
+      Приложение запустится в режиме SERVER:
+      - Фиксированные UDP порты
+      - Production сборка frontend
+      - Оптимизация для сервера
+
+3. ДОСТУП
+
+   После запуска приложение доступно:
+   - Frontend: http://ВАШ_IP:3000
+   - Backend: http://ВАШ_IP:8000
+   - API Docs: http://ВАШ_IP:8000/docs
+
+
+РЕЖИМЫ РАБОТЫ
+=============
+
+LOCAL MODE (для разработки):
+   - Эфемерные UDP порты
+   - Keep-alive включен
+   - Dev режим frontend
+   - Запуск: ./linux/local-start.sh
+
+SERVER MODE (для production):
+   - Фиксированный UDP порт 2500
+   - Keep-alive отключен
+   - Production frontend
+   - Запуск: ./linux/server-start-safe.sh
+
+
+СТРУКТУРА ФАЙЛОВ
+================
+
+Корень проекта:
+├── backend/
+│   ├── main.py
+│   ├── intelligent_migration.py  [НОВЫЙ - система миграций]
+│   ├── update_checker.py         [НОВЫЙ - проверка обновлений]
+│   └── ...
+├── frontend/
+├── linux/
+│   ├── update-safe.sh            [НОВЫЙ - безопасное обновление]
+│   ├── server-start-safe.sh      [НОВЫЙ - умный запуск]
+│   ├── install-systemd-services.sh [НОВЫЙ - установка сервисов]
+│   ├── systemd/                  [НОВЫЙ - шаблоны сервисов]
+│   ├── local-setup.sh
+│   ├── local-start.sh
+│   ├── server-setup.sh
+│   ├── rollback.sh
+│   └── kill-all-processes.sh
+├── logs/
+├── backups/
+└── full_backups/                 [создается при обновлении]
+
+
+РЕШЕНИЕ ПРОБЛЕМ
+===============
+
+1. "Permission denied" при запуске скриптов:
+   chmod +x имя_скрипта.sh
+
+2. "Python 3.11 not found":
+   - Ubuntu/Debian: sudo apt install python3.11
+   - CentOS/RHEL: sudo yum install python3.11
+
+3. Ошибки миграции:
+   - Проверьте backend/migration.log
+   - Используйте ./linux/rollback.sh для отката
+
+4. Порты заняты:
+   ./linux/kill-all-processes.sh
+
+5. Frontend не загружается:
+   cd frontend
+   rm -rf node_modules dist .vite
+   npm install
+   npm run build
+
+
+АВТОМАТИЧЕСКИЕ ОБНОВЛЕНИЯ
+=========================
+
+После этого обновления система будет:
+1. Проверять новые версии при запуске
+2. Показывать уведомление в интерфейсе
+3. Команда обновления: ./update-safe.sh
+
+
+БЕЗОПАСНОСТЬ
+============
+
+- Все пользовательские данные сохраняются
+- Создается полный бэкап перед обновлением  
+- Есть откат на предыдущую версию
+- Миграции применяются интеллектуально (только нужные)
+
+
+КОНТАКТЫ
+========
+
+Проблемы или вопросы:
+- GitHub Issues: https://github.com/MAKEDICH/moonbot-commander
+- Telegram: @MAKEDICH
+- Группа: https://t.me/+HfcEre3V6gsxNTUy
+
+================================================================

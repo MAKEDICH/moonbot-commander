@@ -1246,3 +1246,271 @@
   color: var(--accent-primary);
 }
 
+/* Стили для выбора дней недели - НОВЫЙ СОВРЕМЕННЫЙ ДИЗАЙН */
+
+/* Быстрые пресеты */
+.weekdayPresets {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.presetButton {
+  padding: 0.5rem 1rem;
+  background: rgba(0, 245, 255, 0.08);
+  border: 1px solid rgba(0, 245, 255, 0.25);
+  border-radius: 20px;
+  color: rgba(0, 245, 255, 0.8);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.presetButton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(0, 245, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.presetButton:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.presetButton:hover {
+  background: rgba(0, 245, 255, 0.15);
+  border-color: rgba(0, 245, 255, 0.5);
+  color: rgb(0, 245, 255);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.3);
+}
+
+.presetButton:active {
+  transform: translateY(0);
+}
+
+/* Селектор дней недели */
+.weekdaysSelector {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 245, 255, 0.1);
+}
+
+.weekdayButton {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border: 2px solid rgba(0, 245, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(0, 245, 255, 0.6);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.weekdayButton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(0, 245, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.weekdayButton:hover::before {
+  opacity: 1;
+}
+
+.weekdayButton:hover {
+  border-color: rgba(0, 245, 255, 0.6);
+  color: rgb(0, 245, 255);
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 
+    0 8px 16px rgba(0, 245, 255, 0.2),
+    0 0 20px rgba(0, 245, 255, 0.1);
+}
+
+/* Активное состояние */
+.weekdayButtonActive {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.3), rgba(0, 180, 255, 0.3));
+  border-color: rgb(0, 245, 255);
+  color: #ffffff;
+  box-shadow: 
+    0 0 20px rgba(0, 245, 255, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.weekdayButtonActive::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, rgb(0, 245, 255), rgb(0, 200, 255));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #000;
+  font-weight: bold;
+  animation: checkmarkPop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes checkmarkPop {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+.weekdayButtonActive:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 
+    0 0 30px rgba(0, 245, 255, 0.6),
+    0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.weekdayButton:active {
+  transform: scale(0.95);
+}
+
+/* Подсказка */
+.weekdayHint {
+  display: block;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 245, 255, 0.05);
+  border-left: 3px solid rgba(0, 245, 255, 0.5);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.weekdayHint::first-letter {
+  font-size: 16px;
+}
+
+/* Стили для заблокированных полей ввода */
+.inputWrapper {
+  position: relative;
+}
+
+.inputDisabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.4) !important;
+  border-color: rgba(0, 245, 255, 0.15) !important;
+}
+
+.disabledOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 30, 40, 0.85) 100%
+  );
+  border: 2px solid rgba(0, 245, 255, 0.3);
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  cursor: not-allowed;
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 10px rgba(0, 245, 255, 0.2),
+      inset 0 0 10px rgba(0, 245, 255, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 20px rgba(0, 245, 255, 0.4),
+      inset 0 0 15px rgba(0, 245, 255, 0.2);
+  }
+}
+
+.disabledIcon {
+  font-size: 20px;
+  opacity: 0.8;
+  animation: lockShake 0.5s ease-in-out;
+}
+
+@keyframes lockShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.disabledText {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(0, 245, 255, 0.9);
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+  letter-spacing: 0.5px;
+}
+
+.labelNote {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(0, 245, 255, 0.7);
+  margin-left: 0.5rem;
+  font-style: italic;
+}
+
+/* Улучшенные подсказки под полями */
+.formGroup small {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 245, 255, 0.05);
+  border-left: 3px solid rgba(0, 245, 255, 0.4);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+

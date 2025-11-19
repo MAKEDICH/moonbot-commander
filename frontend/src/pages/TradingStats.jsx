@@ -3,6 +3,7 @@ import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Cart
 import { FaChartLine, FaArrowUp, FaArrowDown, FaMinus, FaFire, FaExclamationTriangle, FaBolt, FaTrophy } from 'react-icons/fa';
 import styles from './TradingStats.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
+import api from '../api/api';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -67,7 +68,7 @@ const Sparkline = ({ data = [], height = 40 }) => {
   );
 };
 
-const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter }) => {
+const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter, currencyFilter }) => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -77,6 +78,7 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
   const [selectedStrategies, setSelectedStrategies] = useState([]);
   const [availableServers, setAvailableServers] = useState([]);
   const [availableStrategies, setAvailableStrategies] = useState([]);
+  const [allServers, setAllServers] = useState([]); // Все серверы пользователя
   const [timePeriod, setTimePeriod] = useState('all'); // 'today', 'week', 'month', 'all', 'custom'
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
@@ -107,7 +109,7 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [autoRefresh, selectedServers, selectedStrategies, emulatorFilter, timePeriod]);
+  }, [autoRefresh, selectedServers, selectedStrategies, emulatorFilter, timePeriod, currencyFilter]);
 
   // Загрузка данных
   const loadStats = useCallback(async () => {
@@ -130,7 +132,19 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
       
       // Серверы
       if (selectedServers.length === 0 || selectedServers.includes('all')) {
-        params.append('server_ids', 'all');
+        // При выборе "все сервера" учитываем фильтр по валюте
+        if (currencyFilter !== 'all' && allServers.length > 0) {
+          const filteredServerIds = allServers
+            .filter(server => server.default_currency === currencyFilter)
+            .map(server => server.id);
+          if (filteredServerIds.length > 0) {
+            params.append('server_ids', filteredServerIds.join(','));
+          } else {
+            params.append('server_ids', 'none'); // Нет серверов с нужной валютой
+          }
+        } else {
+          params.append('server_ids', 'all');
+        }
       } else {
         params.append('server_ids', selectedServers.join(','));
       }
@@ -165,7 +179,23 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
       
       // Обновляем доступные фильтры
       if (data.available_servers) {
-        setAvailableServers(data.available_servers);
+        // Фильтруем серверы по валюте
+        const filteredServers = currencyFilter === 'all' 
+          ? data.available_servers 
+          : data.available_servers.filter(server => 
+              server.default_currency === currencyFilter
+            );
+        setAvailableServers(filteredServers);
+        
+        // Обновляем выбранные серверы, убирая те которые больше недоступны
+        if (selectedServers.length > 0 && selectedServers[0] !== 'all') {
+          const validServers = selectedServers.filter(serverId => 
+            filteredServers.some(s => s.id === serverId)
+          );
+          if (validServers.length !== selectedServers.length) {
+            setSelectedServers(validServers.length > 0 ? validServers : ['all']);
+          }
+        }
       }
       if (data.available_strategies) {
         setAvailableStrategies(data.available_strategies);
@@ -178,12 +208,27 @@ const TradingStats = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulator
     } finally {
       setLoading(false);
     }
-  }, [selectedServers, selectedStrategies, emulatorFilter, timePeriod, customDateFrom, customDateTo]);
+  }, [selectedServers, selectedStrategies, emulatorFilter, timePeriod, customDateFrom, customDateTo, currencyFilter, allServers]);
 
+  // Загрузка всех серверов
+  useEffect(() => {
+    const loadServers = async () => {
+      try {
+        const response = await api.get('/api/servers');
+        setAllServers(response.data || []);
+      } catch (error) {
+        console.error('Error loading servers:', error);
+      }
+    };
+    loadServers();
+  }, []);
+  
   // Начальная загрузка
   useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+    if (allServers.length > 0 || currencyFilter === 'all') {
+      loadStats();
+    }
+  }, [loadStats, allServers, currencyFilter]);
 
   // Обработка выбора серверов
   const handleServerToggle = (serverId) => {

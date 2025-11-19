@@ -5,10 +5,12 @@ import Tooltip from '../components/Tooltip';
 import styles from './Servers.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../context/NotificationContext';
 
 const Servers = () => {
   const API_BASE_URL = getApiBaseUrl();
   const navigate = useNavigate();
+  const { success, error: showError, confirm } = useNotification();
   const [servers, setServers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -31,7 +33,8 @@ const Servers = () => {
     password: '',  // UDP пароль для HMAC-SHA256
     description: '',
     group_name: '',
-    keepalive_enabled: true  // По умолчанию включён
+    keepalive_enabled: true,  // По умолчанию включён
+    is_localhost: false  // По умолчанию запрещён localhost
   });
 
   useEffect(() => {
@@ -105,10 +108,10 @@ const Servers = () => {
         await loadListenerStatus(serverId);
       } else {
         const data = await response.json();
-        alert(data.detail || 'Ошибка запуска listener');
+        showError(data.detail || 'Ошибка запуска listener');
       }
     } catch (error) {
-      alert('Ошибка запуска listener');
+      showError('Ошибка запуска listener');
     } finally {
       setActionLoading(prev => ({ ...prev, [`start-${serverId}`]: false }));
     }
@@ -125,10 +128,10 @@ const Servers = () => {
       if (response.ok) {
         await loadListenerStatus(serverId);
       } else {
-        alert('Ошибка остановки listener');
+        showError('Ошибка остановки listener');
       }
     } catch (error) {
-      alert('Ошибка остановки listener');
+      showError('Ошибка остановки listener');
     } finally {
       setActionLoading(prev => ({ ...prev, [`stop-${serverId}`]: false }));
     }
@@ -157,18 +160,27 @@ const Servers = () => {
       await loadGroups(); // Обновляем список групп на случай если добавили новую
       handleCloseModal();
     } catch (error) {
-      alert(error.response?.data?.detail || 'Ошибка сохранения сервера');
+      showError(error.response?.data?.detail || 'Ошибка сохранения сервера');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Вы уверены, что хотите удалить этот сервер?')) return;
+    const confirmed = await confirm({
+      title: 'Удаление сервера',
+      message: 'Вы уверены, что хотите удалить этот сервер?',
+      type: 'danger',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена',
+    });
+    
+    if (!confirmed) return;
     
     try {
       await serversAPI.delete(id);
       await loadServers();
+      success('Сервер успешно удалён');
     } catch (error) {
-      alert(error.response?.data?.detail || 'Ошибка удаления сервера');
+      showError(error.response?.data?.detail || 'Ошибка удаления сервера');
     }
   };
 
@@ -176,9 +188,13 @@ const Servers = () => {
     setTestingServer(id);
     try {
       const response = await serversAPI.test(id);
-      alert(response.data.is_online ? 'Сервер доступен!' : 'Сервер недоступен');
+      if (response.data.is_online) {
+        success('Сервер доступен!');
+      } else {
+        showError('Сервер недоступен');
+      }
     } catch (error) {
-      alert('Ошибка проверки соединения');
+      showError('Ошибка проверки соединения');
     } finally {
       setTestingServer(null);
     }
@@ -193,7 +209,8 @@ const Servers = () => {
       password: server.password || '',  // Пароль для HMAC-SHA256
       description: server.description || '',
       group_name: server.group_name || '',
-      keepalive_enabled: server.keepalive_enabled !== false  // По умолчанию true
+      keepalive_enabled: server.keepalive_enabled !== false,  // По умолчанию true
+      is_localhost: server.is_localhost || false  // По умолчанию false
     });
     
     // Разбираем группы из строки через запятую
@@ -211,7 +228,7 @@ const Servers = () => {
     setShowModal(false);
     setEditingServer(null);
     setSelectedGroups([]);
-    setFormData({ name: '', host: '', port: '', password: '', description: '', group_name: '', keepalive_enabled: true });
+    setFormData({ name: '', host: '', port: '', password: '', description: '', group_name: '', keepalive_enabled: true, is_localhost: false });
   };
 
   // ДОБАВЛЕНО: Функция переключения вида
@@ -397,144 +414,115 @@ const Servers = () => {
             </h2>
             
             <form onSubmit={handleSubmit}>
+              {/* Название сервера */}
               <div className={styles.formGroup}>
-                <label>Название</label>
+                <label>
+                  <span className={styles.labelIcon}>🖥️</span>
+                  Название сервера
+                </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Например: Главный сервер"
                   required
+                  className={styles.modernInput}
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label>Хост (IP адрес)</label>
-                <input
-                  type="text"
-                  value={formData.host}
-                  onChange={(e) => setFormData({ ...formData, host: e.target.value })}
-                  placeholder="127.0.0.1"
-                  required
-                />
+              {/* Сетевые настройки */}
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>
+                    <span className={styles.labelIcon}>🌐</span>
+                    IP адрес
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.host}
+                    onChange={(e) => setFormData({ ...formData, host: e.target.value })}
+                    placeholder="127.0.0.1"
+                    required
+                    className={styles.modernInput}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>
+                    <span className={styles.labelIcon}>🔌</span>
+                    UDP порт
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.port}
+                    onChange={(e) => setFormData({ ...formData, port: e.target.value })}
+                    placeholder="5005"
+                    min="1"
+                    max="65535"
+                    required
+                    className={styles.modernInput}
+                  />
+                </div>
               </div>
 
+              {/* Безопасность */}
               <div className={styles.formGroup}>
-                <label>UDP порт</label>
-                <input
-                  type="number"
-                  value={formData.port}
-                  onChange={(e) => setFormData({ ...formData, port: e.target.value })}
-                  placeholder="5005"
-                  min="1"
-                  max="65535"
-                  required
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>UDP пароль (необязательно)</label>
+                <label>
+                  <span className={styles.labelIcon}>🔐</span>
+                  UDP пароль
+                  <span className={styles.optionalBadge}>необязательно</span>
+                </label>
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Пароль для HMAC-SHA256"
+                  placeholder="••••••••••"
+                  className={styles.modernInput}
                 />
-                <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>
-                  🔒 Требуется для нового протокола MoonBot (HMAC-SHA256).<br/>
-                  Укажите пароль из: Настройки → Специальные → Remote → UDP Commands Pass
-                </small>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={formData.keepalive_enabled !== false}
-                    onChange={(e) => setFormData({ ...formData, keepalive_enabled: e.target.checked })}
-                  />
-                  <span>Включить Keep-Alive</span>
-                </label>
-                <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  💓 Отправляет "lst" каждые 2 минуты для поддержания UDP соединения через NAT.<br/>
-                  Рекомендуется включать при работе через NAT/роутер.
-                </small>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Описание (необязательно)</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Краткое описание сервера"
-                  rows="3"
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label>Группы (необязательно)</label>
-                <div className={styles.groupSelector}>
-                  {availableGroups.map((group) => (
-                    <label key={group} className={styles.groupCheckbox}>
-                      <input
-                        type="checkbox"
-                        checked={selectedGroups.includes(group)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedGroups([...selectedGroups, group]);
-                          } else {
-                            setSelectedGroups(selectedGroups.filter(g => g !== group));
-                          }
-                        }}
-                      />
-                      <span>{group}</span>
-                    </label>
-                  ))}
-                  <div className={styles.newGroupInput}>
-                    <input
-                      type="text"
-                      placeholder="Или создайте новую группу"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const newGroup = e.target.value.trim();
-                          if (newGroup && !availableGroups.includes(newGroup)) {
-                            setAvailableGroups([...availableGroups, newGroup]);
-                            setSelectedGroups([...selectedGroups, newGroup]);
-                            e.target.value = '';
-                          }
-                        }
-                      }}
-                    />
+                <div className={styles.hint}>
+                  <span className={styles.hintIcon}>💡</span>
+                  <div className={styles.hintText}>
+                    <strong>Требуется для HMAC-SHA256 протокола</strong>
+                    <br />
+                    Настройки → Специальные → Remote → UDP Commands Pass
                   </div>
                 </div>
-                {selectedGroups.length > 0 && (
-                  <div className={styles.selectedGroups}>
-                    Выбрано: {selectedGroups.map((g, idx) => (
-                      <span key={idx} className={styles.selectedGroupBadge}>
-                        {g}
-                        <button 
-                          type="button"
-                          onClick={() => setSelectedGroups(selectedGroups.filter(sg => sg !== g))}
-                          className={styles.removeGroupBtn}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>
-                  Сервер может принадлежать нескольким группам одновременно
-                </small>
               </div>
 
+              {/* Дополнительные опции */}
+              <div className={styles.optionsSection}>
+                <div className={styles.optionCard}>
+                  <div className={styles.optionHeader}>
+                    <label className={styles.modernCheckbox}>
+                      <input
+                        type="checkbox"
+                        checked={formData.is_localhost === true}
+                        onChange={(e) => setFormData({ ...formData, is_localhost: e.target.checked })}
+                      />
+                      <span className={styles.checkboxCustom}></span>
+                      <span className={styles.checkboxLabel}>
+                        <span className={styles.labelIcon}>🏠</span>
+                        Localhost соединение
+                      </span>
+                    </label>
+                  </div>
+                  <div className={styles.optionDescription}>
+                    Разрешает подключение к MoonBot на том же сервере (127.0.0.1).
+                    <br />
+                    <span className={styles.warningText}>⚠️ По умолчанию отключено для защиты от SSRF атак</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Кнопки действий */}
               <div className={styles.modalActions}>
                 <button type="button" className={styles.cancelBtn} onClick={handleCloseModal}>
+                  <span>✕</span>
                   Отмена
                 </button>
                 <button type="submit" className={styles.saveBtn}>
-                  {editingServer ? 'Сохранить' : 'Добавить'}
+                  <span>{editingServer ? '💾' : '➕'}</span>
+                  {editingServer ? 'Сохранить изменения' : 'Добавить сервер'}
                 </button>
               </div>
             </form>

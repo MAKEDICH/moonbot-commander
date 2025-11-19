@@ -5,9 +5,11 @@ import styles from './SQLLogs.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
 import { sqlLogsAPI } from '../api/api';
 import wsService from '../services/websocket';
+import { useNotification } from '../context/NotificationContext';
 
-const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter }) => {
+const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter, currencyFilter }) => {
   const API_BASE_URL = getApiBaseUrl();
+  const { success, error: showError, confirm } = useNotification();
   const [servers, setServers] = useState([]);
   const [selectedServer, setSelectedServer] = useState('all'); // По умолчанию "Все сервера"
   const [logs, setLogs] = useState([]);
@@ -33,7 +35,7 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
   // Загрузка списка серверов
   useEffect(() => {
     fetchServers();
-  }, []);
+  }, [currencyFilter]);
 
   // Перезагрузка данных при возврате на вкладку
   useEffect(() => {
@@ -49,7 +51,7 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [selectedServer, page, servers]);
+  }, [selectedServer, page, servers, currencyFilter]);
 
   // WebSocket подключение (всегда активно для real-time обновлений)
   useEffect(() => {
@@ -76,7 +78,7 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
     return () => {
       unsubscribe();
     };
-  }, [selectedServer, page, servers.length]);
+  }, [selectedServer, page, servers.length, currencyFilter]);
 
   // Автообновление: Fallback polling если WebSocket не работает
   useEffect(() => {
@@ -114,9 +116,14 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
       });
       
       // ЗАЩИТА: нормализуем к массиву если пришёл объект
-      const serversData = Array.isArray(response.data) 
+      const allServersData = Array.isArray(response.data) 
         ? response.data 
         : Object.values(response.data || {});
+      
+      // Фильтруем серверы по валюте
+      const serversData = currencyFilter === 'all' 
+        ? allServersData 
+        : allServersData.filter(server => server.default_currency === currencyFilter);
       
       setServers(serversData);
       
@@ -148,12 +155,24 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
       const offset = (pageNum - 1) * limit;
       
       if (serverId === 'all') {
-        // Загрузка логов со всех серверов ПАРАЛЛЕЛЬНО (оптимизация)
+        // Фильтруем серверы по выбранной валюте
+        const filteredServers = currencyFilter === 'all' 
+          ? serversArray 
+          : serversArray.filter(server => server.default_currency === currencyFilter);
+        
+        if (filteredServers.length === 0) {
+          setLogs([]);
+          setTotal(0);
+          setLoading(false);
+          return;
+        }
+        
+        // Загрузка логов со всех отфильтрованных серверов ПАРАЛЛЕЛЬНО (оптимизация)
         let allLogs = [];
         const MAX_LOGS_PER_SERVER = 100;
         
         // Создаем массив промисов для параллельной загрузки
-        const fetchPromises = serversArray.map(server =>
+        const fetchPromises = filteredServers.map(server =>
           axios.get(`${API_BASE_URL}/api/servers/${server.id}/sql-log?limit=${MAX_LOGS_PER_SERVER}&offset=0`, {
             headers: { Authorization: `Bearer ${token}` }
           })
@@ -269,11 +288,15 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
   };
 
   const handleClearLogs = async () => {
-    const confirmed = window.confirm(
-      selectedServer === 'all'
-        ? '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ SQL логи со ВСЕХ серверов?\n\nЭто действие нельзя отменить!'
-        : '⚠️ ВНИМАНИЕ!\n\nВы действительно хотите удалить ВСЕ SQL логи для этого сервера?\n\nЭто действие нельзя отменить!'
-    );
+    const confirmed = await confirm({
+      title: 'Удаление SQL логов',
+      message: selectedServer === 'all'
+        ? 'Вы действительно хотите удалить ВСЕ SQL логи со ВСЕХ серверов?\n\nЭто действие нельзя отменить!'
+        : 'Вы действительно хотите удалить ВСЕ SQL логи для этого сервера?\n\nЭто действие нельзя отменить!',
+      type: 'danger',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена',
+    });
 
     if (!confirmed) return;
 
@@ -281,10 +304,10 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
       // Используем разные endpoints в зависимости от выбора
       if (selectedServer === 'all') {
         const response = await sqlLogsAPI.clearAll();
-        alert(`✅ Успешно удалено ${response.data.deleted_count} записей со всех серверов`);
+        success(`Успешно удалено ${response.data.deleted_count} записей со всех серверов`);
       } else {
         const response = await sqlLogsAPI.clearByServer(Number(selectedServer));
-        alert(`✅ Успешно удалено ${response.data.deleted_count} записей`);
+        success(`Успешно удалено ${response.data.deleted_count} записей`);
       }
       
       // Перезагружаем данные
@@ -292,7 +315,7 @@ const SQLLogs = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilte
       setPage(1);
     } catch (error) {
       console.error('Error clearing logs:', error);
-      alert('❌ Ошибка при удалении логов');
+      showError('Ошибка при удалении логов');
     }
   };
 

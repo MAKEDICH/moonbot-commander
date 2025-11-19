@@ -3,7 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Orders from './Orders';
 import SQLLogs from './SQLLogs';
 import StrategyComparison from './StrategyComparison';
+import api from '../api/api';
 import styles from './Trading.module.css';
+import commonStyles from '../styles/common.module.css';
+import CurrencySelector from '../components/CurrencySelector';
 
 // Lazy loading для тяжелых страниц с графиками
 const TradingStats = lazy(() => import('./TradingStats'));
@@ -36,6 +39,10 @@ const Trading = () => {
     const saved = localStorage.getItem('trading_emulatorFilter');
     return saved || 'all'; // 'all', 'real', 'emulator'
   });
+  
+  // Состояние для валют с активными сделками
+  const [tradingCurrencies, setTradingCurrencies] = useState([]);
+  const [currencyFilter, setCurrencyFilter] = useState('all');
 
   // Сохраняем состояние автообновления в localStorage
   useEffect(() => {
@@ -46,6 +53,32 @@ const Trading = () => {
   useEffect(() => {
     localStorage.setItem('trading_emulatorFilter', emulatorFilter);
   }, [emulatorFilter]);
+  
+  // Загружаем валюты с активными сделками
+  const fetchTradingCurrencies = async () => {
+    try {
+      const response = await api.get('/api/trading/currencies');
+      setTradingCurrencies(response.data.currencies || []);
+    } catch (err) {
+      console.error('Error fetching trading currencies:', err);
+      setTradingCurrencies(['USDT']); // По умолчанию USDT
+    }
+  };
+  
+  useEffect(() => {
+    fetchTradingCurrencies();
+  }, []);
+  
+  // Автообновление валют
+  useEffect(() => {
+    if (!autoRefresh) return;
+    
+    const interval = setInterval(() => {
+      fetchTradingCurrencies();
+    }, 30000); // Обновляем каждые 30 секунд
+    
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
 
   // Обновляем вкладку при изменении URL
   useEffect(() => {
@@ -68,17 +101,17 @@ const Trading = () => {
     const content = (() => {
       switch (activeTab) {
         case 'orders':
-          return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+          return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} currencyFilter={currencyFilter} />;
         case 'logs':
-          return <SQLLogs autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+          return <SQLLogs autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} currencyFilter={currencyFilter} />;
         case 'stats':
-          return <TradingStats autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+          return <TradingStats autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} currencyFilter={currencyFilter} />;
         case 'strategies':
-          return <StrategyComparison emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+          return <StrategyComparison emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} currencyFilter={currencyFilter} />;
         case 'heatmap':
-          return <ActivityHeatmap emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+          return <ActivityHeatmap emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} currencyFilter={currencyFilter} />;
         default:
-          return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} />;
+          return <Orders autoRefresh={autoRefresh} setAutoRefresh={setAutoRefresh} emulatorFilter={emulatorFilter} setEmulatorFilter={setEmulatorFilter} currencyFilter={currencyFilter} />;
       }
     })();
 
@@ -100,6 +133,33 @@ const Trading = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>📊 Торговля</h1>
+        {tradingCurrencies.length > 0 && (
+          tradingCurrencies.length <= 5 ? (
+            <CurrencySelector
+              currencies={tradingCurrencies}
+              value={currencyFilter}
+              onChange={(e) => setCurrencyFilter(e.target.value)}
+            />
+          ) : (
+              <div className={commonStyles.currencyButtons}>
+                <button
+                  className={`${commonStyles.currencyButton} ${currencyFilter === 'all' ? commonStyles.active : ''}`}
+                  onClick={() => setCurrencyFilter('all')}
+                >
+                  Все
+                </button>
+                {tradingCurrencies.map(currency => (
+                  <button
+                    key={currency}
+                    className={`${commonStyles.currencyButton} ${currencyFilter === currency ? commonStyles.active : ''}`}
+                    onClick={() => setCurrencyFilter(currency)}
+                  >
+                    {currency}
+                  </button>
+                ))}
+              </div>
+          )
+        )}
       </div>
 
       <div className={styles.tabs}>
@@ -107,31 +167,31 @@ const Trading = () => {
           className={`${styles.tab} ${activeTab === 'logs' ? styles.active : ''}`}
           onClick={() => handleTabChange('logs')}
         >
-          📋 SQL Logs
+          <span style={{fontSize: '16px', opacity: 0.9}}>📋</span> SQL Logs
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'orders' ? styles.active : ''}`}
           onClick={() => handleTabChange('orders')}
         >
-          📈 Ордера
+          <span style={{fontSize: '16px', opacity: 0.9}}>✅</span> Ордера
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'stats' ? styles.active : ''}`}
           onClick={() => handleTabChange('stats')}
         >
-          📊 Статистика
+          <span style={{fontSize: '16px', opacity: 0.9}}>📊</span> Статистика
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'strategies' ? styles.active : ''}`}
           onClick={() => handleTabChange('strategies')}
         >
-          🎯 Стратегии
+          <span style={{fontSize: '16px', opacity: 0.9}}>🎯</span> Стратегии
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'heatmap' ? styles.active : ''}`}
           onClick={() => handleTabChange('heatmap')}
         >
-          🔥 Heatmap
+          <span style={{fontSize: '16px', opacity: 0.9}}>🔥</span> Heatmap
         </button>
       </div>
 

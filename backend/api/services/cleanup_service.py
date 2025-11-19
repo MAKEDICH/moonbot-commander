@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import os
 import shutil
 import models
+from logger_utils import log
 
 
 def get_database_stats(user_id: int, db: Session) -> dict:
@@ -17,11 +18,12 @@ def get_database_stats(user_id: int, db: Session) -> dict:
         orders_count = db.query(func.count(models.MoonBotOrder.id)).scalar() or 0
         
         # Получить размер файлов БД (в директории backend)
-        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))  # 3 уровня выше
+        # Используем абсолютный путь для корректного определения директории
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 3 уровня выше от api/services/cleanup_service.py
         
         db_files = {
-            'moonbot_db': os.path.join(backend_dir, 'backend', 'moonbot.db'),
-            'commander_db': os.path.join(backend_dir, 'backend', 'moonbot_commander.db'),
+            'moonbot_db': os.path.join(backend_dir, 'moonbot.db'),
+            'commander_db': os.path.join(backend_dir, 'moonbot_commander.db'),
         }
         
         file_sizes = {}
@@ -31,17 +33,47 @@ def get_database_stats(user_id: int, db: Session) -> dict:
             else:
                 file_sizes[key] = 0
         
-        # Размер логов
-        log_files = {
-            'commander_log': os.path.join(backend_dir, 'backend', 'moonbot_commander.log'),
-            'crash_log': os.path.join(backend_dir, 'backend', 'backend_crash.log')
-        }
-        total_log_size = 0
-        for log_file in log_files.values():
-            if os.path.exists(log_file):
-                total_log_size += os.path.getsize(log_file)
+        # Размер логов - показываем каждый файл отдельно и общий размер
+        logs_dir = os.path.join(backend_dir, 'logs')
         
+        # Проверяем логи в корне backend
+        log_files = {
+            'commander_log': os.path.join(backend_dir, 'moonbot_commander.log'),
+            'crash_log': os.path.join(backend_dir, 'backend_crash.log'),
+            'udp_log': os.path.join(backend_dir, 'udp_listener.log')
+        }
+        
+        # Проверяем логи в директории logs
+        if os.path.exists(logs_dir):
+            # Добавляем все .log файлы из директории logs
+            for filename in os.listdir(logs_dir):
+                if filename.endswith('.log'):
+                    log_key = filename.replace('.log', '_log').replace('-', '_')
+                    log_files[log_key] = os.path.join(logs_dir, filename)
+        
+        total_log_size = 0
+        for key, filepath in log_files.items():
+            if os.path.exists(filepath):
+                size = os.path.getsize(filepath)
+                file_sizes[key] = size
+                total_log_size += size
+            else:
+                file_sizes[key] = 0
+        
+        # Добавляем общий размер логов
         file_sizes['logs'] = total_log_size
+        
+        # Проверяем наличие других файлов в backend директории
+        additional_files = {
+            'alembic.ini': os.path.join(backend_dir, 'alembic.ini'),
+            '.env': os.path.join(backend_dir, '.env')
+        }
+        
+        for key, filepath in additional_files.items():
+            if os.path.exists(filepath):
+                file_sizes[key] = os.path.getsize(filepath)
+            else:
+                file_sizes[key] = 0
         
         # Получить свободное место на диске
         disk_usage = get_disk_usage()
@@ -56,7 +88,7 @@ def get_database_stats(user_id: int, db: Session) -> dict:
             'disk': disk_usage
         }
     except Exception as e:
-        print(f"Error getting database stats: {e}")
+        log(f"Error getting database stats: {e}", level="ERROR")
         return {
             'tables': {},
             'files': {},
@@ -89,7 +121,7 @@ def cleanup_old_logs(user_id: int, days: int, db: Session) -> dict:
         return {'deleted_count': deleted, 'status': 'success'}
     except Exception as e:
         db.rollback()
-        print(f"Error cleaning up logs: {e}")
+        log(f"Error cleaning up logs: {e}")
         import traceback
         traceback.print_exc()
         return {'deleted_count': 0, 'status': 'error', 'message': str(e)}
@@ -123,7 +155,7 @@ def cleanup_command_history(user_id: int, days: int, db: Session) -> dict:
         return {'deleted_count': deleted, 'status': 'success'}
     except Exception as e:
         db.rollback()
-        print(f"Error cleaning up command history: {e}")
+        log(f"Error cleaning up command history: {e}")
         import traceback
         traceback.print_exc()
         return {'deleted_count': 0, 'status': 'error', 'message': str(e)}
@@ -144,7 +176,7 @@ def vacuum_database(db: Session) -> dict:
             'freed_space': 'База данных оптимизирована'
         }
     except Exception as e:
-        print(f"Error vacuuming database: {e}")
+        log(f"Error vacuuming database: {e}")
         return {
             'status': 'error',
             'freed_space': '0 B',
@@ -162,12 +194,12 @@ def cleanup_backend_logs(max_size_mb: int = 0) -> dict:
         dict: {'deleted_count': int, 'freed_bytes': int, 'status': str}
     """
     try:
-        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
         log_files = [
-            os.path.join(backend_dir, 'backend', 'moonbot_commander.log'),
-            os.path.join(backend_dir, 'backend', 'backend_crash.log'),
-            os.path.join(backend_dir, 'backend', 'udp_listener.log'),
+            os.path.join(backend_dir, 'moonbot_commander.log'),
+            os.path.join(backend_dir, 'backend_crash.log'),
+            os.path.join(backend_dir, 'udp_listener.log'),
         ]
         
         deleted_count = 0
@@ -186,7 +218,7 @@ def cleanup_backend_logs(max_size_mb: int = 0) -> dict:
                     deleted_count += 1
                     freed_bytes += file_size
                 except Exception as e:
-                    print(f"Error deleting {log_file}: {e}")
+                    log(f"Error deleting {log_file}: {e}")
             else:
                 # Обрезать файл если он больше max_size_mb
                 max_bytes = max_size_mb * 1024 * 1024
@@ -204,7 +236,7 @@ def cleanup_backend_logs(max_size_mb: int = 0) -> dict:
                         deleted_count += 1
                         freed_bytes += (file_size - max_bytes)
                     except Exception as e:
-                        print(f"Error truncating {log_file}: {e}")
+                        log(f"Error truncating {log_file}: {e}")
         
         return {
             'deleted_count': deleted_count,
@@ -212,7 +244,7 @@ def cleanup_backend_logs(max_size_mb: int = 0) -> dict:
             'status': 'success'
         }
     except Exception as e:
-        print(f"Error cleaning up backend logs: {e}")
+        log(f"Error cleaning up backend logs: {e}")
         import traceback
         traceback.print_exc()
         return {
@@ -253,7 +285,7 @@ def auto_cleanup_check(user_id: int, db: Session) -> None:
         
         # Выполнить очистку только того, что включено
         if should_cleanup:
-            print(f"[AUTO-CLEANUP] Running for user {user_id}")
+            log(f"[AUTO-CLEANUP] Running for user {user_id}")
             
             if settings.auto_cleanup_sql_logs:
                 cleanup_old_logs(user_id, settings.days_to_keep, db)
@@ -268,9 +300,9 @@ def auto_cleanup_check(user_id: int, db: Session) -> None:
             settings.last_cleanup = datetime.utcnow()
             db.commit()
             
-            print(f"[AUTO-CLEANUP] Completed for user {user_id}")
+            log(f"[AUTO-CLEANUP] Completed for user {user_id}")
     except Exception as e:
-        print(f"[AUTO-CLEANUP] Error for user {user_id}: {e}")
+        log(f"[AUTO-CLEANUP] Error for user {user_id}: {e}")
         db.rollback()
 
 
@@ -285,7 +317,7 @@ def get_disk_usage() -> dict:
             'percent': (usage.used / usage.total) * 100
         }
     except Exception as e:
-        print(f"Error getting disk usage: {e}")
+        log(f"Error getting disk usage: {e}")
         return {
             'total': 0,
             'used': 0,
@@ -324,7 +356,7 @@ def full_cleanup(user_id: int, db: Session) -> dict:
             'history_deleted': history_result.get('deleted_count', 0)
         }
     except Exception as e:
-        print(f"Error in full cleanup: {e}")
+        log(f"Error in full cleanup: {e}")
         return {
             'status': 'error',
             'logs_deleted': 0,

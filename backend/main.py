@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, HTTPException, status, Request, WebSocket, WebSocketDisconnect, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, joinedload
@@ -22,6 +22,8 @@ from database import engine, get_db, SessionLocal
 from udp_client import UDPClient, test_connection
 from websocket_manager import ws_manager
 from api.routers import cleanup, strategies
+from logger_utils import log, get_logger
+from update_checker import update_checker, check_update_on_startup
 
 # Создание таблиц
 models.Base.metadata.create_all(bind=engine)
@@ -119,9 +121,8 @@ def api_system_reset(
         raise HTTPException(status_code=403, detail="Неверный код доступа")
     
     try:
-        print("[SYSTEM RESET] WARNING: Starting complete system wipe...")
-        print(f"[SYSTEM RESET] Initiated by user: {current_user.username}")
-        
+        log("[SYSTEM RESET] WARNING: Starting complete system wipe...", level="WARNING")
+        log(f"[SYSTEM RESET] Initiated by user: {current_user.username}")        
         # Удаляем все данные из всех таблиц (в правильном порядке из-за foreign keys)
         db.query(models.CommandHistory).delete()
         db.query(models.ScheduledCommandServer).delete()
@@ -142,7 +143,7 @@ def api_system_reset(
         
         db.commit()
         
-        print("[SYSTEM RESET] OK: All database tables wiped")
+        log("[SYSTEM RESET] OK: All database tables wiped")
         
         # Останавливаем все UDP listeners
         try:
@@ -151,19 +152,18 @@ def api_system_reset(
                 if listener.running:
                     listener.stop()
             udp_listener.active_listeners.clear()
-            print("[SYSTEM RESET] OK: All UDP listeners stopped")
+            log("[SYSTEM RESET] OK: All UDP listeners stopped")
         except Exception as e:
-            print(f"[SYSTEM RESET] WARNING: Could not stop UDP listeners: {e}")
+            log(f"[SYSTEM RESET] WARNING: Could not stop UDP listeners: {e}", level="WARNING")
         
-        print("[SYSTEM RESET] OK: System reset completed successfully")
-        
+        log("[SYSTEM RESET] OK: System reset completed successfully")        
         return {
             "success": True,
             "message": "Система успешно сброшена. Все данные удалены."
         }
         
     except Exception as e:
-        print(f"[SYSTEM RESET] ERROR: {str(e)}")
+        log(f"[SYSTEM RESET] ERROR: {str(e)}", level="ERROR")
         import traceback
         traceback.print_exc()
         db.rollback()
@@ -603,6 +603,38 @@ def get_servers(
     return servers
 
 
+@app.get("/api/trading/currencies")
+def get_trading_currencies(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Получение списка валют, по которым есть любые сделки"""
+    # Получаем все серверы пользователя
+    servers = db.query(models.Server).filter(models.Server.user_id == current_user.id).all()
+    
+    # Собираем валюты, по которым есть сделки
+    currencies_with_trades = set()
+    
+    for server in servers:
+        # Проверяем есть ли вообще сделки для этого сервера
+        has_trades = db.query(models.MoonBotOrder)\
+            .filter(models.MoonBotOrder.server_id == server.id)\
+            .first() is not None
+        
+        # Если есть сделки и задана валюта, добавляем её
+        if has_trades and server.default_currency:
+            currencies_with_trades.add(server.default_currency)
+    
+    # Если нет валют с сделками, возвращаем USDT по умолчанию
+    if not currencies_with_trades:
+        currencies_with_trades = {'USDT'}
+    
+    return {
+        "currencies": sorted(list(currencies_with_trades)),
+        "count": len(currencies_with_trades)
+    }
+
+
 @app.get("/api/servers/balances")
 def get_server_balances(
     current_user: models.User = Depends(get_current_user),
@@ -629,6 +661,7 @@ def get_server_balances(
             "bot_name": balance.bot_name if balance else None,
             "available": float(balance.available) if balance and balance.available else 0.0,
             "total": float(balance.total) if balance and balance.total else 0.0,
+            "default_currency": server.default_currency or "USDT",  # 💱 Валюта сервера
             "updated_at": balance.updated_at.isoformat() if balance and balance.updated_at else None,
         })
     
@@ -660,7 +693,11 @@ def create_server(
 ):
     """Создание нового сервера"""
     # ВАЛИДАЦИЯ: Проверка host (защита от SSRF)
-    is_valid_host, host_error = ip_validator.validate_host(server_data.host)
+    # Передаем allow_localhost=True если пользователь установил флаг is_localhost
+    is_valid_host, host_error = ip_validator.validate_host(
+        server_data.host,
+        allow_localhost=server_data.is_localhost
+    )
     if not is_valid_host:
         raise HTTPException(status_code=400, detail=f"Недопустимый хост: {host_error}")
     
@@ -700,12 +737,11 @@ def create_server(
             )
             
             if success:
-                print(f"[CREATE-SERVER] OK: Listener started for server {new_server.id}: {new_server.name}")
+                log(f"[CREATE-SERVER] OK: Listener started for server {new_server.id}: {new_server.name}")
             else:
-                print(f"[CREATE-SERVER] FAIL: Failed to start listener for server {new_server.id}")
+                log(f"[CREATE-SERVER] FAIL: Failed to start listener for server {new_server.id}", level="ERROR")
         except Exception as e:
-            print(f"[CREATE-SERVER] Error starting listener: {e}")
-    
+            log(f"[CREATE-SERVER] Error starting listener: {e}")    
     return new_server
 
 
@@ -723,6 +759,17 @@ def update_server(
     
     if not server:
         raise HTTPException(status_code=404, detail="Сервер не найден")
+    
+    # ВАЛИДАЦИЯ: Если меняется host, проверяем его
+    if server_data.host is not None and server_data.host != server.host:
+        # Берем is_localhost из запроса если указано, иначе из существующего сервера
+        allow_localhost = server_data.is_localhost if server_data.is_localhost is not None else server.is_localhost
+        is_valid_host, host_error = ip_validator.validate_host(
+            server_data.host,
+            allow_localhost=allow_localhost
+        )
+        if not is_valid_host:
+            raise HTTPException(status_code=400, detail=f"Недопустимый хост: {host_error}")
     
     update_data = server_data.model_dump(exclude_unset=True)
     
@@ -760,20 +807,18 @@ def update_server(
                 )
                 
                 if success:
-                    print(f"[UPDATE-SERVER] OK: Listener started for server {server.id}: {server.name}")
+                    log(f"[UPDATE-SERVER] OK: Listener started for server {server.id}: {server.name}")
                 else:
-                    print(f"[UPDATE-SERVER] FAIL: Failed to start listener for server {server.id}")
+                    log(f"[UPDATE-SERVER] FAIL: Failed to start listener for server {server.id}", level="ERROR")
             except Exception as e:
-                print(f"[UPDATE-SERVER] Error starting listener: {e}")
-                
+                log(f"[UPDATE-SERVER] Error starting listener: {e}")                
         elif not server.is_active and old_is_active:
             # Сервер был включен, теперь выключен - останавливаем listener
             try:
                 udp_listener.stop_listener(server.id)
-                print(f"[UPDATE-SERVER] OK: Listener stopped for server {server.id}: {server.name}")
+                log(f"[UPDATE-SERVER] OK: Listener stopped for server {server.id}: {server.name}")
             except Exception as e:
-                print(f"[UPDATE-SERVER] Error stopping listener: {e}")
-    
+                log(f"[UPDATE-SERVER] Error stopping listener: {e}")    
     return server
 
 
@@ -815,18 +860,18 @@ async def test_server_connection(
     listener = udp_listener.active_listeners.get(server.id)
     
     if listener and listener.running:
-        print(f"[API] Testing server {server.id} through listener")
+        log(f"[API] Testing server {server.id} through listener")
         try:
             success, response = listener.send_command_with_response("lst", timeout=3.0)
             is_online = success and not response.startswith('ERR')
-            print(f"[API] Test result via listener: {is_online}")
+            log(f"[API] Test result via listener: {is_online}")
             return {"server_id": server_id, "is_online": is_online}
         except Exception as e:
-            print(f"[API] Error testing via listener: {e}")
+            log(f"[API] Error testing via listener: {e}")
             return {"server_id": server_id, "is_online": False}
     else:
         # Если listener не активен - используем прямое подключение
-        print(f"[API] Testing server {server.id} directly (no listener)")
+        log(f"[API] Testing server {server.id} directly (no listener)")
         is_online = await test_connection(server.host, server.port, get_decrypted_password(server), bind_port=server.port)
         return {"server_id": server_id, "is_online": is_online}
 
@@ -859,7 +904,7 @@ async def send_command(
     is_strategy_command = command_data.command.startswith('GetStrategies')
     
     if listener and listener.running:
-        print(f"[API] Sending command through listener for server {server.id}")
+        log(f"[API] Sending command through listener for server {server.id}")
         try:
             if is_strategy_command:
                 # Для GetStrategies* просто отправляем команду без ожидания ответа
@@ -867,16 +912,16 @@ async def send_command(
                 listener.send_command(command_data.command)
                 success = True
                 response = f"Команда {command_data.command} отправлена. Данные будут поступать через listener."
-                print(f"[API] Strategy command sent without waiting for response")
+                log(f"[API] Strategy command sent without waiting for response")
             else:
                 # Для остальных команд ждем ответ
                 success, response = listener.send_command_with_response(
                     command_data.command,
                     timeout=float(command_data.timeout or 5)
                 )
-                print(f"[API] Listener response: success={success}, response={response[:100] if response else 'None'}...")
+                log(f"[API] Listener response: success={success}, response={response[:100] if response else 'None'}...")
         except Exception as e:
-            print(f"[API] Error sending through listener: {e}")
+            log(f"[API] Error sending through listener: {e}")
             # Fallback to direct UDP
             client = UDPClient()
             success, response = await client.send_command(
@@ -888,7 +933,7 @@ async def send_command(
             )
     else:
         # Listener не запущен - отправляем напрямую
-        print(f"[API] Listener not active for server {server.id}, sending directly")
+        log(f"[API] Listener not active for server {server.id}, sending directly")
         client = UDPClient()
         success, response = await client.send_command(
             server.host,
@@ -1034,19 +1079,19 @@ async def send_bulk_command(
         listener = udp_listener.active_listeners.get(server.id)
         
         if listener and listener.running:
-            print(f"[API] Sending bulk command to server {server.id} through listener")
+            log(f"[API] Sending bulk command to server {server.id} through listener")
             try:
                 success, response = listener.send_command_with_response(
                     command_data.command,
                     timeout=float(command_data.timeout or 5)
                 )
             except Exception as e:
-                print(f"[API] Error sending bulk command through listener: {e}")
+                log(f"[API] Error sending bulk command through listener: {e}")
                 success = False
                 response = str(e)
         else:
             # Listener не активен - отправляем напрямую
-            print(f"[API] Sending bulk command to server {server.id} directly (no listener)")
+            log(f"[API] Sending bulk command to server {server.id} directly (no listener)")
             client = UDPClient()
             success, response = await client.send_command(
                 server.host,
@@ -1357,16 +1402,16 @@ async def execute_preset(
     
     for command in commands_list:
         if listener and listener.running:
-            print(f"[API] Sending preset command to server {server.id} through listener")
+            log(f"[API] Sending preset command to server {server.id} through listener")
             try:
                 success, response = listener.send_command_with_response(command, timeout=5.0)
             except Exception as e:
-                print(f"[API] Error sending preset command through listener: {e}")
+                log(f"[API] Error sending preset command through listener: {e}")
                 success = False
                 response = str(e)
         else:
             # Listener не активен - отправляем напрямую
-            print(f"[API] Sending preset command to server {server.id} directly (no listener)")
+            log(f"[API] Sending preset command to server {server.id} directly (no listener)")
             client = UDPClient()
             success, response = await client.send_command(
                 server.host,
@@ -1586,84 +1631,6 @@ def get_bot_commands():
     return commands
 
 
-# ==================== QUICK COMMANDS ENDPOINTS ====================
-
-@app.get("/api/quick-commands", response_model=List[schemas.QuickCommand])
-def get_quick_commands(
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Получение списка быстрых команд пользователя"""
-    commands = db.query(models.QuickCommand)\
-        .filter(models.QuickCommand.user_id == current_user.id)\
-        .order_by(models.QuickCommand.order).all()
-    return commands
-
-
-@app.post("/api/quick-commands", response_model=schemas.QuickCommand, status_code=status.HTTP_201_CREATED)
-def create_quick_command(
-    command_data: schemas.QuickCommandCreate,
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Создание новой быстрой команды"""
-    new_command = models.QuickCommand(
-        **command_data.model_dump(),
-        user_id=current_user.id
-    )
-    
-    db.add(new_command)
-    db.commit()
-    db.refresh(new_command)
-    
-    return new_command
-
-
-@app.put("/api/quick-commands/{command_id}", response_model=schemas.QuickCommand)
-def update_quick_command(
-    command_id: int,
-    command_data: schemas.QuickCommandUpdate,
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Обновление быстрой команды"""
-    command = db.query(models.QuickCommand)\
-        .filter(models.QuickCommand.id == command_id, models.QuickCommand.user_id == current_user.id)\
-        .first()
-    
-    if not command:
-        raise HTTPException(status_code=404, detail="Быстрая команда не найдена")
-    
-    update_data = command_data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(command, field, value)
-    
-    db.commit()
-    db.refresh(command)
-    
-    return command
-
-
-@app.delete("/api/quick-commands/{command_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_quick_command(
-    command_id: int,
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Удаление быстрой команды"""
-    command = db.query(models.QuickCommand)\
-        .filter(models.QuickCommand.id == command_id, models.QuickCommand.user_id == current_user.id)\
-        .first()
-    
-    if not command:
-        raise HTTPException(status_code=404, detail="Быстрая команда не найдена")
-    
-    db.delete(command)
-    db.commit()
-    
-    return None
-
-
 # ==================== COMMAND PRESETS ENDPOINTS ====================
 
 @app.get("/api/presets", response_model=List[schemas.CommandPreset])
@@ -1798,16 +1765,16 @@ async def execute_preset(
     # Выполняем команды последовательно
     for command in commands_list:
         if listener and listener.running:
-            print(f"[API] Sending preset-v2 command to server {server.id} through listener")
+            log(f"[API] Sending preset-v2 command to server {server.id} through listener")
             try:
                 success, response = listener.send_command_with_response(command, timeout=float(timeout or 5))
             except Exception as e:
-                print(f"[API] Error sending preset-v2 command through listener: {e}")
+                log(f"[API] Error sending preset-v2 command through listener: {e}")
                 success = False
                 response = str(e)
         else:
             # Listener не активен - отправляем напрямую
-            print(f"[API] Sending preset-v2 command to server {server.id} directly (no listener)")
+            log(f"[API] Sending preset-v2 command to server {server.id} directly (no listener)")
             client = UDPClient()
             success, response = await client.send_command(
                 server.host,
@@ -2115,6 +2082,36 @@ def update_user_settings(
     return settings
 
 
+# ==================== UPDATE CHECKER ====================
+
+@app.get("/api/check-updates")
+async def check_for_updates(
+    force: bool = Query(False, description="Force check ignoring cache"),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Проверить наличие обновлений
+    
+    Returns:
+        Информация об обновлении или {"update_available": false}
+    """
+    update_info = await update_checker.check_for_updates(force=force)
+    
+    if update_info:
+        notification = update_checker.get_update_notification()
+        return {
+            "update_available": True,
+            "current_version": update_checker.current_version,
+            "latest_version": update_info["version"],
+            "notification": notification
+        }
+    
+    return {
+        "update_available": False,
+        "current_version": update_checker.current_version
+    }
+
+
 # ==================== SERVER STATUS ====================
 
 @app.get("/api/servers-with-status")
@@ -2205,12 +2202,12 @@ async def ping_server(
         listener = udp_listener.active_listeners.get(server.id)
         
         if listener and listener.running:
-            print(f"[API] Pinging server {server.id} through listener")
+            log(f"[API] Pinging server {server.id} through listener")
             success, response = listener.send_command_with_response("lst", timeout=3.0)
             is_success = success and not response.startswith('ERR')
         else:
             # Если listener не активен - используем прямое подключение
-            print(f"[API] Pinging server {server.id} directly (no listener)")
+            log(f"[API] Pinging server {server.id} directly (no listener)")
             client = UDPClient(timeout=3)
             is_success, response = await client.send_command(server.host, server.port, "lst", timeout=3, password=get_decrypted_password(server))
         
@@ -2475,6 +2472,12 @@ def create_scheduled_command(
     # Конвертируем в локальное время сервера
     scheduled_local = scheduled_utc.astimezone().replace(tzinfo=None)
     
+    # Конвертируем weekdays из списка в JSON строку для БД
+    import json
+    weekdays_json = None
+    if command_data.weekdays:
+        weekdays_json = json.dumps(command_data.weekdays)
+    
     # Создаем отложенную команду
     new_command = models.ScheduledCommand(
         name=command_data.name,
@@ -2485,15 +2488,17 @@ def create_scheduled_command(
         target_type=command_data.target_type,
         use_botname=command_data.use_botname,
         delay_between_bots=command_data.delay_between_bots,
+        recurrence_type=command_data.recurrence_type,  # ВАЖНО: Сохраняем тип повторения
+        weekdays=weekdays_json,  # ВАЖНО: Сохраняем дни недели (JSON)
         user_id=current_user.id
     )
     
     # Логируем для отладки
-    print(f"[SCHEDULED] Creating command '{command_data.name}'")
-    print(f"[SCHEDULED]   - UTC from request: {command_data.scheduled_time}")
-    print(f"[SCHEDULED]   - Converted to local: {scheduled_local}")
-    print(f"[SCHEDULED]   - Current server time: {datetime.now()}")
-    print(f"[SCHEDULED]   - Time until execution: {(scheduled_local - datetime.now()).total_seconds()}s")
+    log(f"[SCHEDULED] Creating command '{command_data.name}'")
+    log(f"[SCHEDULED]   - UTC from request: {command_data.scheduled_time}")
+    log(f"[SCHEDULED]   - Converted to local: {scheduled_local}")
+    log(f"[SCHEDULED]   - Current server time: {datetime.now()}")
+    log(f"[SCHEDULED]   - Time until execution: {(scheduled_local - datetime.now()).total_seconds()} seconds")
     
     db.add(new_command)
     db.flush()  # Чтобы получить ID
@@ -2519,8 +2524,7 @@ def create_scheduled_command(
     db.commit()
     db.refresh(new_command)
     
-    print(f"[SCHEDULER] New command created: ID={new_command.id}, Time={new_command.scheduled_time}")
-    
+    log(f"[SCHEDULER] New command created: ID={new_command.id}, Time={new_command.scheduled_time}")    
     # Формируем ответ
     result = schemas.ScheduledCommandWithServers.model_validate(new_command)
     result.server_ids = command_data.server_ids
@@ -2616,6 +2620,12 @@ def update_scheduled_command(
         command.use_botname = command_data.use_botname
     if command_data.delay_between_bots is not None:
         command.delay_between_bots = command_data.delay_between_bots
+    if command_data.recurrence_type is not None:
+        command.recurrence_type = command_data.recurrence_type  # ВАЖНО: Обновляем тип повторения
+    if command_data.weekdays is not None:
+        # Конвертируем weekdays из списка в JSON строку
+        import json
+        command.weekdays = json.dumps(command_data.weekdays) if command_data.weekdays else None
     
     # Обновляем серверы если указаны
     if command_data.server_ids is not None:
@@ -2767,8 +2777,7 @@ def update_scheduler_settings(
     # Обновляем статус enabled в файле (не в БД)
     if settings_data.enabled is not None:
         scheduler_module.set_scheduler_enabled(settings_data.enabled)
-        print(f"[API] Scheduler {'enabled' if settings_data.enabled else 'disabled'} by user")
-    
+        log(f"[API] Scheduler {'enabled' if settings_data.enabled else 'disabled'} by user")    
     # Добавляем статус enabled в ответ (из файла)
     settings.enabled = scheduler_module.is_scheduler_enabled()
     
@@ -2790,29 +2799,36 @@ async def startup_event():
     
     Автоматически запускает UDP listeners для всех активных серверов
     """
-    print("[STARTUP] Initializing...")
-    
+    log("[STARTUP] Initializing...")    
     # Устанавливаем event loop для WebSocket manager
     import asyncio
     loop = asyncio.get_event_loop()
     ws_manager.set_event_loop(loop)
-    print("[STARTUP] WebSocket manager event loop configured")
+    log("[STARTUP] WebSocket manager event loop configured")
     
-    print("[STARTUP] Initializing UDP Listeners...")
-    
+    # Проверяем обновления
+    log("[STARTUP] Checking for updates...")
+    try:
+        update_notification = await check_update_on_startup()
+        if update_notification:
+            log(f"[STARTUP] 🆕 Update available: v{update_notification['current_version']} → v{update_notification['new_version']}")
+            # Сохраняем уведомление для отправки через WebSocket
+            ws_manager.update_notification = update_notification
+    except Exception as e:
+        log(f"[STARTUP] Update check failed: {e}")    
+    log("[STARTUP] Initializing UDP Listeners...")    
     db = SessionLocal()
     try:
         # ДИАГНОСТИКА: Показываем ВСЕ серверы
         all_servers = db.query(models.Server).all()
-        print(f"[STARTUP] Total servers in DB: {len(all_servers)}")
+        log(f"[STARTUP] Total servers in DB: {len(all_servers)}")
         for s in all_servers:
-            print(f"  - Server ID={s.id}, Name={s.name}, Active={s.is_active}, User={s.user_id}")
-        
+            log(f"  - Server ID={s.id}, Name={s.name}, Active={s.is_active}, User={s.user_id}")        
         servers = db.query(models.Server).filter(
             models.Server.is_active == True
         ).all()
         
-        print(f"[STARTUP] Found {len(servers)} active servers to start listeners")
+        log(f"[STARTUP] Found {len(servers)} active servers")
         
         for server in servers:
             try:
@@ -2822,11 +2838,11 @@ async def startup_event():
                 
                 # ДИАГНОСТИКА: Логируем параметры запуска (пароль замаскирован!)
                 password_masked = f"{password[:4]}****{password[-4:]}" if password and len(password) > 8 else "****" if password else "None"
-                print(f"[STARTUP] Starting listener for server {server.id}:")
-                print(f"  Name: {server.name}")
-                print(f"  Host: {server.host}")
-                print(f"  Port: {server.port}")
-                print(f"  Password: {password_masked}")
+                log(f"[STARTUP] Starting listener for server {server.id}:")
+                log(f"  Name: {server.name}")
+                log(f"  Host: {server.host}")
+                log(f"  Port: {server.port}")
+                log(f"  Password: {password_masked}")
                 
                 success = udp_listener.start_listener(
                     server_id=server.id,
@@ -2837,24 +2853,23 @@ async def startup_event():
                 )
                 
                 if success:
-                    print(f"[STARTUP] ✅ OK: Listener started for server {server.id}: {server.name}")
+                    log(f"[STARTUP] ✅ OK: Listener started for server {server.id}: {server.name}")
                 else:
-                    print(f"[STARTUP] ❌ FAIL: Failed to start listener for server {server.id}: {server.name}")
+                    log(f"[STARTUP] ❌ FAIL: Failed to start listener for server {server.id}: {server.name}", level="ERROR")
             
             except Exception as e:
-                print(f"[STARTUP] ❌ Error starting listener for server {server.id}: {e}")
+                log(f"[STARTUP] ❌ Error starting listener for server {server.id}: {e}")
                 import traceback
                 traceback.print_exc()
     
     except Exception as e:
-        print(f"[STARTUP] Error during startup: {e}")
+        log(f"[STARTUP] Error during startup: {e}")
         import traceback
         traceback.print_exc()
     finally:
         db.close()
     
-    print("[STARTUP] UDP Listeners initialization complete")
-    
+    log("[STARTUP] UDP Listeners initialization complete")    
     # Запускаем фоновую задачу для мониторинга listeners
     import asyncio
     asyncio.create_task(monitor_listeners())
@@ -2879,8 +2894,7 @@ async def monitor_listeners():
                     
                     # Если listener не работает - перезапускаем
                     if not listener_status["is_running"]:
-                        print(f"[MONITOR] Listener for server {server.id} is down, restarting...")
-                        
+                        log(f"[MONITOR] Listener for server {server.id} is down, restarting...")                        
                         password = None
                         if server.password:
                             password = encryption.decrypt_password(server.password)
@@ -2893,22 +2907,20 @@ async def monitor_listeners():
                         )
                         
                         if success:
-                            print(f"[MONITOR] OK: Listener restarted for server {server.id}")
+                            log(f"[MONITOR] OK: Listener restarted for server {server.id}")
                         else:
-                            print(f"[MONITOR] FAIL: Failed to restart listener for server {server.id}")
-                
+                            log(f"[MONITOR] FAIL: Failed to restart listener for server {server.id}", level="ERROR")                
             finally:
                 db.close()
         except Exception as e:
-            print(f"[MONITOR] Error: {e}")
-
+            log(f"[MONITOR] Error: {e}", level="ERROR")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Выполняется при остановке приложения"""
-    print("[SHUTDOWN] Stopping all UDP Listeners...")
+    log("[SHUTDOWN] Stopping all UDP Listeners...")
     udp_listener.stop_all_listeners()
-    print("[SHUTDOWN] Complete")
+    log("[SHUTDOWN] Complete")
 
 @app.post("/api/servers/{server_id}/listener/start")
 async def start_udp_listener(
@@ -3101,7 +3113,7 @@ async def get_sql_log(
     
     # АВТОСТАРТ LISTENER: Проверяем что listener запущен, если нет - запускаем
     if server.is_active and server_id not in udp_listener.active_listeners:
-        print(f"[AUTO-START] Listener not running for server {server_id}, starting...")
+        log(f"[AUTO-START] Listener not running for server {server_id}, starting...")
         try:
             password = None
             if server.password:
@@ -3115,11 +3127,11 @@ async def get_sql_log(
             )
             
             if success:
-                print(f"[AUTO-START] OK: Listener started for server {server_id}")
+                log(f"[AUTO-START] OK: Listener started for server {server_id}")
             else:
-                print(f"[AUTO-START] FAIL: Could not start listener for server {server_id}")
+                log(f"[AUTO-START] FAIL: Could not start listener for server {server_id}")
         except Exception as e:
-            print(f"[AUTO-START] Error starting listener for server {server_id}: {e}")
+            log(f"[AUTO-START] Error starting listener for server {server_id}: {e}")
     
     # Ограничение на limit
     if limit > 500:
@@ -3340,6 +3352,7 @@ async def get_moonbot_orders(
     return {
         "server_id": server_id,
         "server_name": server.name,
+        "default_currency": server.default_currency or "USDT",  # 💱 Валюта сервера
         "total": total,
         "offset": offset,
         "limit": limit,
@@ -3384,10 +3397,11 @@ async def get_moonbot_orders(
 @app.get("/api/servers/{server_id}/orders/stats")
 async def get_orders_stats(
     server_id: int,
+    emulator: Optional[str] = Query(None, description="Фильтр по типу ордеров: 'real', 'emulator', or null для всех"),
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Получить статистику по ордерам сервера"""
+    """Получить статистику по ордерам сервера с учётом фильтра эмулятор/реальные"""
     from sqlalchemy import func, case
     
     # Проверяем что сервер принадлежит пользователю
@@ -3399,20 +3413,30 @@ async def get_orders_stats(
     if not server:
         raise HTTPException(status_code=404, detail="Сервер не найден")
     
-    # ИСПРАВЛЕНО: Объединили 4 запроса в один с агрегацией
-    # Используем одни запрос с GROUP BY и условной агрегацией
-    stats_query = db.query(
+    # Базовый запрос
+    base_query = db.query(models.MoonBotOrder).filter(
+        models.MoonBotOrder.server_id == server_id
+    )
+    
+    # Применяем фильтр эмулятор/реальные
+    if emulator == 'real':
+        base_query = base_query.filter(models.MoonBotOrder.is_emulator == False)
+    elif emulator == 'emulator':
+        base_query = base_query.filter(models.MoonBotOrder.is_emulator == True)
+    # Если emulator == None или 'all' - не фильтруем
+    
+    # Агрегация статистики одним запросом
+    stats_query = base_query.with_entities(
         func.count(models.MoonBotOrder.id).label('total'),
         func.sum(case((models.MoonBotOrder.status == "Open", 1), else_=0)).label('open_count'),
         func.sum(case((models.MoonBotOrder.status == "Closed", 1), else_=0)).label('closed_count'),
         func.sum(models.MoonBotOrder.profit_btc).label('total_profit')
-    ).filter(
-        models.MoonBotOrder.server_id == server_id
     ).first()
     
     return {
         "server_id": server_id,
         "server_name": server.name,
+        "default_currency": server.default_currency or "USDT",  # 💱 Валюта сервера
         "total_orders": stats_query.total or 0,
         "open_orders": stats_query.open_count or 0,
         "closed_orders": stats_query.closed_count or 0,
@@ -3705,6 +3729,7 @@ async def get_strategies_comparison(
 @app.get("/api/strategies/comparison-all")
 async def get_strategies_comparison_all(
     emulator: Optional[str] = None,  # "true", "false" или None (все)
+    server_ids: Optional[str] = None,  # Список ID серверов через запятую
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -3713,13 +3738,24 @@ async def get_strategies_comparison_all(
     
     Параметры:
     - emulator: "true" для эмулятора, "false" для реальных, None для всех
+    - server_ids: список ID серверов через запятую (опционально)
     """
     from sqlalchemy import func
     
-    # Получаем все сервера пользователя
-    user_servers = db.query(models.Server).filter(
+    # Получаем сервера пользователя
+    servers_query = db.query(models.Server).filter(
         models.Server.user_id == current_user.id
-    ).all()
+    )
+    
+    # Фильтруем по конкретным ID серверов если указаны
+    if server_ids:
+        try:
+            server_id_list = [int(sid) for sid in server_ids.split(',') if sid.strip()]
+            servers_query = servers_query.filter(models.Server.id.in_(server_id_list))
+        except ValueError:
+            return {"strategies": []}
+    
+    user_servers = servers_query.all()
     
     if not user_servers:
         return {"strategies": []}
@@ -3895,6 +3931,7 @@ async def get_activity_heatmap(
 @app.get("/api/heatmap-all")
 async def get_activity_heatmap_all(
     emulator: Optional[str] = None,  # "true", "false" или None (все)
+    server_ids: Optional[str] = None,  # Список ID серверов через запятую
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -3903,13 +3940,24 @@ async def get_activity_heatmap_all(
     
     Параметры:
     - emulator: "true" для эмулятора, "false" для реальных, None для всех
+    - server_ids: список ID серверов через запятую (опционально)
     """
     from datetime import datetime
     
-    # Получаем все сервера пользователя
-    user_servers = db.query(models.Server).filter(
+    # Получаем сервера пользователя
+    servers_query = db.query(models.Server).filter(
         models.Server.user_id == current_user.id
-    ).all()
+    )
+    
+    # Фильтруем по конкретным ID серверов если указаны
+    if server_ids:
+        try:
+            server_id_list = [int(sid) for sid in server_ids.split(',') if sid.strip()]
+            servers_query = servers_query.filter(models.Server.id.in_(server_id_list))
+        except ValueError:
+            return {"data": []}
+    
+    user_servers = servers_query.all()
     
     if not user_servers:
         return {"data": []}
@@ -4099,7 +4147,7 @@ async def sync_orders_from_datetime(
                 saved_count += 1
         
         except Exception as e:
-            print(f"[SYNC] Error parsing command: {e}")
+            log(f"[SYNC] Error parsing command: {e}")
             continue
     
     db.commit()
@@ -4882,7 +4930,7 @@ async def websocket_endpoint(websocket: WebSocket, token: Optional[str] = None):
                 db.close()
         
         except JWTError as e:
-            print(f"[WS] JWT Error: {e}")
+            log(f"[WS] JWT Error: {e}", level="ERROR")
             await websocket.close(code=4004, reason="Token validation failed")
             return
         
@@ -4911,15 +4959,14 @@ async def websocket_endpoint(websocket: WebSocket, token: Optional[str] = None):
                     })
             
             except WebSocketDisconnect:
-                print(f"[WS] Client disconnected: user_id={current_user.id}, connection_id={connection_id}")
+                log(f"[WS] Client disconnected: user_id={current_user.id}, connection_id={connection_id}")
                 break
             except Exception as e:
-                print(f"[WS] Error receiving message: {e}")
+                log(f"[WS] Error receiving message: {e}")
                 break
     
     except Exception as e:
-        print(f"[WS] Connection error: {e}")
-    
+        log(f"[WS] Connection error: {e}", level="ERROR")    
     finally:
         # Отключаем пользователя
         if current_user:

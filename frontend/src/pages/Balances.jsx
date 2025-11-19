@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { FiRefreshCw, FiDollarSign, FiServer, FiActivity } from 'react-icons/fi';
+import { FiRefreshCw, FiDollarSign, FiServer, FiActivity, FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import api from '../api/api';
 import styles from './Balances.module.css';
+import CurrencySelector from '../components/CurrencySelector';
 
 function Balances() {
   const [balances, setBalances] = useState([]);
@@ -12,6 +13,9 @@ function Balances() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [sortBy, setSortBy] = useState('server_name');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [currencyFilter, setCurrencyFilter] = useState('all');
 
   // Сохраняем состояние автообновления в localStorage
   useEffect(() => {
@@ -110,8 +114,53 @@ function Balances() {
 
   const formatBalance = (value) => {
     if (value === null || value === undefined) return '0.00';
-    return parseFloat(value).toFixed(2);
+    // Форматируем число с разделителями тысяч
+    const num = parseFloat(value);
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   };
+
+  // Функция для обработки клика по заголовку для сортировки
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  // Функция сортировки данных
+  const sortedBalances = [...balances].sort((a, b) => {
+    let aValue = a[sortBy];
+    let bValue = b[sortBy];
+
+    // Преобразуем значения для правильной сортировки
+    if (sortBy === 'available' || sortBy === 'total') {
+      aValue = parseFloat(aValue) || 0;
+      bValue = parseFloat(bValue) || 0;
+    } else if (sortBy === 'server_name' || sortBy === 'bot_name' || sortBy === 'host') {
+      aValue = (aValue || '').toString().toLowerCase();
+      bValue = (bValue || '').toString().toLowerCase();
+    } else if (sortBy === 'updated_at') {
+      aValue = new Date(aValue || 0).getTime();
+      bValue = new Date(bValue || 0).getTime();
+    }
+
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Фильтрация по валюте
+  const filteredBalances = currencyFilter === 'all' 
+    ? sortedBalances 
+    : sortedBalances.filter(balance => (balance.default_currency || 'USDT') === currencyFilter);
+
+  // Получаем уникальные валюты для фильтра
+  const uniqueCurrencies = [...new Set(balances.map(b => b.default_currency || 'USDT'))].sort();
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Никогда';
@@ -180,6 +229,13 @@ function Balances() {
           </p>
         </div>
         <div className={styles.controls}>
+          {uniqueCurrencies.length > 1 && (
+            <CurrencySelector
+              currencies={uniqueCurrencies}
+              value={currencyFilter}
+              onChange={(e) => setCurrencyFilter(e.target.value)}
+            />
+          )}
           <label className={styles.autoRefreshToggle}>
             <input
               type="checkbox"
@@ -205,28 +261,73 @@ function Balances() {
         </div>
       )}
 
-      {balances.length === 0 ? (
+      {filteredBalances.length === 0 ? (
         <div className={styles.empty}>
           <FiServer className={styles.emptyIcon} />
           <p>Серверы не найдены</p>
-          <small>Добавьте серверы во вкладке "Серверы"</small>
+          <small>
+            {balances.length > 0 
+              ? `Нет серверов с валютой ${currencyFilter}` 
+              : 'Добавьте серверы во вкладке "Серверы"'
+            }
+          </small>
         </div>
       ) : (
         <div className={styles.tableContainer}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Сервер</th>
-                <th>Бот</th>
+                <th 
+                  className={styles.sortable}
+                  onClick={() => handleSort('server_name')}
+                >
+                  Сервер
+                  {sortBy === 'server_name' && (
+                    sortOrder === 'asc' ? <FiChevronUp className={styles.sortIcon} /> : <FiChevronDown className={styles.sortIcon} />
+                  )}
+                </th>
+                <th 
+                  className={styles.sortable}
+                  onClick={() => handleSort('bot_name')}
+                >
+                  Бот
+                  {sortBy === 'bot_name' && (
+                    sortOrder === 'asc' ? <FiChevronUp className={styles.sortIcon} /> : <FiChevronDown className={styles.sortIcon} />
+                  )}
+                </th>
                 <th>Host:Port</th>
-                <th>Доступно</th>
-                <th>Всего</th>
-                <th>Обновлено</th>
+                <th 
+                  className={styles.sortable}
+                  onClick={() => handleSort('available')}
+                >
+                  Доступно
+                  {sortBy === 'available' && (
+                    sortOrder === 'asc' ? <FiChevronUp className={styles.sortIcon} /> : <FiChevronDown className={styles.sortIcon} />
+                  )}
+                </th>
+                <th 
+                  className={styles.sortable}
+                  onClick={() => handleSort('total')}
+                >
+                  Всего
+                  {sortBy === 'total' && (
+                    sortOrder === 'asc' ? <FiChevronUp className={styles.sortIcon} /> : <FiChevronDown className={styles.sortIcon} />
+                  )}
+                </th>
+                <th 
+                  className={styles.sortable}
+                  onClick={() => handleSort('updated_at')}
+                >
+                  Обновлено
+                  {sortBy === 'updated_at' && (
+                    sortOrder === 'asc' ? <FiChevronUp className={styles.sortIcon} /> : <FiChevronDown className={styles.sortIcon} />
+                  )}
+                </th>
                 <th>Статус</th>
               </tr>
             </thead>
             <tbody>
-              {balances.map((balance) => (
+              {filteredBalances.map((balance) => (
                 <tr 
                   key={balance.server_id}
                   className={!balance.is_active ? styles.inactiveRow : ''}
@@ -242,14 +343,16 @@ function Balances() {
                     <code>{balance.host}:{balance.port}</code>
                   </td>
                   <td className={styles.balance}>
-                    <span className={styles.balanceValue}>
-                      ${formatBalance(balance.available)}
-                    </span>
+                    <div className={styles.balanceWrapper}>
+                      <span className={styles.balanceAmount}>{formatBalance(balance.available)}</span>
+                      <span className={styles.balanceCurrency}>{balance.default_currency || 'USDT'}</span>
+                    </div>
                   </td>
                   <td className={styles.balance}>
-                    <span className={styles.balanceValue}>
-                      ${formatBalance(balance.total)}
-                    </span>
+                    <div className={styles.balanceWrapper}>
+                      <span className={styles.balanceAmount}>{formatBalance(balance.total)}</span>
+                      <span className={styles.balanceCurrency}>{balance.default_currency || 'USDT'}</span>
+                    </div>
                   </td>
                   <td className={styles.lastUpdate}>
                     <small>{formatDate(balance.updated_at)}</small>
@@ -283,6 +386,11 @@ function Balances() {
           </span>
         </div>
         <div className={styles.totalServers}>
+          {currencyFilter !== 'all' && filteredBalances.length !== balances.length && (
+            <>
+              Показано: {filteredBalances.length} из {balances.length} серверов • 
+            </>
+          )}
           Всего: {balances.length} ({balances.filter(b => b.is_active).length} активных)
         </div>
       </div>

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FiDownload, FiCopy, FiCheck, FiAlertTriangle, FiKey, FiShield } from 'react-icons/fi';
 import styles from './Auth.module.css';
+import { useNotification } from '../context/NotificationContext';
 
 const RecoveryCodes = () => {
+  const { warning } = useNotification();
   const navigate = useNavigate();
   const location = useLocation();
   const codes = location.state?.recovery_codes || [];
@@ -51,7 +53,7 @@ const RecoveryCodes = () => {
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Fallback copy failed:', err);
-      alert('Не удалось скопировать. Пожалуйста, скопируйте коды вручную или скачайте файл.');
+      warning('Не удалось скопировать. Пожалуйста, скопируйте коды вручную или скачайте файл.');
     }
     
     document.body.removeChild(textArea);
