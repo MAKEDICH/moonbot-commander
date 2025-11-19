@@ -178,7 +178,8 @@ if not defined DOWNLOAD_URL (
     echo.
     echo [WARNING] Could not get download URL from release info.
     echo Trying to construct URL manually...
-    set "DOWNLOAD_URL=https://github.com/MAKEDICH/moonbot-commander/releases/download/v!NEW_VERSION!/moonbot-commander-!NEW_VERSION!.zip"
+    REM Try release asset first, then source code
+    set "DOWNLOAD_URL=https://github.com/MAKEDICH/moonbot-commander/archive/refs/tags/v!NEW_VERSION!.zip"
 )
 
 echo Download URL: !DOWNLOAD_URL!
