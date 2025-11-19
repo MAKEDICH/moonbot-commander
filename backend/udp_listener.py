@@ -120,6 +120,23 @@ class UDPListener:
             self._update_status(is_running=True, started_at=datetime.utcnow())
             
             log(f"[UDP-LISTENER-{self.server_id}] Started (using global socket) for {self.host}:{self.port}")
+            
+            # ВАЖНО: В серверном режиме тоже нужно отправить initial lst!
+            try:
+                time.sleep(0.5)  # Даём время на инициализацию
+                log(f"[UDP-LISTENER-{self.server_id}] 📡 Sending initial 'lst' to establish UDP connection (SERVER MODE)...")
+                
+                # Устанавливаем флаг что это initial lst
+                self._initial_lst_pending = True
+                
+                # Отправляем команду lst
+                self._send_command_from_listener("lst")
+                log(f"[UDP-LISTENER-{self.server_id}] [OK] Initial 'lst' sent to {self.host}:{self.port}")
+            except Exception as e:
+                log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Error sending initial 'lst' in server mode: {e}")
+                import traceback
+                traceback.print_exc()
+            
             return True
         
         # В LOCAL/AUTO режиме - создаем свой поток с собственным сокетом
