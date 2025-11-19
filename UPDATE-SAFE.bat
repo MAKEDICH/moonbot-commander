@@ -168,11 +168,20 @@ if not exist "latest_release.json" (
 )
 
 REM Get version and download URL
-for /f "delims=" %%a in ('powershell -Command "$json = Get-Content 'latest_release.json' -Raw | ConvertFrom-Json; $json.tag_name"') do set "NEW_VERSION=%%a"
+for /f "delims=" %%a in ('powershell -Command "$json = Get-Content 'latest_release.json' -Raw | ConvertFrom-Json; $json.tag_name -replace '^v', ''"') do set "NEW_VERSION=%%a"
 for /f "delims=" %%a in ('powershell -Command "$json = Get-Content 'latest_release.json' -Raw | ConvertFrom-Json; $json.assets[0].browser_download_url"') do set "DOWNLOAD_URL=%%a"
 
 echo Current version: !CURRENT_VERSION!
 echo Latest version: !NEW_VERSION!
+
+if not defined DOWNLOAD_URL (
+    echo.
+    echo [WARNING] Could not get download URL from release info.
+    echo Trying to construct URL manually...
+    set "DOWNLOAD_URL=https://github.com/MAKEDICH/moonbot-commander/releases/download/v!NEW_VERSION!/moonbot-commander-v!NEW_VERSION!.zip"
+)
+
+echo Download URL: !DOWNLOAD_URL!
 echo.
 
 if "!CURRENT_VERSION!"=="!NEW_VERSION!" (
@@ -192,17 +201,36 @@ REM Download latest release
 echo [5/10] Downloading update...
 echo.
 
-echo Downloading from GitHub...
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!DOWNLOAD_URL!' -OutFile 'moonbot_update.zip' -UseBasicParsing } catch { Write-Host 'Download failed'; exit 1 }" >nul 2>&1
-
-if not exist "moonbot_update.zip" (
-    echo [ERROR] Failed to download update!
-    echo.
-    echo Please check your internet connection and try again.
+if not defined DOWNLOAD_URL (
+    echo [ERROR] Download URL is empty!
     echo.
     del latest_release.json 2>nul
     pause
     exit /b 1
+)
+
+echo Downloading from: !DOWNLOAD_URL!
+echo.
+
+echo Downloading from GitHub...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!DOWNLOAD_URL!' -OutFile 'moonbot_update.zip' -UseBasicParsing } catch { Write-Host 'Download failed: ' + $_.Exception.Message; exit 1 }"
+
+if not exist "moonbot_update.zip" (
+    echo.
+    echo Trying alternative download method...
+    powershell -Command "(New-Object System.Net.WebClient).DownloadFile('!DOWNLOAD_URL!', 'moonbot_update.zip')" 2>nul
+    
+    if not exist "moonbot_update.zip" (
+        echo [ERROR] Failed to download update!
+        echo.
+        echo Manual download URL: !DOWNLOAD_URL!
+        echo.
+        echo You can download manually and place as "moonbot_update.zip" in this folder.
+        echo.
+        del latest_release.json 2>nul
+        pause
+        exit /b 1
+    )
 )
 
 echo [OK] Update downloaded
