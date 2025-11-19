@@ -688,8 +688,10 @@ class UDPListener:
         # Проверяем это SQL команда?
         if "[SQLCommand" in message:
             self._process_sql_command(message)
+        
         # Проверяем это ответ на lst команду?
-        elif "Open Sell Orders:" in message or "Open Buy Orders:" in message:
+        # Важно: используем if вместо elif, чтобы lst обрабатывался даже когда waiting_for_response=True
+        if "Open Sell Orders:" in message or "Open Buy Orders:" in message:
             self._process_lst_response(message)
     
     def _process_order_update(self, packet: dict):
