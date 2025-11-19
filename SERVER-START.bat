@@ -69,8 +69,29 @@ if !errorlevel! neq 0 (
     echo.
 )
 
+REM Apply automatic migrations
+echo [0/5] Applying automatic migrations...
+echo.
+
+if exist moonbot_commander.db (
+    echo Checking backend database...
+    python startup_migrations.py 2>nul
+    if !errorlevel! neq 0 (
+        echo [WARNING] startup_migrations.py not found, trying direct migration...
+        python -c "import sqlite3; conn=sqlite3.connect('moonbot_commander.db'); c=conn.cursor(); c.execute('PRAGMA table_info(servers)'); cols=[col[1] for col in c.fetchall()]; missing=[]; 'is_localhost' not in cols and missing.append('is_localhost'); 'default_currency' not in cols and missing.append('default_currency'); [c.execute(f'ALTER TABLE servers ADD COLUMN {col} {"BOOLEAN DEFAULT FALSE" if col=="is_localhost" else "TEXT"}') for col in missing]; conn.commit(); conn.close(); print(f'[OK] Applied {len(missing)} migrations') if missing else print('[OK] No migrations needed')" 2>nul
+    )
+)
+
+cd ..
+if exist moonbot_commander.db (
+    echo Checking root database...  
+    python -c "import sqlite3; conn=sqlite3.connect('moonbot_commander.db'); c=conn.cursor(); c.execute('PRAGMA table_info(servers)'); cols=[col[1] for col in c.fetchall()]; missing=[]; 'is_localhost' not in cols and missing.append('is_localhost'); 'default_currency' not in cols and missing.append('default_currency'); [c.execute(f'ALTER TABLE servers ADD COLUMN {col} {"BOOLEAN DEFAULT FALSE" if col=="is_localhost" else "TEXT"}') for col in missing]; conn.commit(); conn.close(); print(f'[OK] Applied {len(missing)} migrations') if missing else print('[OK] No migrations needed')" 2>nul
+)
+cd backend
+
 REM Auto-detect application version
-echo [0/4] Detecting application version...
+echo.
+echo [1/5] Detecting application version...
 echo.
 
 set APP_VERSION=unknown
@@ -138,7 +159,7 @@ if not exist "frontend\package.json" (
 )
 
 echo.
-echo [1/4] Cleaning up old processes...
+echo [2/5] Cleaning up old processes...
 echo.
 
 REM Check and kill old processes
@@ -174,15 +195,15 @@ echo.
 
 set "PROJECT_DIR=%CD%"
 
-echo [2/4] Starting Backend %APP_VERSION% [SERVER MODE]...
+echo [3/5] Starting Backend %APP_VERSION% [SERVER MODE]...
 start "MoonBot Backend %APP_VERSION% [SERVER]" cmd /k "cd /d "%PROJECT_DIR%\backend" && set "MOONBOT_MODE=server" && python -m uvicorn %MAIN_FILE:~0,-3%:app --host 0.0.0.0 --port 8000"
 timeout /t 3 /nobreak >nul
 
-echo [3/4] Starting Scheduler...
+echo [4/5] Starting Scheduler...
 start "MoonBot Scheduler" cmd /k "cd /d "%PROJECT_DIR%\backend" && set "MOONBOT_MODE=server" && python scheduler.py"
 timeout /t 2 /nobreak >nul
 
-echo [4/4] Preparing Frontend for production...
+echo [5/5] Preparing Frontend for production...
 cd frontend
 
 REM Check if production build exists and is fresh

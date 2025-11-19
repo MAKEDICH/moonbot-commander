@@ -430,6 +430,31 @@ $PYTHON_CMD -m pip install --upgrade pip --quiet
 echo "Установка Python зависимостей..."
 $PYTHON_CMD -m pip install -r requirements.txt --quiet
 
+# Сначала применяем автоматические миграции ко всем БД
+echo ""
+echo "Применение автоматических миграций..."
+if [ -f "auto_migrate.py" ]; then
+    $PYTHON_CMD auto_migrate.py
+    echo "[OK] Автоматические миграции применены"
+elif [ -f "startup_migrations.py" ]; then
+    $PYTHON_CMD startup_migrations.py
+    echo "[OK] Startup миграции применены"
+else
+    # Прямые миграции для критических колонок
+    if [ -f "moonbot_commander.db" ]; then
+        echo "Применение прямых миграций к backend БД..."
+        $PYTHON_CMD -c "import sqlite3; conn=sqlite3.connect('moonbot_commander.db'); c=conn.cursor(); c.execute('PRAGMA table_info(servers)'); cols=[col[1] for col in c.fetchall()]; missing=[]; 'is_localhost' not in cols and missing.append('is_localhost'); 'default_currency' not in cols and missing.append('default_currency'); [c.execute(f'ALTER TABLE servers ADD COLUMN {col} {\"BOOLEAN DEFAULT FALSE\" if col==\"is_localhost\" else \"TEXT\"}') for col in missing]; conn.commit(); conn.close(); print(f'[OK] Применено {len(missing)} миграций') if missing else print('[OK] Миграции не требуются')"
+    fi
+fi
+
+# Применяем к корневой БД если существует
+cd ..
+if [ -f "moonbot_commander.db" ]; then
+    echo "Применение миграций к корневой БД..."
+    $PYTHON_CMD -c "import sqlite3; conn=sqlite3.connect('moonbot_commander.db'); c=conn.cursor(); c.execute('PRAGMA table_info(servers)'); cols=[col[1] for col in c.fetchall()]; missing=[]; 'is_localhost' not in cols and missing.append('is_localhost'); 'default_currency' not in cols and missing.append('default_currency'); [c.execute(f'ALTER TABLE servers ADD COLUMN {col} {\"BOOLEAN DEFAULT FALSE\" if col==\"is_localhost\" else \"TEXT\"}') for col in missing]; conn.commit(); conn.close(); print(f'[OK] Применено {len(missing)} миграций') if missing else print('[OK] Миграции не требуются')"
+fi
+cd backend
+
 # ВАЖНО: Проверяем наличие intelligent_migration.py
 if [ ! -f "intelligent_migration.py" ]; then
     echo ""
@@ -444,6 +469,19 @@ if [ ! -f "intelligent_migration.py" ]; then
             $PYTHON_CMD "$migration" >/dev/null 2>&1 || true
         fi
     done
+    
+    # Применяем миграции к корневой БД если она есть
+    cd ..
+    if [ -f "moonbot_commander.db" ]; then
+        echo ""
+        echo "Применение миграций к корневой БД..."
+        for migration in backend/migrate_*.py; do
+            if [ -f "$migration" ]; then
+                $PYTHON_CMD "$migration" >/dev/null 2>&1 || true
+            fi
+        done
+    fi
+    cd backend
 else
     echo ""
     echo "============================================================"

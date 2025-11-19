@@ -265,6 +265,9 @@ xcopy "!UPDATE_SOURCE!\backend\*.py" "backend\" /Y /Q >nul 2>&1
 if exist "!UPDATE_SOURCE!\backend\api" xcopy "!UPDATE_SOURCE!\backend\api" "backend\api\" /E /Y /Q >nul 2>&1
 if exist "!UPDATE_SOURCE!\backend\alembic" xcopy "!UPDATE_SOURCE!\backend\alembic" "backend\alembic\" /E /Y /Q >nul 2>&1
 if exist "!UPDATE_SOURCE!\backend\requirements.txt" copy "!UPDATE_SOURCE!\backend\requirements.txt" "backend\requirements.txt" >nul
+REM Важные новые файлы
+if exist "!UPDATE_SOURCE!\backend\auto_migrate.py" copy "!UPDATE_SOURCE!\backend\auto_migrate.py" "backend\auto_migrate.py" >nul
+if exist "!UPDATE_SOURCE!\backend\startup_migrations.py" copy "!UPDATE_SOURCE!\backend\startup_migrations.py" "backend\startup_migrations.py" >nul
 
 REM Frontend
 echo Обновление Frontend...

@@ -24,6 +24,13 @@ from websocket_manager import ws_manager
 from api.routers import cleanup, strategies
 from logger_utils import log, get_logger
 from update_checker import update_checker, check_update_on_startup
+from auto_migrate import run_auto_migrations
+
+# Автоматическое применение миграций
+try:
+    run_auto_migrations()
+except Exception as e:
+    print(f"Warning: Auto-migration failed: {e}")
 
 # Создание таблиц
 models.Base.metadata.create_all(bind=engine)
