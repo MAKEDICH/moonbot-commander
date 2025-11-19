@@ -347,6 +347,10 @@ cp -f "$UPDATE_SOURCE"/backend/*.py backend/ 2>/dev/null || true
 [ -d "$UPDATE_SOURCE/backend/api" ] && cp -rf "$UPDATE_SOURCE/backend/api" backend/ 2>/dev/null || true
 [ -d "$UPDATE_SOURCE/backend/alembic" ] && cp -rf "$UPDATE_SOURCE/backend/alembic" backend/ 2>/dev/null || true
 [ -f "$UPDATE_SOURCE/backend/requirements.txt" ] && cp -f "$UPDATE_SOURCE/backend/requirements.txt" backend/
+# Копируем важные новые файлы
+[ -f "$UPDATE_SOURCE/backend/auto_migrate.py" ] && cp -f "$UPDATE_SOURCE/backend/auto_migrate.py" backend/
+[ -f "$UPDATE_SOURCE/backend/startup_migrations.py" ] && cp -f "$UPDATE_SOURCE/backend/startup_migrations.py" backend/
+[ -f "$UPDATE_SOURCE/backend/fix_currency_on_startup.py" ] && cp -f "$UPDATE_SOURCE/backend/fix_currency_on_startup.py" backend/
 
 # Frontend
 echo "Обновление Frontend..."

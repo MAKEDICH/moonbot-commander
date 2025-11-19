@@ -66,8 +66,12 @@ if [ -f "moonbot_commander.db" ]; then
             echo "[WARNING] startup_migrations.py failed, trying direct migration..."
             $PYTHON_CMD -c "import sqlite3; conn=sqlite3.connect('moonbot_commander.db'); c=conn.cursor(); c.execute('PRAGMA table_info(servers)'); cols=[col[1] for col in c.fetchall()]; missing=[]; 'is_localhost' not in cols and missing.append('is_localhost'); 'default_currency' not in cols and missing.append('default_currency'); [c.execute(f'ALTER TABLE servers ADD COLUMN {col} {\"BOOLEAN DEFAULT FALSE\" if col==\"is_localhost\" else \"TEXT\"}') for col in missing]; conn.commit(); conn.close(); print(f'[OK] Applied {len(missing)} migrations') if missing else print('[OK] No migrations needed')" 2>/dev/null
         }
+        # Fix currencies if needed
+        [ -f "fix_currency_on_startup.py" ] && $PYTHON_CMD fix_currency_on_startup.py 2>/dev/null
     else
         $PYTHON_CMD -c "import sqlite3; conn=sqlite3.connect('moonbot_commander.db'); c=conn.cursor(); c.execute('PRAGMA table_info(servers)'); cols=[col[1] for col in c.fetchall()]; missing=[]; 'is_localhost' not in cols and missing.append('is_localhost'); 'default_currency' not in cols and missing.append('default_currency'); [c.execute(f'ALTER TABLE servers ADD COLUMN {col} {\"BOOLEAN DEFAULT FALSE\" if col==\"is_localhost\" else \"TEXT\"}') for col in missing]; conn.commit(); conn.close(); print(f'[OK] Applied {len(missing)} migrations') if missing else print('[OK] No migrations needed')" 2>/dev/null
+        # Fix currencies if needed
+        [ -f "fix_currency_on_startup.py" ] && $PYTHON_CMD fix_currency_on_startup.py 2>/dev/null
     fi
 fi
 
@@ -76,6 +80,8 @@ cd ..
 if [ -f "moonbot_commander.db" ]; then
     echo "Checking root database..."
     $PYTHON_CMD -c "import sqlite3; conn=sqlite3.connect('moonbot_commander.db'); c=conn.cursor(); c.execute('PRAGMA table_info(servers)'); cols=[col[1] for col in c.fetchall()]; missing=[]; 'is_localhost' not in cols and missing.append('is_localhost'); 'default_currency' not in cols and missing.append('default_currency'); [c.execute(f'ALTER TABLE servers ADD COLUMN {col} {\"BOOLEAN DEFAULT FALSE\" if col==\"is_localhost\" else \"TEXT\"}') for col in missing]; conn.commit(); conn.close(); print(f'[OK] Applied {len(missing)} migrations') if missing else print('[OK] No migrations needed')" 2>/dev/null
+    # Fix currencies if needed
+    [ -f "backend/fix_currency_on_startup.py" ] && cd backend && $PYTHON_CMD fix_currency_on_startup.py 2>/dev/null && cd ..
 fi
 
 # Detect version
