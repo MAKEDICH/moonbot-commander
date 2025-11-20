@@ -1304,7 +1304,9 @@ class UDPListener:
                 'GainedBTC': ('gained_btc', float),
                 'ProfitBTC': ('profit_btc', float),
                 'SellReason': ('sell_reason', str),
+                'Comment': ('strategy', str),
                 'Strategy': ('strategy', str),
+                'StrategyID': ('strategy', str),
                 # Новые расширенные поля
                 'SignalType': ('signal_type', str),
                 'BaseCurrency': ('base_currency', str),
@@ -1316,6 +1318,15 @@ class UDPListener:
                 'Latency': ('latency', int),
                 'TaskID': ('task_id', int),
             }
+            
+            # Сначала проверяем SellReason для извлечения стратегии
+            strategy_from_sellreason = None
+            if 'SellReason' in updates:
+                sellreason_value = str(updates['SellReason'])
+                # Ищем стратегию в формате (strategy <StrategyName>)
+                strategy_match = re.search(r'\(strategy\s*<([^>]+)>\)', sellreason_value)
+                if strategy_match:
+                    strategy_from_sellreason = strategy_match.group(1).strip()
             
             # Применяем все найденные поля
             for sql_field, (model_field, field_type) in field_mapping.items():
@@ -1330,10 +1341,19 @@ class UDPListener:
                         else:
                             value = updates[sql_field]
                         
+                        # Пропускаем обработку стратегии если уже нашли в SellReason
+                        if model_field == 'strategy' and strategy_from_sellreason:
+                            continue
+                        
                         if value is not None:
                             setattr(order, model_field, value)
                     except Exception as e:
                         log(f"[UDP-LISTENER-{self.server_id}] Error setting {model_field}: {e}")
+            
+            # Устанавливаем стратегию из SellReason если она была найдена (приоритет)
+            if strategy_from_sellreason:
+                order.strategy = strategy_from_sellreason
+                log(f"[UDP-LISTENER-{self.server_id}] ✅ UPDATE: Set strategy from SellReason: '{strategy_from_sellreason}'")
             
             # Обрабатываем Lev как Leverage (если нет Quantity)
             if 'Lev' in updates and not order.quantity:
@@ -1640,13 +1660,28 @@ class UDPListener:
             }
             
             # Заполняем все поля
-            # Сначала обрабатываем Comment для извлечения названия стратегии
-            strategy_from_comment = None
-            if 'Comment' in data:
-                comment_value = data['Comment']
-                strategy_match = re.search(r'<([^>]+)>', str(comment_value))
+            # Сначала проверяем Comment и SellReason для извлечения стратегии
+            strategy_from_text = None
+            
+            # Проверяем SellReason (может содержать (strategy <StrategyName>))
+            if 'SellReason' in data:
+                sellreason_value = str(data['SellReason'])
+                strategy_match = re.search(r'\(strategy\s*<([^>]+)>\)', sellreason_value)
                 if strategy_match:
-                    strategy_from_comment = strategy_match.group(1)
+                    strategy_from_text = strategy_match.group(1).strip()
+            
+            # Если не нашли в SellReason, проверяем Comment
+            if not strategy_from_text and 'Comment' in data:
+                comment_value = str(data['Comment'])
+                # Сначала ищем в формате (strategy <StrategyName>)
+                strategy_match = re.search(r'\(strategy\s*<([^>]+)>\)', comment_value)
+                if strategy_match:
+                    strategy_from_text = strategy_match.group(1).strip()
+                else:
+                    # Если не нашли, ищем просто <StrategyName> в конце
+                    strategy_match = re.search(r'<([^<>]+)>\s*$', comment_value)
+                    if strategy_match:
+                        strategy_from_text = strategy_match.group(1).strip()
             
             for sql_field, model_field in field_mapping.items():
                 if sql_field in data:
@@ -1662,22 +1697,25 @@ class UDPListener:
                         # Emulator может быть 0/1 или True/False
                         value = bool(self._safe_int(value))
                     elif model_field == 'strategy':
-                        # Для стратегии - приоритет у названия из Comment
-                        if sql_field == 'Comment':
+                        # Для стратегии - приоритет у названия из Comment/SellReason
+                        if sql_field in ['Comment', 'SellReason']:
                             continue  # Уже обработано выше
-                        elif strategy_from_comment:
-                            continue  # Используем название из Comment
-                        elif value and str(value).isdigit() and str(value) != '0':
-                            value = str(value)
-                        else:
-                            value = None
+                        elif strategy_from_text:
+                            continue  # Используем название из Comment/SellReason
+                        elif value:
+                            # Принимаем любое непустое значение (включая 'emu' для эмулятора)
+                            # но только если не нашли реальное название стратегии
+                            value = str(value).strip()
+                            if value == '0' or value == '':
+                                value = None
                     
                     if value is not None:
                         setattr(order, model_field, value)
             
-            # Устанавливаем стратегию из Comment если она была найдена
-            if strategy_from_comment:
-                order.strategy = strategy_from_comment
+            # Устанавливаем стратегию из Comment/SellReason если она была найдена
+            if strategy_from_text:
+                order.strategy = strategy_from_text
+                log(f"[UDP-LISTENER-{self.server_id}] ✅ INSERT: Set strategy from text: '{strategy_from_text}'")
             
             # Обработка дат
             if 'BuyDate' in data:

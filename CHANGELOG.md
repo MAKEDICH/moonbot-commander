@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.1.8] - 2025-11-21
+
+### 🐛 Fixed
+
+#### Strategy Detection for Emulator Orders
+- **Fixed missing strategy names** for emulator orders
+- Strategy names are now correctly extracted from `SellReason` field
+- Added support for pattern `(strategy <StrategyName>)` in both INSERT and UPDATE commands
+
+**Technical Details:**
+- Enhanced regex pattern to find `(strategy <StrategyName>)` in SellReason
+- Added Comment and StrategyID fields to UPDATE command mapping
+- Improved priority handling: SellReason → Comment → StrategyID
+- Now accepts non-numeric StrategyID values (like 'emu')
+
+**Impact:**
+- ✅ Emulator orders now show actual strategy names (e.g., 'Palki(e)' instead of empty)
+- ✅ Works for both emulator and real orders
+- ✅ No database migration required
+
 ## [2.1.7] - 2025-11-21
 
 ### 🚀 New Features
