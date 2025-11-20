@@ -3373,6 +3373,7 @@ async def get_moonbot_orders(
         "orders": [
             {
                 "id": order.id,
+                "server_id": order.server_id,  # Добавляем server_id для удаления
                 "moonbot_order_id": order.moonbot_order_id,
                 "symbol": order.symbol,
                 "buy_price": order.buy_price,
@@ -3455,6 +3456,55 @@ async def get_orders_stats(
         "open_orders": stats_query.open_count or 0,
         "closed_orders": stats_query.closed_count or 0,
         "total_profit_btc": float(stats_query.total_profit or 0.0)
+    }
+
+
+@app.delete("/api/servers/{server_id}/orders/{order_id}")
+async def delete_order(
+    server_id: int,
+    order_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Удалить конкретный ордер"""
+    # Проверяем что сервер принадлежит пользователю
+    server = db.query(models.Server).filter(
+        models.Server.id == server_id,
+        models.Server.user_id == current_user.id
+    ).first()
+    
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    
+    # Находим и удаляем ордер
+    order = db.query(models.MoonBotOrder).filter(
+        models.MoonBotOrder.id == order_id,
+        models.MoonBotOrder.server_id == server_id
+    ).first()
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Сохраняем данные для ответа
+    order_data = {
+        "id": order.id,
+        "moonbot_order_id": order.moonbot_order_id,
+        "symbol": order.symbol,
+        "status": order.status
+    }
+    
+    # Удаляем ордер
+    db.delete(order)
+    db.commit()
+    
+    # Отправляем WebSocket уведомление об обновлении
+    from websocket_manager import notify_order_update_sync
+    notify_order_update_sync(current_user.id, server_id)
+    
+    return {
+        "success": True,
+        "message": f"Order {order_data['moonbot_order_id']} ({order_data['symbol']}) deleted",
+        "deleted_order": order_data
     }
 
 

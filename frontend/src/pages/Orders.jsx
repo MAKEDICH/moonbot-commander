@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaChartLine, FaSync, FaFilter, FaCheckCircle, FaTimesCircle, FaCoins } from 'react-icons/fa';
+import { FaChartLine, FaSync, FaFilter, FaCheckCircle, FaTimesCircle, FaCoins, FaTrash } from 'react-icons/fa';
 import styles from './Orders.module.css';
 import commonStyles from '../styles/common.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
@@ -277,7 +277,8 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
         const results = await Promise.all(fetchPromises);
         
         // Объединяем все результаты
-        results.forEach(result => {
+        results.forEach((result) => {
+          // server_id теперь приходит с сервера
           allOrders = [...allOrders, ...result.orders];
           totalCount += result.total;
         });
@@ -571,6 +572,107 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
     fetchOrders(selectedServer, newPage, statusFilter, symbolFilter, emulatorFilter);
   };
 
+  const handleDeleteOrder = async (serverId, orderId) => {
+    if (!serverId) {
+      showError('Ошибка: не указан ID сервера для удаления ордера');
+      return;
+    }
+    
+    const confirmed = await confirm({
+      title: 'Удаление ордера',
+      message: 'Вы действительно хотите удалить этот ордер?\n\nЭто действие нельзя отменить!',
+      type: 'danger',
+      confirmText: 'Удалить',
+      cancelText: 'Отмена',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.delete(
+        `${API_BASE_URL}/api/servers/${serverId}/orders/${orderId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        success(`Ордер #${response.data.deleted_order.moonbot_order_id} удален`);
+        
+        // Удаляем ордер из локального состояния без перезагрузки
+        setOrders(prevOrders => prevOrders.filter(o => o.id !== orderId));
+        setTotal(prevTotal => {
+          const newTotal = prevTotal - 1;
+          
+          // Если на текущей странице больше нет ордеров и мы не на первой странице
+          if (orders.length === 1 && page > 1) {
+            // Переходим на предыдущую страницу
+            setTimeout(() => {
+              handlePageChange(page - 1);
+            }, 100);
+          }
+          
+          return newTotal;
+        });
+        
+        // Обновляем статистику
+        if (stats) {
+          const deletedOrder = orders.find(o => o.id === orderId);
+          if (deletedOrder) {
+            setStats(prevStats => {
+              const newStats = { ...prevStats };
+              
+              // Обновляем общую статистику
+              newStats.total_orders = Math.max(0, newStats.total_orders - 1);
+              
+              if (deletedOrder.status === 'Open') {
+                newStats.open_orders = Math.max(0, newStats.open_orders - 1);
+              } else if (deletedOrder.status === 'Closed') {
+                newStats.closed_orders = Math.max(0, newStats.closed_orders - 1);
+                // Обновляем прибыль
+                if (deletedOrder.profit_btc) {
+                  newStats.total_profit_btc = newStats.total_profit_btc - deletedOrder.profit_btc;
+                }
+              }
+              
+              // Обновляем статистику по валютам если есть
+              if (newStats.currencies) {
+                // Определяем валюту ордера (base_currency или валюта сервера)
+                const orderServerId = deletedOrder.server_id || serverId;
+                const currentServer = servers.find(s => s.id === orderServerId);
+                const currency = deletedOrder.base_currency || currentServer?.default_currency || 'USDT';
+                
+                if (newStats.currencies[currency]) {
+                  newStats.currencies[currency].total_orders = Math.max(0, newStats.currencies[currency].total_orders - 1);
+                  
+                  if (deletedOrder.status === 'Open') {
+                    newStats.currencies[currency].open_orders = Math.max(0, newStats.currencies[currency].open_orders - 1);
+                  } else if (deletedOrder.status === 'Closed') {
+                    newStats.currencies[currency].closed_orders = Math.max(0, newStats.currencies[currency].closed_orders - 1);
+                    if (deletedOrder.profit_btc) {
+                      newStats.currencies[currency].total_profit_btc = newStats.currencies[currency].total_profit_btc - deletedOrder.profit_btc;
+                    }
+                  }
+                }
+              }
+              
+              return newStats;
+            });
+          }
+        }
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || 
+                          err.response?.data?.message || 
+                          err.message || 
+                          'Неизвестная ошибка';
+      showError('Ошибка удаления ордера: ' + errorMessage);
+    }
+  };
+
   const handleAutoRefreshToggle = (e) => {
     const newValue = e.target.checked;
     setAutoRefresh(newValue);
@@ -858,6 +960,7 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
                       Закрыт {sortBy === 'closedAt' && (sortOrder === 'asc' ? '▲' : '▼')}
                     </th>
                   )}
+                  <th style={{ width: '60px', textAlign: 'center' }}>Действия</th>
                 </tr>
               </thead>
               <tbody>
@@ -938,6 +1041,15 @@ const Orders = ({ autoRefresh, setAutoRefresh, emulatorFilter, setEmulatorFilter
                     {visibleColumns.closedAt && (
                       <td className={styles.date}>{formatDate(order.closed_at)}</td>
                     )}
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        onClick={() => handleDeleteOrder(order.server_id, order.id)}
+                        className={styles.deleteBtn}
+                        title="Удалить ордер"
+                      >
+                        <FaTrash />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -1386,9 +1386,14 @@ class UDPListener:
                     current_timestamp = int(datetime.now().timestamp())
                     is_date_in_future = close_date > current_timestamp
                     
+                    # Максимальное окно для долгосрочных ордеров (365 дней)
+                    MAX_FUTURE_WINDOW = 365 * 24 * 60 * 60
+                    is_within_reasonable_window = (close_date - current_timestamp) <= MAX_FUTURE_WINDOW
+                    
                     # ЛОГИКА ОПРЕДЕЛЕНИЯ СТАТУСА:
                     # - Если дата в прошлом → Closed (классический случай)
                     # - Если дата в будущем, НО есть все признаки закрытия → Closed (умное определение)
+                    # - Если дата в будущем В ПРЕДЕЛАХ окна (365 дней) и есть признаки → Closed (долгосрочные ордера)
                     # - Если дата в будущем и нет признаков → Open (планируемое закрытие)
                     
                     if not is_date_in_future:
@@ -1401,9 +1406,9 @@ class UDPListener:
                             order.closed_at = datetime.now()
                         log(f"[UDP-LISTENER-{self.server_id}] ✅ Order {order.moonbot_order_id} marked as Closed (CloseDate in past)")
                     
-                    elif has_sell_reason and has_sell_price and has_profit_calculated:
+                    elif has_sell_reason and has_sell_price and has_profit_calculated and is_within_reasonable_window:
                         # 🎯 ГЕНИАЛЬНЫЙ СЛУЧАЙ: Дата в будущем, НО есть все признаки закрытия!
-                        # Это значит ордер УЖЕ закрыт, просто часы рассинхронизированы
+                        # Это значит ордер УЖЕ закрыт (долгосрочный ордер или рассинхронизация времени)
                         order.status = "Closed"
                         try:
                             # Используем CloseDate несмотря на то, что в будущем
@@ -1700,6 +1705,10 @@ class UDPListener:
                     current_timestamp = int(datetime.now().timestamp())
                     is_date_in_future = close_date > current_timestamp
                     
+                    # Максимальное окно для долгосрочных ордеров (365 дней)
+                    MAX_FUTURE_WINDOW = 365 * 24 * 60 * 60
+                    is_within_reasonable_window = (close_date - current_timestamp) <= MAX_FUTURE_WINDOW
+                    
                     if not is_date_in_future:
                         # Классический случай: дата в прошлом - ордер закрыт
                         order.status = "Closed"
@@ -1709,8 +1718,8 @@ class UDPListener:
                             order.closed_at = datetime.now()
                         log(f"[UDP-LISTENER-{self.server_id}] ✅ INSERT: Order {moonbot_order_id} marked as Closed (CloseDate in past)")
                     
-                    elif has_sell_reason and has_sell_price and has_profit_calculated:
-                        # 🎯 УМНЫЙ СЛУЧАЙ: Дата в будущем, НО есть все признаки закрытия
+                    elif has_sell_reason and has_sell_price and has_profit_calculated and is_within_reasonable_window:
+                        # 🎯 УМНЫЙ СЛУЧАЙ: Дата в будущем, НО есть все признаки закрытия (в пределах года)
                         order.status = "Closed"
                         try:
                             order.closed_at = datetime.utcfromtimestamp(close_date)

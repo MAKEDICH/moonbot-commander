@@ -1,5 +1,49 @@
 # Changelog
 
+## [2.1.7] - 2025-11-21
+
+### 🚀 New Features
+
+#### Long-term Order Support (Up to 1 Year)
+- **Added MAX_FUTURE_WINDOW = 365 days** for long-term order handling
+- Orders with `CloseDate` up to 1 year in the future are now correctly processed
+- Solves the issue where orders could be open for months and still close properly
+
+**Technical Implementation:**
+- `udp_listener.py`: Added time window check in `_parse_update_order()` and `_parse_insert_order()`
+- Orders with future dates within 365 days AND all close indicators are marked as Closed
+- Maintains backward compatibility with existing order logic
+
+#### Individual Order Deletion
+- **New API endpoint:** `DELETE /api/servers/{server_id}/orders/{order_id}`
+- Added delete button (🗑️) for each order in the UI
+- Confirmation dialog before deletion
+- Real-time UI update without page scroll/reload
+- WebSocket notifications for instant updates across all connected clients
+
+**Technical Implementation:**
+- Backend: New endpoint in `main.py` with proper authorization checks
+- Frontend: `Orders.jsx` updated with delete functionality and local state management
+- Smart UI updates: Stats recalculated locally, no page jumps
+- Auto-navigation to previous page if last order on current page is deleted
+
+### 🛠️ Improvements
+
+#### Better Error Handling
+- Improved error messages in order deletion (no more `[object Object]`)
+- Added `server_id` to order API responses for proper deletion support
+- Enhanced error logging and user feedback
+
+#### UI/UX Enhancements
+- Order deletion preserves scroll position
+- Local state updates for instant feedback
+- Automatic stats recalculation without full page reload
+
+### 📝 Technical Notes
+- FName processing remains instant (no waiting period)
+- FName continues to fix UNKNOWN symbols whenever UPDATE arrives
+- System handles orders that may receive updates months after creation
+
 ## [2.1.5] - 2025-11-20
 ### Fixed
 - Исправлено определение валюты при нажатии кнопки "Обновить" в балансах
