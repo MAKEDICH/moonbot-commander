@@ -1319,14 +1319,29 @@ class UDPListener:
                 'TaskID': ('task_id', int),
             }
             
-            # Сначала проверяем SellReason для извлечения стратегии
-            strategy_from_sellreason = None
+            # Сначала проверяем SellReason и Comment для извлечения стратегии
+            strategy_from_text = None
+            
+            # Проверяем SellReason
             if 'SellReason' in updates:
                 sellreason_value = str(updates['SellReason'])
                 # Ищем стратегию в формате (strategy <StrategyName>)
                 strategy_match = re.search(r'\(strategy\s*<([^>]+)>\)', sellreason_value)
                 if strategy_match:
-                    strategy_from_sellreason = strategy_match.group(1).strip()
+                    strategy_from_text = strategy_match.group(1).strip()
+            
+            # Если не нашли в SellReason, проверяем Comment
+            if not strategy_from_text and 'Comment' in updates:
+                comment_value = str(updates['Comment'])
+                # Сначала ищем в формате (strategy <StrategyName>)
+                strategy_match = re.search(r'\(strategy\s*<([^>]+)>\)', comment_value)
+                if strategy_match:
+                    strategy_from_text = strategy_match.group(1).strip()
+                else:
+                    # Если не нашли, ищем просто <StrategyName>
+                    strategy_match = re.search(r'<([^<>]+)>', comment_value)
+                    if strategy_match:
+                        strategy_from_text = strategy_match.group(1).strip()
             
             # Применяем все найденные поля
             for sql_field, (model_field, field_type) in field_mapping.items():
@@ -1341,8 +1356,8 @@ class UDPListener:
                         else:
                             value = updates[sql_field]
                         
-                        # Пропускаем обработку стратегии если уже нашли в SellReason
-                        if model_field == 'strategy' and strategy_from_sellreason:
+                        # Пропускаем обработку стратегии если уже извлекли из текста
+                        if model_field == 'strategy' and strategy_from_text:
                             continue
                         
                         if value is not None:
@@ -1350,10 +1365,9 @@ class UDPListener:
                     except Exception as e:
                         log(f"[UDP-LISTENER-{self.server_id}] Error setting {model_field}: {e}")
             
-            # Устанавливаем стратегию из SellReason если она была найдена (приоритет)
-            if strategy_from_sellreason:
-                order.strategy = strategy_from_sellreason
-                log(f"[UDP-LISTENER-{self.server_id}] ✅ UPDATE: Set strategy from SellReason: '{strategy_from_sellreason}'")
+            # Устанавливаем извлеченную стратегию (приоритет)
+            if strategy_from_text:
+                order.strategy = strategy_from_text
             
             # Обрабатываем Lev как Leverage (если нет Quantity)
             if 'Lev' in updates and not order.quantity:
@@ -1678,8 +1692,8 @@ class UDPListener:
                 if strategy_match:
                     strategy_from_text = strategy_match.group(1).strip()
                 else:
-                    # Если не нашли, ищем просто <StrategyName> в конце
-                    strategy_match = re.search(r'<([^<>]+)>\s*$', comment_value)
+                    # Если не нашли, ищем просто <StrategyName>
+                    strategy_match = re.search(r'<([^<>]+)>', comment_value)
                     if strategy_match:
                         strategy_from_text = strategy_match.group(1).strip()
             

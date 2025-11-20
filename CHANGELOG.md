@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.1.9] - 2025-01-20
+
+### 🐛 Fixed
+
+#### Strategy Name Extraction
+- **Fixed strategy field displaying full Comment text** instead of just strategy name
+- Now correctly extracts only strategy name (e.g., `t1`) from Comment field
+- Improved regex to find `<StrategyName>` anywhere in Comment, not just at the end
+
+**Technical Details:**
+- Enhanced extraction logic for both UPDATE and INSERT commands
+- Prevents Comment field from overwriting extracted strategy name
+- Priority: SellReason → Comment (with regex) → Strategy → StrategyID
+- Regex patterns: `(strategy <Name>)` or `<Name>`
+
+**Impact:**
+- ✅ Strategy column now shows clean names like `t1` instead of full hook details
+- ✅ Works for all order types (real and emulator)
+- ✅ No data loss - full details remain in Comment field
+
 ## [2.1.8] - 2025-11-21
 
 ### 🐛 Fixed
