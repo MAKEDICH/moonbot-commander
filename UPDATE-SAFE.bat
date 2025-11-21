@@ -471,40 +471,65 @@ REM ============================================================
 echo [12/14] Running database migrations (SAFE MODE)...
 echo.
 
-REM 🎯 ГЕНИАЛЬНОЕ РЕШЕНИЕ: Запускаем миграции в СТРОГОМ ПОРЯДКЕ
-REM Это гарантирует правильную последовательность применения
+REM 🎯 ПРИОРИТЕТ: Используем intelligent_migration.py если доступен
+REM Это автоматически определит какие миграции нужны и применит их в правильном порядке
 
-echo   [INFO] Applying migrations in correct order...
-echo.
-
-REM Счётчик успешных миграций
-set MIGRATIONS_SUCCESS=0
-set MIGRATIONS_FAILED=0
-
-REM Определяем порядок миграций (от старых к новым)
-set "MIGRATION_ORDER=migrate_add_2fa.py migrate_add_password.py migrate_add_keepalive.py migrate_add_udp_listener.py migrate_add_recovery_codes.py migrate_add_scheduler_settings.py migrate_add_timezone.py migrate_add_display_time.py migrate_add_created_from_update.py migrate_add_balance_and_strategies.py migrate_add_cleanup_settings.py migrate_cleanup_settings_v2.py migrate_moonbot_orders_extended.py migrate_scheduled_commands_full.py migrate_001_recurrence_weekdays.py migrate_002_add_is_localhost.py migrate_add_default_currency.py"
-
-REM Запускаем миграции по порядку
-for %%m in (%MIGRATION_ORDER%) do (
-    if exist "%%m" (
-        echo   [+] Running %%m...
-        python %%m >nul 2>&1
-        if !errorlevel! equ 0 (
-            echo   [OK] %%m completed
-            set /a MIGRATIONS_SUCCESS+=1
-        ) else (
-            echo   [WARNING] %%m reported an issue
-            echo   [INFO] This is OK if the migration was already applied
-            set /a MIGRATIONS_FAILED+=1
-        )
+if exist "intelligent_migration.py" (
+    echo   [INFO] Using intelligent migration system...
+    echo   [INFO] This will automatically detect and apply all pending migrations
+    echo.
+    python intelligent_migration.py
+    if !errorlevel! equ 0 (
+        echo   [OK] Intelligent migration completed successfully
+        goto :migrations_done
     ) else (
-        echo   [SKIP] %%m not found (normal for older versions)
+        echo   [WARNING] Intelligent migration reported issues
+        echo   [INFO] Falling back to manual migration list...
+        echo.
     )
+) else (
+    echo   [INFO] intelligent_migration.py not found, using manual migration list...
+    echo.
 )
 
-echo.
-echo   [SUMMARY] Migrations: !MIGRATIONS_SUCCESS! succeeded, !MIGRATIONS_FAILED! skipped/failed
-echo.
+:manual_migrations
+    REM 🎯 FALLBACK: Запускаем миграции в СТРОГОМ ПОРЯДКЕ
+    REM Это гарантирует правильную последовательность применения
+    
+    echo   [INFO] Applying migrations in correct order...
+    echo.
+    
+    REM Счётчик успешных миграций
+    set MIGRATIONS_SUCCESS=0
+    set MIGRATIONS_FAILED=0
+    
+    REM Определяем порядок миграций (от старых к новым)
+    REM ВАЖНО: Порядок критически важен! Новые миграции добавляются в конец.
+    set "MIGRATION_ORDER=migrate_add_2fa.py migrate_add_password.py migrate_add_keepalive.py migrate_add_udp_listener.py migrate_add_recovery_codes.py migrate_add_scheduler_settings.py migrate_add_timezone.py migrate_add_display_time.py migrate_add_created_from_update.py migrate_add_balance_and_strategies.py migrate_add_balance_fields.py migrate_add_cleanup_settings.py migrate_cleanup_settings_v2.py migrate_moonbot_orders_extended.py migrate_scheduled_commands_full.py migrate_001_recurrence_weekdays.py migrate_002_add_is_localhost.py migrate_add_default_currency.py"
+    
+    REM Запускаем миграции по порядку
+    for %%m in (%MIGRATION_ORDER%) do (
+        if exist "%%m" (
+            echo   [+] Running %%m...
+            python %%m >nul 2>&1
+            if !errorlevel! equ 0 (
+                echo   [OK] %%m completed
+                set /a MIGRATIONS_SUCCESS+=1
+            ) else (
+                echo   [WARNING] %%m reported an issue
+                echo   [INFO] This is OK if the migration was already applied
+                set /a MIGRATIONS_FAILED+=1
+            )
+        ) else (
+            echo   [SKIP] %%m not found (normal for older versions)
+        )
+    )
+    
+    echo.
+    echo   [SUMMARY] Migrations: !MIGRATIONS_SUCCESS! succeeded, !MIGRATIONS_FAILED! skipped/failed
+    echo.
+
+:migrations_done
 
 cd ..\frontend
 call npm install --silent >nul 2>&1

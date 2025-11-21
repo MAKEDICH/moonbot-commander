@@ -64,6 +64,13 @@ class SmartMigrationChecker:
                     ('table', 'strategy_cache', None),
                 ]
             },
+            'migrate_add_balance_fields': {
+                'desc': 'Поля is_running и version в балансах (обновление формата MoonBot)',
+                'checks': [
+                    ('column', 'server_balance', 'is_running'),
+                    ('column', 'server_balance', 'version'),
+                ]
+            },
             'migrate_add_cleanup_settings': {
                 'desc': 'Настройки автоочистки БД',
                 'checks': [

@@ -502,6 +502,20 @@ const Dashboard = () => {
                     <span>IP:</span>
                     <span>{server.host}:{server.port}</span>
                   </div>
+                  {viewMode === 'full' && (server.bot_version !== null && server.bot_version !== undefined) && (
+                    <div className={styles.serverDetail}>
+                      <span>Версия:</span>
+                      <span>v{server.bot_version}</span>
+                    </div>
+                  )}
+                  {viewMode === 'full' && (server.bot_running !== null && server.bot_running !== undefined) && (
+                    <div className={styles.serverDetail}>
+                      <span>Состояние:</span>
+                      <span className={server.bot_running ? styles.botRunning : styles.botStopped}>
+                        {server.bot_running ? 'START' : 'STOP'}
+                      </span>
+                    </div>
+                  )}
                   {viewMode === 'full' && server.group_name && (
                     <div className={styles.serverDetail}>
                       <span>Группа:</span>
@@ -522,6 +536,14 @@ const Dashboard = () => {
                   {viewMode === 'compact' && (
                     <div className={styles.compactInfo}>
                       {server.group_name && <span className={styles.compactGroup}>{server.group_name}</span>}
+                      {server.bot_version !== null && server.bot_version !== undefined && (
+                        <span className={styles.compactVersion}>v{server.bot_version}</span>
+                      )}
+                      {server.bot_running !== null && server.bot_running !== undefined && (
+                        <span className={`${styles.compactBotStatusIcon} ${server.bot_running ? styles.compactRunning : styles.compactStopped}`}>
+                          {server.bot_running ? '▶' : '⏸'}
+                        </span>
+                      )}
                       {status?.last_ping && (
                         <span className={styles.compactTime}>{new Date(status.last_ping).toLocaleTimeString()}</span>
                       )}

@@ -172,6 +172,85 @@
   margin-bottom: 8px;
 }
 
+.serverVersion {
+  font-size: 12px;
+  color: var(--accent-primary);
+  font-weight: 600;
+  background: rgba(0, 245, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.serverBotStatus {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.serverBotStatus.botRunning {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.serverBotStatus.botStopped {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+/* Компактная информация о боте */
+.compactBotInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.compactBotInfo .compactVersion {
+  color: var(--accent-primary);
+  font-weight: 500;
+  background: rgba(0, 245, 255, 0.08);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  font-size: 0.65rem;
+  border: 1px solid rgba(0, 245, 255, 0.2);
+}
+
+.compactBotInfo .compactBotStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.compactBotInfo .compactBotStatus.compactRunning {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+.compactBotInfo .compactBotStatus.compactStopped {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* Скрываем версию и состояние в компактном виде как отдельные элементы */
+.serverCard.compact .serverVersion,
+.serverCard.compact .serverBotStatus {
+  display: none;
+}
+
 .serverDescription {
   /* COMPACT: Reduced font size from 14px to 12px */
   font-size: 12px;

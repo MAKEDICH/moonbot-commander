@@ -27,6 +27,8 @@ class ServerBalanceResponse(BaseModel):
     bot_name: Optional[str] = None
     available: float
     total: float
+    is_running: Optional[bool] = None  # Запущен ли бот (S)
+    version: Optional[int] = None  # Номер версии MoonBot (V)
     updated_at: Optional[str] = None
     
     class Config:
@@ -54,6 +56,15 @@ def get_server_balances(
             models.ServerBalance.server_id == server.id
         ).first()
         
+        # Безопасное получение новых полей (могут отсутствовать до миграции)
+        is_running = None
+        version = None
+        if balance:
+            if hasattr(balance, 'is_running'):
+                is_running = balance.is_running
+            if hasattr(balance, 'version'):
+                version = balance.version
+        
         result.append(ServerBalanceResponse(
             server_id=server.id,
             server_name=server.name,
@@ -63,6 +74,8 @@ def get_server_balances(
             bot_name=balance.bot_name if balance else None,
             available=float(balance.available) if balance and balance.available else 0.0,
             total=float(balance.total) if balance and balance.total else 0.0,
+            is_running=is_running,
+            version=version,
             updated_at=balance.updated_at.isoformat() if balance and balance.updated_at else None,
         ))
     

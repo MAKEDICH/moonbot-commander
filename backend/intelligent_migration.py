@@ -67,6 +67,7 @@ class IntelligentMigrationSystem:
         # UDP и мониторинг
         ('migrate_add_udp_listener', 'UDP Listener для приёма данных', MigrationType.DATABASE, None),
         ('migrate_add_balance_and_strategies', 'Балансы и стратегии', MigrationType.DATABASE, None),
+        ('migrate_add_balance_fields', 'Поля is_running и version в балансах', MigrationType.DATABASE, None),
         
         # Планировщик
         ('migrate_scheduled_commands_full', 'Расширенный планировщик команд', MigrationType.DATABASE, None),
@@ -166,6 +167,7 @@ class IntelligentMigrationSystem:
             'migrate_add_recovery_codes': lambda: self._table_exists(conn, 'recovery_codes'),
             'migrate_add_udp_listener': lambda: self._table_exists(conn, 'moonbot_orders'),
             'migrate_add_balance_and_strategies': lambda: self._table_exists(conn, 'server_balance'),
+            'migrate_add_balance_fields': lambda: self._column_exists(conn, 'server_balance', 'is_running') and self._column_exists(conn, 'server_balance', 'version'),
             'migrate_add_cleanup_settings': lambda: self._table_exists(conn, 'cleanup_settings'),
             'migrate_001_recurrence_weekdays': lambda: self._column_exists(conn, 'scheduled_commands', 'weekdays'),
             'migrate_002_add_is_localhost': lambda: self._column_exists(conn, 'servers', 'is_localhost'),
@@ -331,6 +333,15 @@ class IntelligentMigrationSystem:
             # Вызываем функцию миграции
             if hasattr(module, 'migrate'):
                 result = module.migrate()
+                if result:
+                    logger.info(f"✅ {migration_name} - успешно")
+                    return True
+                else:
+                    logger.error(f"❌ {migration_name} - неудачно")
+                    return False
+            elif hasattr(module, 'run_migration'):
+                # Альтернативное имя функции
+                result = module.run_migration()
                 if result:
                     logger.info(f"✅ {migration_name} - успешно")
                     return True

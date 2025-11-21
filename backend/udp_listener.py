@@ -346,11 +346,18 @@ class UDPListener:
             
             # Отправляем через listener сокет
             if self.sock:
-                self.sock.sendto(
-                    payload.encode('utf-8'),
-                    (self.host, self.port)
-                )
-                log(f"[UDP-LISTENER-{self.server_id}] [OK] Command sent successfully")
+                try:
+                    local_addr_before = self.sock.getsockname()
+                    self.sock.sendto(
+                        payload.encode('utf-8'),
+                        (self.host, self.port)
+                    )
+                    log(f"[UDP-LISTENER-{self.server_id}] [OK] Command sent successfully")
+                except Exception as e:
+                    log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to send command: {e}")
+                    raise
+            else:
+                log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Socket not initialized!")
         except Exception as e:
             log(f"[UDP-LISTENER-{self.server_id}] [ERROR] Failed to send command: {e}")
     
@@ -571,7 +578,7 @@ class UDPListener:
         
         # Проверяем источник
         if addr != self.host:
-            log(f"[UDP-LISTENER-{self.server_id}] [WARN] WARNING: Wrong host {addr}")
+            log(f"[UDP-LISTENER-{self.server_id}] [WARN] WARNING: Wrong host {addr} (expected {self.host})")
             return
         
         # Декодируем пакет (поддержка gzip + JSON) - передаём RAW BYTES!
@@ -713,31 +720,110 @@ class UDPListener:
         """
         Обработка регулярного обновления баланса (раз в 5 сек)
         
-        Формат: {"cmd":"acc","bot":"BotName","data":"A:1234.56$,T:5678.90$"}
-        Или:    {"cmd":"acc","bot":"BotName","A":1234.56,"T":5678.90}
+        Формат (старый 1): {"cmd":"acc","bot":"BotName","data":"A:1234.56$,T:5678.90$"}
+        Формат (старый 2): {"cmd":"acc","bot":"BotName","A":"double","T":"double","S":bool,"V":int}
+        Формат (новый): {"cmd":"acc","bot":"BotName","data":{"A":"double","T":"double","S":bool,"V":int}}
+        
+        Поля:
+        - A: Available (доступный баланс)
+        - T: Total (всего баланс)
+        - S: запущен ли бот (is_running)
+        - V: номер версии MoonBot (без точки, например 756)
         """
         bot_name = packet.get("bot", "")
+        available = 0.0
+        total = 0.0
+        is_running = None
+        version = None
         
-        # Проверяем формат: строка в data или отдельные поля
+        # Логируем входящий пакет для отладки
+        log(f"[UDP-LISTENER-{self.server_id}] 📦 Balance packet received: {packet}")
+        
+        # Проверяем формат: data может быть строкой (старый) или объектом (новый)
         if "data" in packet:
-            # Формат: "A:9590.09$,T:9590.09$"
-            data_str = packet.get("data", "")
-            available = 0.0
-            total = 0.0
+            data_value = packet.get("data")
             
-            # Парсим строку
-            import re
-            a_match = re.search(r'A:([\d.]+)', data_str)
-            t_match = re.search(r'T:([\d.]+)', data_str)
-            
-            if a_match:
-                available = float(a_match.group(1))
-            if t_match:
-                total = float(t_match.group(1))
+            if isinstance(data_value, str):
+                # СТАРЫЙ формат 1: data - строка "A:9590.09$,T:9590.09$"
+                import re
+                a_match = re.search(r'A:([\d.]+)', data_value)
+                t_match = re.search(r'T:([\d.]+)', data_value)
+                
+                if a_match:
+                    available = float(a_match.group(1))
+                if t_match:
+                    total = float(t_match.group(1))
+            elif isinstance(data_value, dict):
+                # НОВЫЙ формат: data - объект {"A":"double","T":"double","S":bool,"V":int}
+                a_value = data_value.get("A", 0.0)
+                t_value = data_value.get("T", 0.0)
+                
+                # Конвертируем в float (если строка - парсим, убирая символы валюты)
+                if isinstance(a_value, str):
+                    try:
+                        # Убираем символы валюты и пробелы: $, TRY, USDT, USDC и т.д.
+                        a_clean = a_value.strip().rstrip('$').rstrip('TRY').rstrip('USDT').rstrip('USDC').rstrip('BTC').rstrip('ETH').strip()
+                        available = float(a_clean)
+                    except (ValueError, TypeError) as e:
+                        log(f"[UDP-LISTENER-{self.server_id}] [WARN] Failed to parse A value '{a_value}': {e}")
+                        available = 0.0
+                else:
+                    available = float(a_value) if a_value is not None else 0.0
+                
+                if isinstance(t_value, str):
+                    try:
+                        # Убираем символы валюты и пробелы: $, TRY, USDT, USDC и т.д.
+                        t_clean = t_value.strip().rstrip('$').rstrip('TRY').rstrip('USDT').rstrip('USDC').rstrip('BTC').rstrip('ETH').strip()
+                        total = float(t_clean)
+                    except (ValueError, TypeError) as e:
+                        log(f"[UDP-LISTENER-{self.server_id}] [WARN] Failed to parse T value '{t_value}': {e}")
+                        total = 0.0
+                else:
+                    total = float(t_value) if t_value is not None else 0.0
+                
+                # Новые поля: S (is_running) и V (version)
+                is_running = data_value.get("S", None)  # bool или None
+                version = data_value.get("V", None)  # int или None
+                
+                # Конвертируем version в int если нужно
+                if version is not None:
+                    try:
+                        version = int(version)
+                    except (ValueError, TypeError):
+                        version = None
         else:
-            # Формат: отдельные поля A и T
-            available = packet.get("A", 0.0)
-            total = packet.get("T", 0.0)
+            # СТАРЫЙ формат 2: поля A, T, S, V на верхнем уровне
+            # A и T могут быть строками (double) или числами
+            a_value = packet.get("A", 0.0)
+            t_value = packet.get("T", 0.0)
+            
+            # Конвертируем в float (если строка - парсим)
+            if isinstance(a_value, str):
+                try:
+                    available = float(a_value)
+                except (ValueError, TypeError):
+                    available = 0.0
+            else:
+                available = float(a_value) if a_value is not None else 0.0
+            
+            if isinstance(t_value, str):
+                try:
+                    total = float(t_value)
+                except (ValueError, TypeError):
+                    total = 0.0
+            else:
+                total = float(t_value) if t_value is not None else 0.0
+            
+            # Новые поля: S (is_running) и V (version)
+            is_running = packet.get("S", None)  # bool или None
+            version = packet.get("V", None)  # int или None
+            
+            # Конвертируем version в int если нужно
+            if version is not None:
+                try:
+                    version = int(version)
+                except (ValueError, TypeError):
+                    version = None
         
         # Обновляем баланс в БД
         db = SessionLocal()
@@ -754,10 +840,32 @@ class UDPListener:
             balance.available = available
             balance.total = total
             balance.bot_name = bot_name
+            
+            # Безопасное сохранение новых полей (могут отсутствовать до миграции)
+            if hasattr(balance, 'is_running'):
+                balance.is_running = is_running
+            if hasattr(balance, 'version'):
+                balance.version = version
+            
             balance.updated_at = datetime.now()
             
             db.commit()
-            log(f"[UDP-LISTENER-{self.server_id}] 💰 Balance: Available={available:.2f}, Total={total:.2f}")
+            
+            # Логируем обновление
+            log_msg = f"[UDP-LISTENER-{self.server_id}] 💰 Balance: Available={available:.2f}, Total={total:.2f}"
+            if is_running is not None:
+                log_msg += f", Running={is_running}"
+            if version is not None:
+                log_msg += f", Version={version}"
+            log(log_msg)
+            
+            # Дополнительное логирование для отладки нового формата
+            if "data" in packet and isinstance(packet.get("data"), dict):
+                log(f"[UDP-LISTENER-{self.server_id}] ✅ NEW FORMAT detected: data is object")
+            elif "data" in packet and isinstance(packet.get("data"), str):
+                log(f"[UDP-LISTENER-{self.server_id}] 📝 OLD FORMAT 1 detected: data is string")
+            else:
+                log(f"[UDP-LISTENER-{self.server_id}] 📝 OLD FORMAT 2 detected: fields on top level")
         except Exception as e:
             log(f"[UDP-LISTENER-{self.server_id}] Balance update error: {e}")
             db.rollback()
@@ -1162,17 +1270,24 @@ class UDPListener:
         
         Формат: update Orders set CloseDate=0, SellPrice=0.52135, ... WHERE [ID]=86516
         
-        Важно: в WHERE может быть [ID]=число - это и есть moonbot_order_id!
+        Важно: 
+        - oid из пакета (moonbot_order_id) имеет ПРИОРИТЕТ над ID из SQL
+        - Если oid не передан, ищем ID=число в WHERE clause (может быть как ID, так и [ID])
         """
         try:
-            # Ищем ID=число в WHERE clause (может быть как ID, так и [ID])
-            id_match = re.search(r'\[?ID\]?\s*=\s*(\d+)', sql, re.IGNORECASE)
-            if not id_match:
-                # Если нет ID, возможно это обновление по другому условию
-                log(f"[UDP-LISTENER-{self.server_id}] UPDATE без ID: {sql[:100]}")
-                return
-            
-            moonbot_order_id = int(id_match.group(1))
+            # ИСПРАВЛЕНО: Используем oid из пакета как приоритетный
+            # Если oid не передан, ищем ID в SQL WHERE clause
+            if moonbot_order_id is None:
+                id_match = re.search(r'\[?ID\]?\s*=\s*(\d+)', sql, re.IGNORECASE)
+                if not id_match:
+                    # Если нет ID, возможно это обновление по другому условию
+                    log(f"[UDP-LISTENER-{self.server_id}] UPDATE без ID и без oid: {sql[:100]}")
+                    return
+                
+                moonbot_order_id = int(id_match.group(1))
+                log(f"[UDP-LISTENER-{self.server_id}] [INFO] Using ID from SQL WHERE: {moonbot_order_id}")
+            else:
+                log(f"[UDP-LISTENER-{self.server_id}] [INFO] Using oid from packet: {moonbot_order_id}")
             
             # Парсим SET clause (упрощенный парсер)
             set_match = re.search(r'set\s+(.+?)\s+where', sql, re.IGNORECASE | re.DOTALL)

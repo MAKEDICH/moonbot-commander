@@ -338,8 +338,10 @@ class ServerBalance(Base):
     id = Column(Integer, primary_key=True, index=True)
     server_id = Column(Integer, ForeignKey("servers.id"), nullable=False, unique=True)
     bot_name = Column(String, nullable=True)
-    available = Column(Float, default=0.0)  # Доступный баланс
-    total = Column(Float, default=0.0)      # Всего баланс
+    available = Column(Float, default=0.0)  # Доступный баланс (A)
+    total = Column(Float, default=0.0)      # Всего баланс (T)
+    is_running = Column(Boolean, nullable=True)  # Запущен ли бот (S)
+    version = Column(Integer, nullable=True)  # Номер версии MoonBot (V, без точки, например 756)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     
     server = relationship("Server")

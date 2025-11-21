@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiServer, FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiRadio, FiRefreshCw, FiGrid, FiList, FiDollarSign } from 'react-icons/fi';
-import { serversAPI } from '../api/api';
+import { serversAPI, serverStatusAPI } from '../api/api';
 import Tooltip from '../components/Tooltip';
 import styles from './Servers.module.css';
 import { getApiBaseUrl } from '../utils/apiUrl';
@@ -52,7 +52,8 @@ const Servers = () => {
 
   const loadServers = async () => {
     try {
-      const response = await serversAPI.getAll();
+      // Используем getAllWithStatus для получения версии и состояния бота
+      const response = await serverStatusAPI.getAllWithStatus();
       setServers(response.data);
     } catch (error) {
       console.error('Error loading servers:', error);
@@ -304,6 +305,32 @@ const Servers = () => {
               
               <h3 className={styles.serverName}>{server.name}</h3>
               <div className={styles.serverAddress}>{server.host}:{server.port}</div>
+              
+              {viewMode === 'full' && (server.bot_version !== null && server.bot_version !== undefined) && (
+                <div className={styles.serverVersion}>
+                  Версия: v{server.bot_version}
+                </div>
+              )}
+              
+              {viewMode === 'full' && (server.bot_running !== null && server.bot_running !== undefined) && (
+                <div className={`${styles.serverBotStatus} ${server.bot_running ? styles.botRunning : styles.botStopped}`}>
+                  {server.bot_running ? 'START' : 'STOP'}
+                </div>
+              )}
+              
+              {/* Компактная информация о версии и состоянии */}
+              {viewMode === 'compact' && (
+                <div className={styles.compactBotInfo}>
+                  {(server.bot_version !== null && server.bot_version !== undefined) && (
+                    <span className={styles.compactVersion}>v{server.bot_version}</span>
+                  )}
+                  {(server.bot_running !== null && server.bot_running !== undefined) && (
+                    <span className={`${styles.compactBotStatus} ${server.bot_running ? styles.compactRunning : styles.compactStopped}`}>
+                      {server.bot_running ? '▶' : '⏸'}
+                    </span>
+                  )}
+                </div>
+              )}
               
               {server.group_name && (
                 <div className={styles.groupBadges}>
