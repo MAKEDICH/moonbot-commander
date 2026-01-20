@@ -1,0 +1,94 @@
+/**
+ * Useful - Контролы копирования
+ * Copy controls, buttons, checkboxes
+ */
+
+/* ===== Контролы копирования ===== */
+.copyControls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: #0a162a;
+    border-radius: 8px;
+}
+
+.aliasCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.aliasCheckbox input {
+    cursor: pointer;
+}
+
+.exchangeSelect {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.exchangeSelect label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.copyButton {
+    background: transparent;
+    border: 1px solid #1f2937;
+    color: #e2e8f0;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copyButton:hover {
+    background: #1f2937;
+    border-color: #38bdf8;
+}
+
+.copyButtonSmall {
+    background: transparent;
+    border: 1px solid #1f2937;
+    color: #94a3b8;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copyButtonSmall:hover {
+    background: #1f2937;
+    color: #e2e8f0;
+}
+
+.copyNotice {
+    font-size: 12px;
+    color: #22c55e;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+

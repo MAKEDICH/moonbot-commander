@@ -1,0 +1,312 @@
+/**
+ * CommandsNew - Стили редактора команд
+ * Центральная панель, текстовые поля, результаты
+ */
+
+/* === ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (РЕДАКТОР) === */
+.commandPanel {
+  background: linear-gradient(135deg, rgba(20, 25, 50, 0.95) 0%, rgba(30, 35, 65, 0.9) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    0 0 40px rgba(0, 245, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Верхняя строка с контролами */
+.topControlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(180, 0, 255, 0.05) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.15);
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+
+.botnameCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.botnameCheckbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.botnameCheckbox code {
+  background: var(--bg-primary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: var(--accent-primary);
+  font-size: 0.8rem;
+}
+
+/* Задержка отправки команд */
+.delayInputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.delayInputWrapper label {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.delayInputWrapper label:hover {
+  color: var(--accent-primary);
+  text-decoration: underline dotted;
+}
+
+.delayInput {
+  width: 60px;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.delayInput:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
+}
+
+.delayInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.formGroup label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.textarea {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(10, 14, 39, 0.9) 0%, rgba(15, 20, 45, 0.9) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  color: var(--text-primary);
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 180px;
+  height: 180px;
+  max-height: 600px;
+  transition: all 0.3s;
+  line-height: 1.6;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: rgba(0, 245, 255, 0.5);
+  box-shadow: 
+    0 0 20px rgba(0, 245, 255, 0.2),
+    inset 0 0 30px rgba(0, 245, 255, 0.03);
+}
+
+.textarea::placeholder {
+  color: rgba(0, 245, 255, 0.3);
+}
+
+.sendButton {
+  padding: 0.9rem 2.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-size: 200% 200%;
+  border: none;
+  color: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 4px 20px rgba(102, 126, 234, 0.4),
+    0 0 40px rgba(118, 75, 162, 0.2);
+  margin-top: 1rem;
+  margin-bottom: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sendButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.sendButton:hover:not(:disabled) {
+  transform: translateY(-4px);
+  background-position: 100% 0;
+  box-shadow: 
+    0 8px 35px rgba(102, 126, 234, 0.55),
+    0 0 60px rgba(240, 147, 251, 0.3);
+}
+
+.sendButton:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.sendButton:active:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.sendButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+  box-shadow: none;
+}
+
+/* Результаты */
+.response {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 2px solid;
+  max-height: 250px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.response.success {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: var(--success);
+}
+
+.response.error {
+  background: rgba(255, 0, 85, 0.1);
+  border-color: var(--error);
+}
+
+.responseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid currentColor;
+  font-size: 0.9rem;
+}
+
+.responseTime {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.bulkResults {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.bulkResult {
+  margin-bottom: 0.6rem;
+  padding: 0.6rem;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 0.8rem;
+}
+
+.bulkResult.success {
+  border-color: var(--success);
+}
+
+.bulkResult.error {
+  border-color: var(--error);
+}
+
+.bulkResultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 0.5rem;
+}
+
+.bulkResultHeader code {
+  background: var(--bg-primary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: var(--accent-primary);
+}
+
+.bulkResultText,
+.responseText {
+  background: var(--bg-primary);
+  padding: 0.6rem;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text-secondary);
+  margin: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+

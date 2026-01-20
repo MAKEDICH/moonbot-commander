@@ -1,0 +1,1070 @@
+/**
+ * StrategyCompare - Стили секции отправки команд
+ * Выбор серверов, отправка и результаты
+ */
+
+/* Секция отправки команд */
+.commandSendSection {
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.05) 0%, rgba(75, 0, 130, 0.05) 100%);
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.commandSendTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin: 0 0 16px 0;
+}
+
+/* Секция пака команд */
+.commandsPackSection {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 245, 255, 0.15);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.commandsPackHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    background: rgba(0, 245, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.commandsPackHeader:hover {
+    background: rgba(0, 245, 255, 0.1);
+}
+
+.commandsPackBody {
+    padding: 16px;
+}
+
+.commandPackTextarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--error);
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    line-height: 1.5;
+    resize: vertical;
+    margin-bottom: 12px;
+    transition: var(--transition);
+}
+
+.commandPackTextarea::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.commandPackTextarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
+}
+
+.commandPackActions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.generateBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.generateBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.copyBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.copyBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}
+
+.copyBtn:active:not(:disabled) {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+.copyBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Секция выбора серверов */
+.serverSendSection {
+    background: linear-gradient(135deg, rgba(0, 245, 255, 0.03) 0%, rgba(138, 43, 226, 0.03) 100%);
+    border: 1px solid rgba(0, 245, 255, 0.2);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.serverSendHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(138, 43, 226, 0.05) 100%);
+    border-bottom: 1px solid rgba(0, 245, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.serverSendHeader:hover {
+    background: linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(138, 43, 226, 0.1) 100%);
+}
+
+.serverSendTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+.serverIcon {
+    color: var(--accent-primary);
+    font-size: 18px;
+}
+
+.serverCount {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: var(--bg-primary);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.toggleBtn {
+    background: rgba(0, 245, 255, 0.1);
+    border: 1px solid rgba(0, 245, 255, 0.3);
+    color: var(--accent-primary);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggleBtn:hover {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    transform: scale(1.05);
+}
+
+.serverSendBody {
+    padding: 16px;
+}
+
+/* Контролы поиска */
+.serverControls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.serverSearchBox {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+}
+
+.serverSearchBox .searchIcon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-primary);
+    font-size: 14px;
+}
+
+.serverSearchInput {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    background: rgba(0, 245, 255, 0.05);
+    border: 1px solid rgba(0, 245, 255, 0.2);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.serverSearchInput:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    background: rgba(0, 245, 255, 0.1);
+    box-shadow: 0 0 12px rgba(0, 245, 255, 0.15);
+}
+
+.serverSearchInput::placeholder {
+    color: var(--text-muted);
+}
+
+.quickSelectBtns {
+    display: flex;
+    gap: 8px;
+}
+
+.quickSelectBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(0, 245, 255, 0.08);
+    border: 1px solid rgba(0, 245, 255, 0.25);
+    border-radius: 8px;
+    color: var(--accent-primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.quickSelectBtn:hover {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 245, 255, 0.3);
+}
+
+.quickSelectBtn:active {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+/* Список серверов */
+.serverCheckboxList {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.serverCheckboxList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.serverCheckboxList::-webkit-scrollbar-track {
+    background: rgba(0, 245, 255, 0.05);
+    border-radius: 3px;
+}
+
+.serverCheckboxList::-webkit-scrollbar-thumb {
+    background: rgba(0, 245, 255, 0.3);
+    border-radius: 3px;
+}
+
+.serverGroup {
+    background: rgba(0, 245, 255, 0.02);
+    border: 1px solid rgba(0, 245, 255, 0.1);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.serverGroup:hover {
+    border-color: rgba(0, 245, 255, 0.25);
+    background: rgba(0, 245, 255, 0.04);
+}
+
+.groupHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(0, 245, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.groupHeader:hover {
+    background: rgba(0, 245, 255, 0.1);
+}
+
+.groupCheckbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
+.groupName {
+    flex: 1;
+    font-weight: 700;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.groupCount {
+    background: rgba(255, 107, 0, 0.15);
+    color: var(--accent-secondary);
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.serverItems {
+    padding: 8px 14px 12px 40px;
+}
+
+.serverItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+}
+
+.serverItem:hover {
+    background: rgba(0, 245, 255, 0.08);
+    transform: translateX(4px);
+}
+
+.serverCheckbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
+.serverName {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.serverHost {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+}
+
+.noServersFound {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* Кнопка отправки */
+.sendButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(75, 0, 130, 0.2));
+    border: 2px solid rgba(138, 43, 226, 0.4);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sendButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sendButton.sendButtonActive {
+    background: linear-gradient(135deg, #8a2be2, #4b0082);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+}
+
+.sendButton.sendButtonActive:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(138, 43, 226, 0.5);
+}
+
+/* Анимация вращения */
+.spinIcon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Результат отправки */
+.sendResult {
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-top: 16px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sendResult.success {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 204, 102, 0.1) 100%);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.sendResult.partial {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.sendResult.error {
+    background: linear-gradient(135deg, rgba(255, 82, 82, 0.1) 0%, rgba(255, 50, 50, 0.1) 100%);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+}
+
+.sendResultHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+.sendResult.success .sendResultHeader {
+    color: #00ff88;
+}
+
+.sendResult.partial .sendResultHeader {
+    color: #ffc107;
+}
+
+.sendResult.error .sendResultHeader {
+    color: #ff5252;
+}
+
+.closeResultBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.closeResultBtn:hover {
+    color: var(--text-primary);
+}
+
+.sendResultSummary {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.sendResultMessage {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Детальные ответы */
+.sendResultDetails {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sendResultDetailsHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.sendResultList {
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sendResultItem {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    border-left: 3px solid;
+}
+
+.sendResultItem.success {
+    border-left-color: #00ff88;
+}
+
+.sendResultItem.error {
+    border-left-color: #ff5252;
+}
+
+.sendResultItemHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sendResultServerName {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.sendResultItem.success .sendResultServerName {
+    color: #00ff88;
+}
+
+.sendResultItem.error .sendResultServerName {
+    color: #ff5252;
+}
+
+.sendResultCommand {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(0, 245, 255, 0.08);
+    padding: 3px 8px;
+    border-radius: 4px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sendResultResponse {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 12px;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+/* Кнопка очистки пака */
+.clearPackBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 8px;
+    color: #f87171;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clearPackBtn:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #f87171;
+    transform: translateY(-2px);
+}
+
+.clearPackBtn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.clearPackBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Ряд кнопок отправки */
+.sendButtonsRow {
+    display: flex;
+    gap: 12px;
+}
+
+.sendButtonsRow .sendButton {
+    flex: 1;
+}
+
+/* Кнопка сохранить */
+.saveButton {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+    border: 2px solid rgba(16, 185, 129, 0.4);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.saveButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.saveButton.saveButtonActive {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+/* Кнопка сохранить в историю */
+.saveBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.saveBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.saveBtn:active:not(:disabled) {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+.saveBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Кнопка отправить */
+.sendBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(138, 43, 226, 0.2);
+    border: 1px solid rgba(138, 43, 226, 0.4);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sendBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sendBtn.sendBtnActive {
+    background: linear-gradient(135deg, #8a2be2, #4b0082);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 12px rgba(138, 43, 226, 0.4);
+}
+
+.sendBtn.sendBtnActive:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(138, 43, 226, 0.5);
+}
+
+.sendBtn:active:not(:disabled) {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+/* ===== История команд ===== */
+.historySection {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.historyHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    cursor: pointer;
+    background: rgba(138, 43, 226, 0.08);
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.historyHeader:hover {
+    background: rgba(138, 43, 226, 0.12);
+}
+
+.historyHeader span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.historyBody {
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.noHistory {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 24px;
+    font-size: 14px;
+}
+
+.historyBlock {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(138, 43, 226, 0.15);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.historyBlockHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(138, 43, 226, 0.1);
+    border-bottom: 1px solid rgba(138, 43, 226, 0.1);
+}
+
+.historyDate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.historyBlockActions {
+    display: flex;
+    gap: 8px;
+}
+
+.historyActionBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.historyActionBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-glow);
+}
+
+.historyActionBtn:active {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+.historyDeleteBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 6px;
+    color: #f87171;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.historyDeleteBtn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #f87171;
+}
+
+.historyDeleteBtn:active {
+    transform: scale(0.9);
+}
+
+/* Кнопки Copy Forward / Copy Revert */
+.copyForwardBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copyForwardBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
+}
+
+.copyForwardBtn:active {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+.copyRevertBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #a855f7, #9333ea);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copyRevertBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+}
+
+.copyRevertBtn:active {
+    transform: scale(0.95);
+    box-shadow: none;
+}
+
+/* Изменения в истории */
+.historyChanges {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.historyChangeItem {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    border-left: 3px solid #06b6d4;
+}
+
+.historyChangeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.forwardCommand {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #22d3ee;
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.copyForwardSmallBtn {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid #06b6d4;
+    border-radius: 4px;
+    color: #06b6d4;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+}
+
+.copyForwardSmallBtn:hover {
+    background: rgba(6, 182, 212, 0.15);
+}
+
+.copyForwardSmallBtn:active {
+    transform: scale(0.95);
+    background: rgba(6, 182, 212, 0.25);
+}
+
+.revertRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.revertLabel {
+    color: #a855f7;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.revertCommand {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.copyRevertSmallBtn {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid #a855f7;
+    border-radius: 4px;
+    color: #a855f7;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
+}
+
+.copyRevertSmallBtn:hover {
+    background: rgba(168, 85, 247, 0.15);
+}
+
+.copyRevertSmallBtn:active {
+    transform: scale(0.95);
+    background: rgba(168, 85, 247, 0.25);
+}
+
+.changeInfo {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.clearHistoryBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: #f87171;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+}
+
+.clearHistoryBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #f87171;
+}
+
+.clearHistoryBtn:active {
+    transform: scale(0.98);
+}
+
+

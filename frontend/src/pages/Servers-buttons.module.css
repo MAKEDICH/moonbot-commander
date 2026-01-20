@@ -1,0 +1,178 @@
+/**
+ * Servers - Кнопки управления
+ * View toggle, auto ping, errors, hide address
+ */
+
+.viewToggleBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(138, 101, 255, 0.1) 0%, rgba(138, 101, 255, 0.2) 100%);
+  border: 1px solid #8a65ff;
+  color: #8a65ff;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.viewToggleBtn:hover {
+  background: #8a65ff;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(138, 101, 255, 0.4);
+}
+
+.autoPingBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 0, 85, 0.3);
+  color: #ff0055;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.autoPingBtn:hover {
+  background: rgba(255, 0, 85, 0.1);
+  border-color: #ff0055;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 0, 85, 0.3);
+}
+
+.autoPingBtn.autoPingActive {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(0, 245, 255, 0.2) 100%);
+  border-color: #00f5ff;
+  color: #00f5ff;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.2);
+}
+
+.autoPingBtn.autoPingActive:hover {
+  background: rgba(0, 245, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 245, 255, 0.4);
+}
+
+.autoPingGroup {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.autoPingGroup .autoPingBtn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.pingSettingsBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(138, 101, 255, 0.3);
+  border-left: none;
+  color: #8a65ff;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.pingSettingsBtn:hover {
+  background: rgba(138, 101, 255, 0.1);
+  color: #a78bff;
+}
+
+.hideAddressBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.hideAddressBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.hideAddressBtn.hideAddressActive {
+  background: rgba(255, 0, 85, 0.15);
+  border-color: rgba(255, 0, 85, 0.3);
+  color: #ff0055;
+}
+
+.hideAddressBtn.hideAddressActive:hover {
+  background: rgba(255, 0, 85, 0.25);
+}
+
+/* Кнопка ошибок API */
+.errorsBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: var(--transition);
+  position: relative;
+  min-width: 48px;
+}
+
+.errorsBtnOk {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.25) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+}
+
+.errorsBtnOk:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.35) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.errorsBtnActive {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.25) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+  animation: errorPulse 2s ease-in-out infinite;
+}
+
+.errorsBtnActive:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0.35) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes errorPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.errorsCount {
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+

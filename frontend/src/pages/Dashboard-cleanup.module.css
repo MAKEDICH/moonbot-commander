@@ -1,0 +1,108 @@
+/**
+ * Dashboard - Cleanup стили
+ * Кнопка очистки и модальное окно очистки
+ */
+
+/* Cleanup Button */
+.cleanupBtn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  color: #ff4d4d;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cleanupBtn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(255, 77, 77, 0.3) 0%, transparent 70%);
+  transition: width 0.5s, height 0.5s;
+  transform: translate(-50%, -50%);
+}
+
+.cleanupBtn:hover {
+  background: rgba(255, 77, 77, 0.05);
+  border-color: #ff4d4d;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(255, 77, 77, 0.5);
+}
+
+.cleanupBtn:hover::before {
+  width: 200%;
+  height: 200%;
+}
+
+/* Larger Modal for Cleanup */
+.modalContentLarge {
+  background: linear-gradient(135deg, rgba(13, 25, 45, 0.98) 0%, rgba(17, 30, 50, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  padding: 0;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 80px -20px rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.modalContentLarge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: radial-gradient(ellipse at center top, rgba(255, 77, 77, 0.1) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.cleanupContainer {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  padding: 0;
+  position: relative;
+  
+  /* Кастомный скроллбар */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 77, 77, 0.3) rgba(255, 255, 255, 0.02);
+}
+
+.cleanupContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cleanupContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.cleanupContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 77, 77, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.cleanupContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 77, 77, 0.5);
+}
+
+

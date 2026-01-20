@@ -1,0 +1,21 @@
+/**
+ * Useful - Главный файл стилей
+ * Объединяет все модули стилей для страницы Useful
+ * 
+ * Структура:
+ * - Useful-base.module.css - базовые стили
+ * - Useful-header.module.css - заголовок и контролы
+ * - Useful-tabs.module.css - вкладки
+ * - Useful-progress.module.css - прогресс и уведомления
+ * - Useful-table.module.css - таблицы
+ * - Useful-copy.module.css - контролы копирования
+ * - Useful-responsive.module.css - адаптивные стили
+ */
+
+@import './Useful-base.module.css';
+@import './Useful-header.module.css';
+@import './Useful-tabs.module.css';
+@import './Useful-progress.module.css';
+@import './Useful-table.module.css';
+@import './Useful-copy.module.css';
+@import './Useful-responsive.module.css';

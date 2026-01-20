@@ -1,0 +1,187 @@
+/**
+ * Servers - Стили форм
+ * Modern form styles, inputs, checkboxes, hints
+ */
+
+/* Иконки в labels */
+.labelIcon {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+/* Современный input */
+.modernInput {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 15px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modernInput:hover {
+  border-color: rgba(0, 245, 255, 0.4);
+}
+
+.modernInput:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px rgba(0, 245, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Два поля в ряд */
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Badge "необязательно" */
+.optionalBadge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 10px;
+  background: rgba(138, 101, 255, 0.15);
+  color: #8a65ff;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: lowercase;
+  vertical-align: middle;
+}
+
+/* Подсказки (hints) */
+.hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(138, 101, 255, 0.08) 0%, rgba(0, 245, 255, 0.08) 100%);
+  border-left: 3px solid var(--accent-primary);
+  border-radius: 8px;
+}
+
+.hintIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.hintText {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.hintText strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Секция опций */
+.optionsSection {
+  margin: 24px 0;
+  padding-top: 20px;
+  border-top: 2px dashed var(--border-color);
+}
+
+.optionCard {
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.optionCard:hover {
+  border-color: rgba(0, 245, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.1);
+}
+
+.optionHeader {
+  margin-bottom: 10px;
+}
+
+.optionDescription {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  padding-left: 32px;
+}
+
+.warningText {
+  color: #ffa500;
+  font-weight: 500;
+}
+
+/* Современный checkbox */
+.modernCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.modernCheckbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkboxCustom {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.modernCheckbox input[type="checkbox"]:checked + .checkboxCustom {
+  background: var(--accent-gradient);
+  border-color: var(--accent-primary);
+}
+
+.modernCheckbox input[type="checkbox"]:checked + .checkboxCustom::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.modernCheckbox:hover .checkboxCustom {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+

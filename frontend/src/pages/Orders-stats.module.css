@@ -1,0 +1,170 @@
+/**
+ * Orders - Статистика
+ * Stats grid, stat cards, progress bar
+ */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+  animation: fadeInUp 0.6s ease-out;
+  animation-delay: 0.2s;
+  animation-fill-mode: both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.statsGrid > *:nth-child(1) { animation: fadeInUp 0.5s ease-out 0.1s both; }
+.statsGrid > *:nth-child(2) { animation: fadeInUp 0.5s ease-out 0.2s both; }
+.statsGrid > *:nth-child(3) { animation: fadeInUp 0.5s ease-out 0.3s both; }
+.statsGrid > *:nth-child(4) { animation: fadeInUp 0.5s ease-out 0.4s both; }
+
+.statCard {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 12px;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 50px;
+}
+
+/* Увеличенные карточки для режима "все сервера" */
+.statCard.allServers {
+  padding: 12px 18px;
+  min-height: 75px;
+}
+
+.statCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.statCard:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 8px 24px rgba(99, 102, 241, 0.15),
+    0 0 40px rgba(99, 102, 241, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.statCard:hover::before {
+  opacity: 1;
+}
+
+.statLabel {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+
+/* Увеличенные лейблы для режима "все сервера" */
+.statCard.allServers .statLabel {
+  font-size: 14px;
+  margin-bottom: 6px;
+  gap: 4px;
+  opacity: 1;
+}
+
+.statValue {
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  text-shadow: 0 2px 20px rgba(99, 102, 241, 0.3);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Увеличенные значения для режима "все сервера" */
+.statCard.allServers .statValue {
+  font-size: 28px;
+  font-weight: 800;
+  gap: 4px;
+  text-shadow: 0 2px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Progress Bar */
+.progressBar {
+  width: 300px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(0, 245, 255, 0.2);
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    rgba(0, 245, 255, 0.8) 0%, 
+    rgba(0, 200, 255, 1) 50%, 
+    rgba(0, 245, 255, 0.8) 100%);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+  animation: shimmer 1.5s infinite;
+}
+
+.progressText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  z-index: 1;
+}
+
+@keyframes shimmer {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+  100% { filter: brightness(1); }
+}
+
+

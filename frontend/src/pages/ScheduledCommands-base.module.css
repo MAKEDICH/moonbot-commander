@@ -1,0 +1,109 @@
+/**
+ * ScheduledCommands - Базовые стили
+ * Контейнеры, layout, header, базовые элементы
+ */
+
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.headerButtons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  position: relative;
+}
+
+/* Скрытая кнопка сброса */
+.hiddenResetBtn {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: all 0.3s ease;
+  opacity: 0.3;
+}
+
+.hiddenResetBtn:hover {
+  background: rgba(255, 71, 87, 0.3);
+  width: 6px;
+  height: 6px;
+  opacity: 0.6;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+}
+
+.createBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-primary);
+  color: #1a1d29;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.createBtn:hover {
+  background: var(--accent-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.4);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.emptyState svg {
+  color: var(--accent-primary);
+  margin-bottom: 1rem;
+}
+
+.emptyState p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.emptyState button {
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-primary);
+  color: #1a1d29;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.emptyState button:hover {
+  background: var(--accent-secondary);
+}
+
+

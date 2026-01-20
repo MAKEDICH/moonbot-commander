@@ -1,0 +1,21 @@
+/**
+ * StrategyCompare - Главный файл стилей
+ * Объединяет все модули стилей для компонента StrategyCompare
+ * 
+ * Структура:
+ * - StrategyCompare-base.module.css - базовые стили
+ * - StrategyCompare-sidebar.module.css - боковая панель
+ * - StrategyCompare-controls.module.css - панель управления
+ * - StrategyCompare-strategies.module.css - секция стратегий
+ * - StrategyCompare-table.module.css - таблица сравнения
+ * - StrategyCompare-send.module.css - секция отправки команд
+ * - StrategyCompare-responsive.module.css - адаптивные стили
+ */
+
+@import './StrategyCompare-base.module.css';
+@import './StrategyCompare-sidebar.module.css';
+@import './StrategyCompare-controls.module.css';
+@import './StrategyCompare-strategies.module.css';
+@import './StrategyCompare-table.module.css';
+@import './StrategyCompare-send.module.css';
+@import './StrategyCompare-responsive.module.css';

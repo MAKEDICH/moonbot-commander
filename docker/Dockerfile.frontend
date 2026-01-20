@@ -1,0 +1,39 @@
+# ============================================================
+# MOONBOT COMMANDER - FRONTEND DOCKERFILE
+# ============================================================
+
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY frontend/package*.json ./
+
+# Install dependencies (use npm install if package-lock.json doesn't exist)
+RUN npm ci --silent 2>/dev/null || npm install --silent
+
+# Copy source code
+COPY frontend/ .
+
+# Build production
+# Note: VITE_API_URL is not set here - frontend will auto-detect API URL at runtime
+RUN npm run build
+
+# Stage 2: Production
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install serve globally
+RUN npm install -g serve
+
+# Copy built files from builder
+COPY --from=builder /app/dist ./dist
+
+# Expose port
+EXPOSE 3000
+
+# Start server
+CMD ["serve", "-s", "dist", "-l", "3000"]
+

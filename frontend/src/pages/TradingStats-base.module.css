@@ -1,0 +1,91 @@
+/**
+ * TradingStats - Базовые стили
+ * Контейнер, шапка, controls
+ */
+
+/* === КОНТЕЙНЕР === */
+.container {
+  padding: 24px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+/* === ШАПКА === */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.15);
+}
+
+.header h1 {
+  margin: 0;
+  color: #00ff88;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.refreshBtn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.autoRefreshLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b0b0b0;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+}
+
+.autoRefreshLabel input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #00ff88;
+}
+
+/* === ЗАГРУЗКА И ОШИБКИ === */
+.loading,
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 1.1rem;
+  color: #00ff88;
+}
+
+.error {
+  color: #ff4444;
+}
+
+

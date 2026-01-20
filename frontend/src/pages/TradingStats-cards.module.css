@@ -1,0 +1,180 @@
+/**
+ * TradingStats - Карточки и метрики
+ * Hot indicators, stat cards, stats grid
+ */
+
+/* === ГОРЯЧИЕ ИНДИКАТОРЫ === */
+.hotIndicators {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.hotCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid;
+  transition: all 0.2s ease;
+}
+
+.hotCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hotSuccess {
+  border-color: rgba(0, 255, 136, 0.35);
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.06), rgba(0, 255, 136, 0.02));
+}
+
+.hotWarning {
+  border-color: rgba(255, 170, 0, 0.35);
+  background: linear-gradient(135deg, rgba(255, 170, 0, 0.06), rgba(255, 170, 0, 0.02));
+}
+
+.hotInfo {
+  border-color: rgba(0, 170, 255, 0.35);
+  background: linear-gradient(135deg, rgba(0, 170, 255, 0.06), rgba(0, 170, 255, 0.02));
+}
+
+.hotIcon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.hotSuccess .hotIcon { color: #00ff88; }
+.hotWarning .hotIcon { color: #ffaa00; }
+.hotInfo .hotIcon { color: #00aaff; }
+
+.hotLabel {
+  font-size: 0.6rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+.hotValue {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1px;
+}
+
+.hotSubtext {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* === СЕТКА МЕТРИК === */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* === ОСНОВНЫЕ МЕТРИКИ === */
+.overallStats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.statCard {
+  background: linear-gradient(135deg, rgba(25, 25, 45, 0.9) 0%, rgba(35, 35, 60, 0.9) 100%);
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 255, 136, 0.12);
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
+.statLabel {
+  font-size: 0.65rem;
+  color: #888;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statValue {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #00ff88;
+  line-height: 1.2;
+}
+
+.statValue.positive { color: #00ff88; }
+.statValue.negative { color: #ff4444; }
+
+.statSubtext {
+  font-size: 0.6rem;
+  color: #666;
+  margin-top: 3px;
+}
+
+/* === ИНДИКАТОРЫ ИЗМЕНЕНИЙ === */
+.changeIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.changePositive {
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+}
+
+.changeNegative {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+/* === SPARKLINE === */
+.sparkline {
+  display: flex;
+  align-items: flex-end;
+  height: 24px;
+  gap: 1px;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+
+.sparklineBar {
+  flex: 1;
+  background: linear-gradient(180deg, #00ff88, #00cc6a);
+  border-radius: 1px 1px 0 0;
+  transition: all 0.15s ease;
+  min-height: 2px;
+}
+
+.sparklineBar.negative {
+  background: linear-gradient(180deg, #ff4444, #cc0000);
+}
+
+.sparklineBar:hover {
+  opacity: 0.8;
+}
+
+

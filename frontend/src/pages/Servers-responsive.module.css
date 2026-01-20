@@ -1,0 +1,46 @@
+/**
+ * Servers - Адаптивные стили
+ * Все @media запросы для адаптивности
+ */
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .addBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .serverGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalContent {
+    padding: 24px;
+  }
+  
+  .headerActions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .viewToggleBtn,
+  .autoPingBtn,
+  .addBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .serverGrid.compactView {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .serverCard.compact {
+    padding: 10px;
+  }
+}
+
+

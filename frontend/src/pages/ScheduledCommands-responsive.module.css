@@ -1,0 +1,35 @@
+/**
+ * ScheduledCommands - Адаптивные стили
+ * Все @media запросы для адаптивности
+ */
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .dateTimeGroup {
+    grid-template-columns: 1fr;
+  }
+
+  .commandActions {
+    flex-direction: column;
+  }
+
+  .modal {
+    padding: 1rem;
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+}
+
+

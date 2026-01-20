@@ -1,0 +1,164 @@
+/**
+ * Useful - Вкладки
+ * Main tabs, sub tabs, base tabs, tab panels
+ */
+
+/* ===== Главные вкладки страницы Полезное ===== */
+.usefulTabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #1f2937;
+}
+
+.usefulTab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    color: #e2e8f0;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.usefulTab:hover {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    border-color: #475569;
+    transform: translateY(-1px);
+}
+
+.usefulTab.active {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    border-color: #22c55e;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+}
+
+/* ===== Контент вкладок ===== */
+.usefulContent {
+    min-height: 400px;
+}
+
+/* ===== Главные вкладки ===== */
+.mainTabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.mainTab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    color: #e2e8f0;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mainTab:hover {
+    background: #111827;
+    border-color: #2b3443;
+}
+
+.mainTab.active {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-color: #6366f1;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.tabIcon {
+    font-size: 18px;
+}
+
+/* ===== Панели вкладок ===== */
+.tabPanels {
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.panel {
+    padding: 16px;
+}
+
+.panelContent {
+    margin-top: 16px;
+}
+
+/* ===== Подвкладки ===== */
+.subTabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.subTab {
+    padding: 10px 16px;
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.subTab:hover {
+    background: #111827;
+    border-color: #2b3443;
+}
+
+.subTab.active {
+    background: #111827;
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+/* ===== Вкладки баз ===== */
+.baseTabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.baseTab {
+    padding: 8px 14px;
+    background: #0f1830;
+    border: 1px solid #1f2937;
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.baseTab:hover {
+    background: #121b36;
+    border-color: #2b3443;
+}
+
+.baseTab.active {
+    background: #121b36;
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+

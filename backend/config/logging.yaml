@@ -1,0 +1,51 @@
+# Logging Configuration
+# Настройки системы логирования
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  
+  # Директория для логов
+  directory: "./logs"
+  
+  # Формат имени файла
+  filename_pattern: "{date}_moonbot_{number}.log"
+  
+  # Ротация файлов
+  rotation:
+    max_file_size_mb: 50
+    max_total_size_gb: 1
+    backup_count: 20
+    cleanup_size_mb: 100
+    
+  # Цвета для консоли
+  colors:
+    enabled: true
+    debug: "cyan"
+    info: "green"
+    warning: "yellow"
+    error: "red"
+    critical: "red_bold"
+    
+  # Фильтрация чувствительных данных
+  filters:
+    sensitive_keys:
+      - "password"
+      - "token"
+      - "secret"
+      - "key"
+      - "api_key"
+      - "access_token"
+      - "refresh_token"
+      - "hmac"
+      
+  # Формат логов
+  format:
+    console: "[{timestamp}] [{level:8}] {message}"
+    file: "[{timestamp}] [{level:8}] [{module}] {message}"
+    timestamp_format: "%Y-%m-%d %H:%M:%S.%f"
+    timestamp_precision: 3  # миллисекунды
+
+
+
+
+

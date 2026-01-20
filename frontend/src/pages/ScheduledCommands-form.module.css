@@ -1,0 +1,226 @@
+/**
+ * ScheduledCommands - Элементы форм
+ * Radio buttons, checkboxes, server list
+ */
+
+.targetTypeSelector {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.radioLabel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  cursor: pointer;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.15) 100%);
+  border: 2px solid rgba(0, 245, 255, 0.2);
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.radioLabel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.radioLabel:hover::before {
+  left: 100%;
+}
+
+.radioLabel:hover {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.08) 0%, rgba(180, 0, 255, 0.05) 100%);
+  border-color: rgba(0, 245, 255, 0.5);
+  box-shadow: 0 4px 15px rgba(0, 245, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.radioLabel input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 245, 255, 0.5);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.radioLabel input[type="radio"]:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.4);
+}
+
+.radioLabel input[type="radio"]:checked {
+  border-color: transparent;
+  background: var(--accent-gradient);
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.6),
+              0 0 0 2px rgba(0, 245, 255, 0.2);
+  animation: pulse 0.6s ease-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.radioLabel input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+.radioLabel input[type="radio"]:checked + span {
+  color: var(--accent-primary);
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.3);
+}
+
+.radioLabel span {
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s;
+  user-select: none;
+  position: relative;
+  z-index: 1;
+}
+
+.serversList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+}
+
+.serverCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s;
+  border-radius: 4px;
+}
+
+.serverCheckbox:hover {
+  background: var(--bg-tertiary);
+}
+
+.serverCheckbox input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  cursor: pointer;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 100%);
+  border: 2px solid rgba(0, 245, 255, 0.15);
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.checkbox:hover {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(180, 0, 255, 0.03) 100%);
+  border-color: rgba(0, 245, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 245, 255, 0.15);
+}
+
+.checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 245, 255, 0.4);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.checkbox input[type="checkbox"]:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.3);
+}
+
+.checkbox input[type="checkbox"]:checked {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+.checkbox input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+.checkbox span {
+  color: var(--text-secondary);
+  font-size: 14px;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.checkbox:hover span {
+  color: var(--text-primary);
+}
+
+.checkbox code {
+  background: rgba(0, 245, 255, 0.1);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--accent-primary);
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+

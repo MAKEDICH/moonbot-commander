@@ -1,0 +1,93 @@
+/**
+ * StrategyCommander - Адаптивные стили
+ * Все @media запросы для адаптивности
+ */
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+  .selectorsContainer {
+    grid-template-columns: 1fr;
+  }
+  
+  .tableContainer {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .commandsActions {
+    flex-direction: column;
+  }
+
+  .copyBtn,
+  .clearBtn,
+  .saveBtn,
+  .sendBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .historyHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .historyHeaderButtons {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .historyHeaderButtons button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Адаптивность для секции отправки на серверы */
+  .serverControls {
+    flex-direction: column;
+  }
+
+  .serverSearchBox {
+    min-width: 100%;
+  }
+
+  .quickSelectBtns {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .quickSelectBtn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .serverSendTitle {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .serverItems {
+    padding-left: 20px;
+  }
+
+  .serverItem {
+    flex-wrap: wrap;
+  }
+
+  .serverHost {
+    width: 100%;
+    margin-left: 26px;
+    margin-top: 2px;
+  }
+}
+
+

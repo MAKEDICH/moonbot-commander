@@ -1,0 +1,148 @@
+/**
+ * Balances - Ячейки таблицы
+ * Server name, bot name, host, balance, status
+ */
+
+.serverName {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.table tbody tr:hover .serverName {
+  color: var(--accent-primary);
+  transform: translateX(4px);
+}
+
+.serverIcon {
+  font-size: 18px;
+  color: var(--accent-primary);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.table tbody tr:hover .serverIcon {
+  opacity: 1;
+  transform: rotate(15deg) scale(1.1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.botName {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 500;
+  color: var(--accent-secondary);
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.table tbody tr:hover .botName {
+  color: var(--text-primary);
+}
+
+.hostPort {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.hostPort code {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+  display: inline-block;
+  font-size: 13px;
+}
+
+.table tbody tr:hover .hostPort code {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Balance styles */
+.balance {
+  padding: 16px 20px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.balanceWrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  justify-content: flex-start;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.table tbody tr:hover .balanceWrapper {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.02);
+}
+
+.balanceValue {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.balanceAmount {
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+  text-align: right;
+  min-width: 120px;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+.balanceCurrency {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  min-width: 45px;
+  letter-spacing: 1px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.table tbody tr:hover .balanceCurrency {
+  opacity: 1;
+}
+
+.lastUpdate {
+  color: var(--text-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.lastUpdate small {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.noData {
+  color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.5;
+}
+
+

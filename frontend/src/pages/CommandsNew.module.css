@@ -1,0 +1,23 @@
+/**
+ * CommandsNew - Главный файл стилей
+ * Объединяет все модули стилей для страницы CommandsNew
+ * 
+ * Структура:
+ * - CommandsNew-base.module.css - базовые стили, layout, header
+ * - CommandsNew-servers.module.css - выбор серверов, чекбоксы
+ * - CommandsNew-forms.module.css - формы и кнопки
+ * - CommandsNew-presets.module.css - пресеты команд
+ * - CommandsNew-editor.module.css - редактор команд
+ * - CommandsNew-constructor.module.css - конструктор команд
+ * - CommandsNew-modal.module.css - модальные окна
+ * - CommandsNew-responsive.module.css - адаптивные стили
+ */
+
+@import './CommandsNew-base.module.css';
+@import './CommandsNew-servers.module.css';
+@import './CommandsNew-forms.module.css';
+@import './CommandsNew-presets.module.css';
+@import './CommandsNew-editor.module.css';
+@import './CommandsNew-constructor.module.css';
+@import './CommandsNew-modal.module.css';
+@import './CommandsNew-responsive.module.css';

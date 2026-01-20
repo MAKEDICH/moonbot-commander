@@ -1,0 +1,405 @@
+/**
+ * Dashboard - Серверы
+ * Карточки серверов, статусы, кнопки управления
+ */
+
+/* === SERVERS GRID === */
+.serversGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.serverCard {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 1.5rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+.serverCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(135deg, var(--card-gradient-start, transparent) 0%, var(--card-gradient-end, transparent) 100%);
+  opacity: 0.05;
+  transition: opacity 0.4s ease;
+}
+
+.serverCard::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, var(--card-border-glow, transparent), var(--card-border-glow-2, transparent));
+  border-radius: 20px;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.4s ease;
+}
+
+.serverCard.online {
+  --card-gradient-start: rgba(0, 255, 136, 0.1);
+  --card-gradient-end: rgba(0, 255, 136, 0.02);
+  --card-border-glow: #00ff88;
+  --card-border-glow-2: #00ff8840;
+}
+
+.serverCard.offline {
+  --card-gradient-start: rgba(255, 0, 85, 0.1);
+  --card-gradient-end: rgba(255, 0, 85, 0.02);
+  --card-border-glow: #ff0055;
+  --card-border-glow-2: #ff005540;
+}
+
+.serverCard:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.serverCard:hover::before {
+  opacity: 0.1;
+}
+
+.serverCard:hover::after {
+  opacity: 0.8;
+}
+
+.serverHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+.serverHeader::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary), transparent);
+  border-radius: 1px;
+}
+
+.serverHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.testBtn {
+  padding: 0.4rem 0.9rem;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  color: var(--accent-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.testBtn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent, rgba(0, 245, 255, 0.2), transparent);
+  transform: translate(-50%, -50%) rotate(0deg);
+  transition: transform 0.6s;
+  opacity: 0;
+}
+
+.testBtn:hover:not(:disabled) {
+  background: rgba(0, 245, 255, 0.05);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -5px rgba(0, 245, 255, 0.5);
+}
+
+.testBtn:hover:not(:disabled)::before {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+
+.testBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.serverName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: -0.2px;
+}
+
+.serverStatus {
+  padding: 0.35rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.statusOnline {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2) 0%, rgba(0, 255, 136, 0.1) 100%);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  box-shadow: 0 4px 20px -4px rgba(0, 255, 136, 0.5);
+}
+
+.statusOffline {
+  background: linear-gradient(135deg, rgba(255, 0, 85, 0.2) 0%, rgba(255, 0, 85, 0.1) 100%);
+  color: #ff0055;
+  border: 1px solid rgba(255, 0, 85, 0.4);
+  box-shadow: 0 4px 20px -4px rgba(255, 0, 85, 0.5);
+}
+
+.serverStatus::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, currentColor 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  opacity: 0.3;
+  animation: statusPulse 3s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.3; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+}
+
+.serverDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.serverDetail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  padding: 0.4rem 0;
+  transition: all 0.2s;
+}
+
+.serverDetail:hover {
+  transform: translateX(5px);
+}
+
+.serverDetail span:first-child {
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+.serverDetail span:last-child {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, #00c8ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 600;
+  font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.serverError {
+  background: linear-gradient(135deg, rgba(255, 0, 85, 0.1) 0%, rgba(255, 0, 85, 0.05) 100%);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 0, 85, 0.2);
+  color: #ff0055;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.serverError::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 0, 85, 0.1), transparent);
+  animation: errorSweep 3s ease-in-out infinite;
+}
+
+@keyframes errorSweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* View Toggle and Auto Ping Buttons */
+.viewToggleBtn {
+  padding: 0.65rem 1.4rem;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(138, 101, 255, 0.3);
+  color: #8a65ff;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.viewToggleBtn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(138, 101, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.viewToggleBtn:hover {
+  background: rgba(138, 101, 255, 0.1);
+  border-color: #8a65ff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(138, 101, 255, 0.5);
+}
+
+.viewToggleBtn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.autoPingBtn {
+  padding: 0.65rem 1.4rem;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 0, 85, 0.3);
+  color: #ff0055;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.autoPingBtn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  animation: none;
+  transition: all 0.3s;
+}
+
+.autoPingBtn.active {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+}
+
+.autoPingBtn.active::after {
+  animation: pingPulse 2s ease-in-out infinite;
+  background: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+}
+
+@keyframes pingPulse {
+  0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+  50% { opacity: 0.6; transform: translateY(-50%) scale(1.5); }
+}
+
+.autoPingBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(255, 0, 85, 0.5);
+  background: rgba(255, 0, 85, 0.05);
+}
+
+.autoPingBtn.active:hover {
+  box-shadow: 0 8px 25px -5px rgba(0, 255, 136, 0.5);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+/* Bot Status */
+.botRunning {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.botStopped {
+  color: #f87171;
+  font-weight: 600;
+}
+
+

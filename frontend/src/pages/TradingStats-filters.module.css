@@ -1,0 +1,181 @@
+/**
+ * TradingStats - Фильтры
+ * Dropdown меню, фильтры, кастомные даты
+ */
+
+/* === ФИЛЬТРЫ === */
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: rgba(20, 20, 35, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdown {
+  position: relative;
+  min-width: 200px;
+  flex: 1;
+  max-width: 280px;
+}
+
+.dropdownButton {
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(30, 30, 50, 0.9);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.dropdownButton:hover {
+  border-color: rgba(0, 255, 136, 0.5);
+  background: rgba(40, 40, 60, 0.9);
+}
+
+.dropdownArrow {
+  font-size: 0.75rem;
+  color: #00ff88;
+  margin-left: 8px;
+  transition: transform 0.2s ease;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: rgba(25, 25, 45, 0.98);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  max-height: 280px;
+  overflow-y: auto;
+  animation: dropdownSlide 0.15s ease;
+}
+
+@keyframes dropdownSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdownMenu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdownMenu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.dropdownMenu::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 136, 0.3);
+  border-radius: 3px;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 0.9rem;
+}
+
+.dropdownItem:hover {
+  background: rgba(0, 255, 136, 0.08);
+}
+
+.dropdownItem input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #00ff88;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: rgba(0, 255, 136, 0.15);
+  margin: 4px 10px;
+}
+
+/* === КАСТОМНЫЕ ДАТЫ === */
+.customDateInputs {
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dateInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dateInputGroup label {
+  font-size: 0.85rem;
+  color: #888;
+  min-width: 30px;
+}
+
+.dateInput {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(0, 255, 136, 0.25);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.dateInput:focus {
+  border-color: #00ff88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.15);
+}
+
+.dateInput::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.applyDateBtn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.applyDateBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.25);
+}
+
+.applyDateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+

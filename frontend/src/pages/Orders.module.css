@@ -1,0 +1,25 @@
+/**
+ * Orders - Главный файл стилей
+ * Объединяет все модули стилей для страницы Orders
+ * 
+ * Структура:
+ * - Orders-base.module.css - базовые стили, layout
+ * - Orders-controls.module.css - элементы управления
+ * - Orders-stats.module.css - статистика
+ * - Orders-filters.module.css - фильтры
+ * - Orders-table.module.css - таблица ордеров
+ * - Orders-currency.module.css - мультивалютность
+ * - Orders-pagination.module.css - пагинация
+ * - Orders-modal.module.css - модальное окно графика
+ * - Orders-responsive.module.css - адаптивные стили
+ */
+
+@import './Orders-base.module.css';
+@import './Orders-controls.module.css';
+@import './Orders-stats.module.css';
+@import './Orders-filters.module.css';
+@import './Orders-table.module.css';
+@import './Orders-currency.module.css';
+@import './Orders-pagination.module.css';
+@import './Orders-modal.module.css';
+@import './Orders-responsive.module.css';

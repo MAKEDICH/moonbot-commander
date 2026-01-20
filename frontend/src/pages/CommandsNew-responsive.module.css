@@ -1,0 +1,96 @@
+/**
+ * CommandsNew - Адаптивные стили
+ * Все @media запросы для адаптивности
+ */
+
+/* Адаптивность */
+@media (max-width: 1400px) {
+  .content {
+    grid-template-columns: 320px 1fr 300px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+  
+  .leftPanel,
+  .rightPanel {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0.75rem;
+    height: auto;
+    overflow-y: visible;
+  }
+  
+  .header h1 {
+    font-size: 1.4rem;
+  }
+  
+  /* Убираем overflow и фиксированные высоты на мобильных */
+  .leftPanel,
+  .centerPanel,
+  .rightPanel {
+    overflow-y: visible;
+    max-height: none;
+    height: auto;
+  }
+  
+  .serversCompactControls {
+    flex-direction: column;
+  }
+  
+  .searchBox,
+  .groupFilter {
+    width: 100%;
+    min-width: 100%;
+  }
+  
+  /* Убираем ограничение высоты списка серверов */
+  .serversList {
+    max-height: none;
+    height: auto;
+    overflow-y: visible;
+  }
+  
+  /* Убираем ограничение высоты для serverGroupsList */
+  .serverGroupsList {
+    max-height: none;
+    height: auto;
+    overflow-y: visible;
+  }
+  
+  /* Убираем ограничение высоты для quickCommandsList */
+  .quickCommandsList {
+    max-height: none;
+    height: auto;
+    overflow-y: visible;
+  }
+  
+  /* Убираем ограничение высоты для presetButtons */
+  .presetButtons {
+    max-height: none;
+    height: auto;
+    overflow-y: visible;
+  }
+  
+  /* Убираем ограничение высоты для textarea */
+  .commandTextarea {
+    min-height: 120px;
+  }
+  
+  .modal {
+    padding: 0.5rem;
+  }
+  
+  .referenceFilters {
+    grid-template-columns: 1fr;
+  }
+}
+
+

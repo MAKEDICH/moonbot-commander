@@ -1,0 +1,12 @@
+/**
+ * APIErrors - Главный файл стилей
+ * 
+ * Страница ошибок API.
+ * Импортирует все подмодули стилей.
+ */
+
+@import './APIErrors-base.module.css';
+@import './APIErrors-stats.module.css';
+@import './APIErrors-filters.module.css';
+@import './APIErrors-table.module.css';
+@import './APIErrors-responsive.module.css';

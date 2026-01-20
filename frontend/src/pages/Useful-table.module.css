@@ -1,0 +1,183 @@
+/**
+ * Useful - Таблицы
+ * Table card, table wrapper, data table, table footer
+ */
+
+/* ===== Таблицы ===== */
+.tableCard {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.tableToolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.searchInput {
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    color: #e2e8f0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    min-width: 200px;
+    transition: all 0.2s ease;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+.dateLabel {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.dateInput {
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    color: #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.dateInput:focus {
+    outline: none;
+    border-color: #38bdf8;
+}
+
+/* ===== Заголовок пересечения ===== */
+.intersectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #0b1328;
+    border: 1px solid #1f2937;
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.intersectionInfo {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* ===== Обёртка таблицы ===== */
+.tableWrapper {
+    max-height: 480px;
+    overflow: auto;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+}
+
+.tableWrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+    background: #0b1220;
+    border-radius: 4px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+    background: #1f2937;
+    border-radius: 4px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:hover {
+    background: #2b3443;
+}
+
+/* ===== Таблица данных ===== */
+.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.dataTable thead th {
+    position: sticky;
+    top: 0;
+    background: #0e162a;
+    border-bottom: 1px solid #1f2937;
+    z-index: 1;
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.dataTable th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.dataTable th.sortable:hover {
+    background: #0e1b34;
+}
+
+.sortIndicator {
+    margin-left: 4px;
+    color: #38bdf8;
+}
+
+.dataTable tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #0e162a;
+    color: #e2e8f0;
+}
+
+.dataTable tbody tr:hover {
+    background: rgba(56, 189, 248, 0.05);
+}
+
+.aliasCell {
+    font-size: 11px;
+    color: #94a3b8;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.positive {
+    color: #22c55e;
+}
+
+.negative {
+    color: #ef4444;
+}
+
+/* ===== Подвал таблицы ===== */
+.tableFooter {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: right;
+}
+
+

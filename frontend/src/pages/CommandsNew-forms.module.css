@@ -1,0 +1,268 @@
+/**
+ * CommandsNew - Стили форм и кнопок
+ * Формы добавления, редактирования, кнопки действий
+ */
+
+.addBtn {
+  background: linear-gradient(135deg, #00f5ff 0%, #00c8ff 100%);
+  border: none;
+  color: #0a0e27;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 245, 255, 0.3);
+}
+
+.addBtn:hover {
+  transform: scale(1.2) rotate(90deg);
+  box-shadow: 
+    0 4px 16px rgba(0, 245, 255, 0.5),
+    0 0 20px rgba(0, 245, 255, 0.3);
+}
+
+.addForm,
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(180, 0, 255, 0.05) 100%);
+  border: 1px solid rgba(0, 245, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: inset 0 0 20px rgba(0, 245, 255, 0.03);
+}
+
+.formButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.saveBtn {
+  flex: 1;
+  background: linear-gradient(135deg, #00ff88 0%, #00e676 100%);
+  border: none;
+  color: #0a0e27;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.25);
+}
+
+.saveBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 6px 20px rgba(0, 255, 136, 0.4),
+    0 0 25px rgba(0, 255, 136, 0.2);
+}
+
+.cancelBtn {
+  flex: 1;
+  background: linear-gradient(135deg, #ff3b52 0%, #ff0055 100%);
+  border: none;
+  color: #fff;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 0, 85, 0.25);
+}
+
+.cancelBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 6px 20px rgba(255, 0, 85, 0.4),
+    0 0 25px rgba(255, 0, 85, 0.2);
+}
+
+.clearBtn {
+  background: var(--error);
+  border: none;
+  color: var(--text-primary);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  transition: all 0.3s;
+}
+
+.clearBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4);
+}
+
+.clearBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.quickCommandsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.quickCommandItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quickCmdBtn {
+  flex: 1;
+  background: linear-gradient(135deg, rgba(180, 0, 255, 0.1) 0%, rgba(120, 0, 200, 0.15) 100%);
+  border: 1px solid rgba(180, 0, 255, 0.35);
+  color: #e0b0ff;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(180, 0, 255, 0.1);
+}
+
+.quickCmdBtn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #b400ff 0%, #8000cc 100%);
+  border-radius: 10px 0 0 10px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.quickCmdBtn:hover {
+  background: linear-gradient(135deg, rgba(180, 0, 255, 0.25) 0%, rgba(140, 0, 220, 0.3) 100%);
+  border-color: rgba(180, 0, 255, 0.6);
+  color: #fff;
+  transform: translateX(6px);
+  box-shadow: 
+    0 4px 16px rgba(180, 0, 255, 0.25),
+    0 0 20px rgba(180, 0, 255, 0.1);
+}
+
+.quickCmdBtn:hover::before {
+  opacity: 1;
+}
+
+.quickCmdActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.iconBtn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.5);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+}
+
+.iconBtn:hover {
+  background: rgba(0, 245, 255, 0.15);
+  border-color: rgba(0, 245, 255, 0.5);
+  color: #00f5ff;
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.3);
+}
+
+.loadBtn {
+  flex: 1;
+  background: var(--accent-primary);
+  border: none;
+  color: var(--bg-primary);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.8rem;
+}
+
+.loadBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 245, 255, 0.4);
+}
+
+.deleteBtn {
+  background: linear-gradient(135deg, #ff3b52 0%, #ff0055 100%);
+  border: none;
+  color: #fff;
+  padding: 0.35rem 0.65rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(255, 0, 85, 0.2);
+}
+
+.deleteBtn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 
+    0 4px 14px rgba(255, 0, 85, 0.4),
+    0 0 15px rgba(255, 0, 85, 0.2);
+  background: linear-gradient(135deg, #ff5268 0%, #ff3b52 100%);
+}
+
+.editBtn {
+  background: linear-gradient(135deg, #58a6ff 0%, #4593e6 100%);
+  border: none;
+  color: #fff;
+  padding: 0.35rem 0.65rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(88, 166, 255, 0.2);
+}
+
+.editBtn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 
+    0 4px 14px rgba(88, 166, 255, 0.4),
+    0 0 15px rgba(88, 166, 255, 0.2);
+  background: linear-gradient(135deg, #6bb3ff 0%, #58a6ff 100%);
+}
+
+

@@ -1,0 +1,153 @@
+/**
+ * CommandsNew - Стили выбранных серверов
+ * 
+ * Содержит стили для списка выбранных серверов и действий.
+ */
+
+/* ПРАВАЯ КОЛОНКА - Выбранные серверы */
+.selectedActions {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.selectAllBtn {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  background: var(--success);
+  border: none;
+  color: var(--bg-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.selectAllBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.4);
+}
+
+.clearAllBtn {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  background: var(--error);
+  border: none;
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.clearAllBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 0, 85, 0.4);
+}
+
+.clearAllBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.selectedServersList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.emptySelection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem;
+}
+
+.emptySelection svg {
+  color: var(--text-muted);
+  opacity: 0.5;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+.emptySelection p {
+  font-size: 0.75rem;
+  margin: 0.25rem 0;
+}
+
+.emptySelection small {
+  font-size: 0.65rem;
+}
+
+.selectedServerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.4rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+  transition: all 0.3s;
+}
+
+.selectedServerItem:hover {
+  transform: translateX(-1px);
+  box-shadow: 0 2px 8px rgba(0, 245, 255, 0.3);
+}
+
+.selectedServerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.selectedServerName {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 0.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selectedServerDetails {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selectedServerGroup {
+  color: var(--accent-secondary);
+}
+
+.removeBtn {
+  background: transparent;
+  border: 1px solid var(--error);
+  color: var(--error);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+}
+
+.removeBtn:hover {
+  background: var(--error);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+

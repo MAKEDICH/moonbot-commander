@@ -1,0 +1,217 @@
+/**
+ * History - Стили команд и ответов
+ * 
+ * Содержит стили для отображения команд и ответов.
+ */
+
+.itemCommand,
+.itemResponse {
+  margin-bottom: 16px;
+  animation: fadeInUp 0.5s ease-out backwards;
+}
+
+.itemCommand {
+  animation-delay: 0.1s;
+}
+
+.itemResponse {
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.itemCommand:last-child,
+.itemResponse:last-child {
+  margin-bottom: 0;
+}
+
+.commandLabel,
+.responseLabel {
+  font-size: 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.8), rgba(255, 0, 136, 0.8));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  display: inline-block;
+}
+
+.commandText {
+  padding: 16px 20px 16px 32px;
+  background: linear-gradient(135deg,
+    rgba(0, 255, 255, 0.05),
+    rgba(0, 180, 200, 0.03)
+  );
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: 500;
+  color: #00f5ff;
+  word-wrap: break-word;
+  letter-spacing: 0.3px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.commandText::before {
+  content: '>';
+  position: absolute;
+  left: 12px;
+  top: 16px;
+  color: rgba(0, 255, 255, 0.5);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.commandText:hover {
+  background: linear-gradient(135deg,
+    rgba(0, 255, 255, 0.08),
+    rgba(0, 180, 200, 0.05)
+  );
+  border-color: rgba(0, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 255, 255, 0.1);
+}
+
+.responseText {
+  padding: 16px 20px;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(200, 200, 255, 0.02)
+  );
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.7;
+  letter-spacing: 0.2px;
+  transition: all 0.3s ease;
+}
+
+.responseText:hover {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(200, 200, 255, 0.04)
+  );
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.05);
+}
+
+/* === SetParam Action Buttons === */
+.commandHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.commandActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(0, 255, 255, 0.1);
+  color: #00f5ff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.actionBtn:hover {
+  background: rgba(0, 255, 255, 0.2);
+  border-color: rgba(0, 255, 255, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.actionBtn:active {
+  transform: translateY(0);
+}
+
+.actionBtn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Revert button - оранжевый */
+.revertBtn {
+  border-color: rgba(255, 165, 0, 0.3);
+  background: rgba(255, 165, 0, 0.1);
+  color: #ffa500;
+}
+
+.revertBtn:hover {
+  background: rgba(255, 165, 0, 0.2);
+  border-color: rgba(255, 165, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(255, 165, 0, 0.2);
+}
+
+/* Send button - зелёный */
+.sendBtn {
+  border-color: rgba(0, 255, 136, 0.3);
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+}
+
+.sendBtn:hover:not(:disabled) {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
+}
+
+.sendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .commandHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .commandActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .actionBtn {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+}
+
+

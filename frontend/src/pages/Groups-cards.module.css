@@ -1,0 +1,124 @@
+/**
+ * Groups - Стили карточек групп
+ * 
+ * Содержит стили для карточек групп и их элементов.
+ */
+
+.groupCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 20px;
+}
+
+.groupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.groupTitleWithCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.groupCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.groupCheckbox:hover {
+  transform: scale(1.1);
+}
+
+.checkIcon {
+  color: var(--accent-primary);
+  font-size: 20px;
+}
+
+.groupHeader h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.groupCount {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.groupActions {
+  display: flex;
+  gap: 8px;
+}
+
+.iconBtn {
+  padding: 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.iconBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.moveBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--accent-gradient);
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.moveBtn:hover {
+  transform: translateY(-2px);
+}
+
+.addToGroupBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--bg-tertiary);
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.addToGroupBtn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.addToGroupBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+

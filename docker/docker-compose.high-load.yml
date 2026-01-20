@@ -1,0 +1,226 @@
+# ============================================================
+# MOONBOT COMMANDER - DOCKER COMPOSE (HIGH LOAD)
+# ============================================================
+# 
+# Конфигурация для 3000+ серверов
+#
+# Quick start:
+#   docker compose -f docker-compose.high-load.yml up -d
+#
+# ============================================================
+
+version: '3.8'
+
+services:
+  # ============================================================
+  # POSTGRESQL - Production Database (Optimized for 3000+ servers)
+  # ============================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: moonbot-postgres
+    environment:
+      POSTGRES_DB: moonbot
+      POSTGRES_USER: moonbot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-moonbot_secure_password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moonbot -d moonbot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+    # Оптимизация PostgreSQL для 3000+ серверов
+    command: >
+      postgres
+      -c shared_buffers=4GB
+      -c effective_cache_size=12GB
+      -c work_mem=512MB
+      -c maintenance_work_mem=1GB
+      -c max_connections=500
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=128MB
+      -c max_wal_size=4GB
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c max_worker_processes=16
+      -c max_parallel_workers_per_gather=4
+      -c max_parallel_workers=16
+
+  # ============================================================
+  # REDIS - Cache & Message Queue (Optimized for 3000+ servers)
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: moonbot-redis
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+    # Оптимизация Redis для 3000+ серверов
+    command: >
+      redis-server
+      --maxmemory 4gb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --tcp-keepalive 300
+      --maxclients 10000
+      --tcp-backlog 4096
+
+  # ============================================================
+  # BACKEND - FastAPI Application (Optimized for 3000+ servers)
+  # ============================================================
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: moonbot-backend
+    ports:
+      - "8000:8000"
+      - "2500:2500/udp"  # UDP port for MoonBot
+    volumes:
+      - moonbot-data:/app/data
+      - moonbot-logs:/app/logs
+    environment:
+      - MOONBOT_MODE=server
+      - DATABASE_URL=postgresql://moonbot:${POSTGRES_PASSWORD:-moonbot_secure_password}@postgres:5432/moonbot
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=*
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+    # Оптимизировано для 3000+ серверов: 17 workers
+    command: >
+      uvicorn main:app 
+      --host 0.0.0.0 
+      --port 8000 
+      --workers 17 
+      --limit-concurrency 2000 
+      --backlog 4096
+      --timeout-keep-alive 30
+    # Ресурсы для 3000+ серверов
+    deploy:
+      resources:
+        limits:
+          cpus: '16'
+          memory: 16G
+        reservations:
+          cpus: '8'
+          memory: 8G
+    # Увеличенные лимиты для UDP
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    sysctls:
+      - net.core.somaxconn=4096
+      - net.core.rmem_max=8388608
+      - net.core.wmem_max=4194304
+
+  # ============================================================
+  # SCHEDULER - Background Tasks
+  # ============================================================
+  scheduler:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: moonbot-scheduler
+    volumes:
+      - moonbot-data:/app/data
+      - moonbot-logs:/app/logs
+    environment:
+      - MOONBOT_MODE=server
+      - DATABASE_URL=postgresql://moonbot:${POSTGRES_PASSWORD:-moonbot_secure_password}@postgres:5432/moonbot
+      - REDIS_URL=redis://redis:6379/0
+    command: python -m services.scheduler
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+
+  # ============================================================
+  # FRONTEND - React Application
+  # ============================================================
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: moonbot-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+
+  # ============================================================
+  # NGINX - Reverse Proxy (Optional)
+  # ============================================================
+  nginx:
+    image: nginx:alpine
+    container_name: moonbot-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+    profiles:
+      - with-nginx
+
+# ============================================================
+# VOLUMES
+# ============================================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  moonbot-data:
+    driver: local
+  moonbot-logs:
+    driver: local
+
+# ============================================================
+# NETWORKS
+# ============================================================
+networks:
+  moonbot-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+

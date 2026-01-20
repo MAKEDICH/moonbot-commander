@@ -1,0 +1,323 @@
+/**
+ * Стили для секции истории команд
+ */
+
+/* ========== HISTORY SECTION ========== */
+.historySection {
+    background: linear-gradient(165deg, 
+        rgba(17, 12, 46, 0.98) 0%, 
+        rgba(30, 27, 75, 0.85) 100%);
+    border: 1px solid rgba(192, 38, 211, 0.25);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, 
+        rgba(192, 38, 211, 0.15), 
+        rgba(139, 92, 246, 0.08));
+    transition: all 0.3s;
+}
+
+.sectionHeader:hover .toggleBtn {
+    background: linear-gradient(135deg, #c026d3, #a855f7);
+    color: white;
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 800;
+    color: #e0e7ff;
+}
+
+.cardTitle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #e0e7ff;
+}
+
+.toggleBtn {
+    background: linear-gradient(135deg, 
+        rgba(192, 38, 211, 0.2), 
+        rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(192, 38, 211, 0.4);
+    color: #e879f9;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggleBtn:hover {
+    background: linear-gradient(135deg, #c026d3, #a855f7);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(192, 38, 211, 0.4);
+}
+
+.historyBody {
+    padding: 22px;
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+.noHistory {
+    text-align: center;
+    color: rgba(167, 139, 250, 0.5);
+    padding: 50px 20px;
+    font-size: 15px;
+}
+
+.historyBlock {
+    background: linear-gradient(165deg, 
+        rgba(0, 0, 0, 0.4), 
+        rgba(17, 12, 46, 0.6));
+    border: 1px solid rgba(192, 38, 211, 0.2);
+    border-radius: 18px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.historyBlock:hover {
+    border-color: rgba(192, 38, 211, 0.4);
+    box-shadow: 0 0 40px rgba(192, 38, 211, 0.15);
+}
+
+.historyBlockHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, 
+        rgba(192, 38, 211, 0.15), 
+        rgba(139, 92, 246, 0.08));
+    border-bottom: 1px solid rgba(192, 38, 211, 0.15);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.historyDate {
+    font-size: 14px;
+    color: #e879f9;
+    font-weight: 700;
+    text-shadow: 0 0 15px rgba(232, 121, 249, 0.3);
+}
+
+.historyActions {
+    display: flex;
+    gap: 12px;
+}
+
+.copyForwardBtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+}
+
+.copyForwardBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.5);
+}
+
+.copyRevertBtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #c026d3, #a855f7);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(192, 38, 211, 0.3);
+}
+
+.copyRevertBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(192, 38, 211, 0.5);
+}
+
+.historyChanges {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.historyChangeItem {
+    background: linear-gradient(165deg, 
+        rgba(0, 0, 0, 0.5), 
+        rgba(17, 12, 46, 0.7));
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: 16px;
+    padding: 18px;
+    border-left: 5px solid #06b6d4;
+    transition: all 0.2s;
+}
+
+.historyChangeItem:hover {
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.1);
+}
+
+.historyChangeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.forwardCmd {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: 13px;
+    color: #22d3ee;
+    font-weight: 700;
+    word-break: break-all;
+    line-height: 1.6;
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+}
+
+.deleteBtn {
+    background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.25), 
+        rgba(220, 38, 38, 0.15));
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.deleteBtn:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.copySmallBtn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid #06b6d4;
+    border-radius: 10px;
+    color: #06b6d4;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 14px;
+}
+
+.copySmallBtn:hover {
+    background: rgba(6, 182, 212, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+}
+
+.copySmallBtn.copyRevert {
+    border-color: #c026d3;
+    color: #c026d3;
+}
+
+.copySmallBtn.copyRevert:hover {
+    background: rgba(192, 38, 211, 0.2);
+    box-shadow: 0 0 15px rgba(192, 38, 211, 0.3);
+}
+
+.revertRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.revertLabel {
+    color: #e879f9;
+    font-weight: 800;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.revertCmd {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    color: #f0abfc;
+    text-shadow: 0 0 10px rgba(240, 171, 252, 0.2);
+}
+
+.changeInfo {
+    font-size: 11px;
+    color: rgba(167, 139, 250, 0.5);
+    font-style: italic;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(139, 92, 246, 0.2);
+}
+
+.clearHistoryBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.15), 
+        rgba(220, 38, 38, 0.08));
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 14px;
+    color: #f87171;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+}
+
+.clearHistoryBtn:hover {
+    background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.25), 
+        rgba(220, 38, 38, 0.15));
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+}
+

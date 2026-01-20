@@ -1,0 +1,54 @@
+/**
+ * TradingStats - Тепловая карта
+ * Heatmap grid, cells, labels
+ */
+
+/* === ТЕПЛОВАЯ КАРТА === */
+.heatmapContainer {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.heatmapGrid {
+  display: grid;
+  grid-template-columns: 70px repeat(24, 36px);
+  gap: 2px;
+  min-width: 980px;
+}
+
+.heatmapLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #888;
+  padding: 4px;
+}
+
+.heatmapCell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #fff;
+}
+
+.heatmapCell:hover {
+  transform: scale(1.12);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
+  z-index: 10;
+}
+
+.heatmapCell.heat0 { background: #1a1a1a; color: #555; }
+.heatmapCell.heat1 { background: linear-gradient(135deg, #ff4444, #cc0000); }
+.heatmapCell.heat2 { background: linear-gradient(135deg, #ff8844, #dd6622); }
+.heatmapCell.heat3 { background: linear-gradient(135deg, #ffbb44, #dd9922); }
+.heatmapCell.heat4 { background: linear-gradient(135deg, #88ff44, #66dd22); }
+.heatmapCell.heat5 { background: linear-gradient(135deg, #00ff88, #00cc6a); }
+
+

@@ -1,0 +1,88 @@
+/**
+ * TradingStats - Таблицы
+ * Table styles, row highlighting
+ */
+
+/* === ТАБЛИЦЫ === */
+.table {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  table-layout: fixed;
+}
+
+.table th {
+  background: rgba(0, 255, 136, 0.08);
+  color: #00ff88;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 2px solid rgba(0, 255, 136, 0.2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table th:hover {
+  background: rgba(0, 255, 136, 0.12);
+}
+
+.table td {
+  padding: 8px 10px;
+  color: #d0d0d0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.table tbody tr:hover {
+  background: rgba(0, 255, 136, 0.04);
+}
+
+.table .positive {
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.table .negative {
+  color: #ff4444;
+  font-weight: 600;
+}
+
+/* === ВЫДЕЛЕНИЕ СТРОК === */
+.topRow {
+  background: linear-gradient(90deg, rgba(0, 255, 136, 0.12), rgba(0, 255, 136, 0.04)) !important;
+  border-left: 3px solid #00ff88 !important;
+}
+
+.worstRow {
+  background: linear-gradient(90deg, rgba(255, 68, 68, 0.12), rgba(255, 68, 68, 0.04)) !important;
+  border-left: 3px solid #ff4444 !important;
+}
+
+.clickableRow {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clickableRow:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+

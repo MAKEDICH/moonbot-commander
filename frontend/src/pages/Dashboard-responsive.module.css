@@ -1,0 +1,256 @@
+/**
+ * Dashboard - Адаптивные стили
+ * Все @media запросы для адаптивности
+ */
+
+/* MoonBot адаптив */
+@media (max-width: 768px) {
+  .moonbotContent {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .moonbotLink {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Dashboard Grid */
+@media (max-width: 1200px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Trading Overview */
+@media (max-width: 768px) {
+  .tradingOverviewGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .streaksRow {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}
+
+/* Recent Orders */
+@media (max-width: 768px) {
+  .recentOrderItem {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  
+  .orderTime {
+    display: none;
+  }
+}
+
+/* Stats Grid */
+@media (max-width: 1400px) {
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.65rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+  }
+  
+  .statCard {
+    padding: 0.8rem;
+  }
+  
+  .statInfo h3 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .statsGrid {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  
+  .statCard {
+    padding: 0.7rem 0.5rem;
+    min-width: 110px;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+  
+  .statIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+  
+  .statInfo h3 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Main responsive */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .dashboard::before {
+    opacity: 0.5;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header h1 {
+    font-size: 1.75rem;
+  }
+
+  .header h1::after {
+    width: 40px;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .cleanupBtn,
+  .settingsBtn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .statsGrid {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.75rem;
+  }
+
+  .statCard {
+    padding: 0.65rem 0.5rem;
+    min-height: 80px;
+    min-width: 100px;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  .statIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .statInfo h3 {
+    font-size: 1.1rem;
+  }
+
+  .statInfo p {
+    font-size: 0.55rem;
+    letter-spacing: 0.4px;
+  }
+
+  .serversGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sectionHeader h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Section Controls */
+  .sectionControls {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .viewToggleBtn,
+  .autoPingBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .serversGrid.compactView {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  
+  /* Toast */
+  .toast {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
+  
+  @keyframes slideIn {
+    from {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideOut {
+    from {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  }
+  
+  /* Profit Table */
+  .monthSelector {
+    padding: 0.5rem;
+  }
+
+  .monthDisplay {
+    min-width: 100px;
+  }
+
+  .monthName {
+    font-size: 1rem;
+  }
+
+  .profitTableRow {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .profitStats {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+

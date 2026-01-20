@@ -1,0 +1,130 @@
+/**
+ * Orders - Мультивалютность
+ * Multi-currency card styles
+ */
+
+/* 💱 Multi-Currency Support Styles */
+.multiCurrencyCard {
+  grid-column: span 1;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%);
+  position: relative;
+  padding: 4px 8px;
+}
+
+/* Увеличенные отступы для мультивалютной карточки в режиме "все сервера" */
+.statCard.allServers.multiCurrencyCard {
+  padding: 12px 18px;
+}
+
+.multiCurrencyCard::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1px;
+  pointer-events: none;
+}
+
+.currencyBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+/* Увеличенные отступы для режима "все сервера" */
+.statCard.allServers .currencyBreakdown {
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.currencyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Увеличенные строки валют для режима "все сервера" */
+.statCard.allServers .currencyRow {
+  padding: 6px 10px;
+  gap: 8px;
+  border-radius: 10px;
+}
+
+.currencyRow::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #6366f1, #8b5cf6);
+}
+
+.currencyRow:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  transform: translateX(4px);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.currencyLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Увеличенные лейблы валют для режима "все сервера" */
+.statCard.allServers .currencyLabel {
+  font-size: 12px;
+  min-width: 60px;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.currencyValue {
+  font-size: 14px;
+  font-weight: 700;
+  flex: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Увеличенные значения валют для режима "все сервера" */
+.statCard.allServers .currencyValue {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.currencyOrders {
+  font-size: 10px;
+  color: #64748b;
+  opacity: 0.7;
+  font-weight: 500;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Увеличенные счетчики ордеров для режима "все сервера" */
+.statCard.allServers .currencyOrders {
+  font-size: 11px;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+

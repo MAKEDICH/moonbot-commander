@@ -1,0 +1,153 @@
+/**
+ * TradingStats - Секции и сетки
+ * Section, charts grid, tables grid
+ */
+
+/* === СЕКЦИИ === */
+.section {
+  margin-bottom: 20px;
+  background: rgba(20, 20, 35, 0.7);
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.section h2 {
+  margin: 0 0 10px 0;
+  color: #00ff88;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* === ДВУХКОЛОНОЧНАЯ СЕТКА ДЛЯ ГРАФИКОВ === */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* === ТРЁХКОЛОНОЧНАЯ СЕТКА ДЛЯ ТАБЛИЦ === */
+.tablesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tablesGrid > * {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* === ТОП СДЕЛОК === */
+.topDeals {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+/* === AI ИНСАЙТЫ === */
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.insightCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.06), rgba(118, 75, 162, 0.04));
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.insightCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.12);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.insightIcon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.insightText {
+  color: #b0b0b0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.insightText strong {
+  color: #00ff88;
+  font-weight: 600;
+}
+
+/* === СРАВНЕНИЕ ПЕРИОДОВ === */
+.comparisonBlock {
+  margin-top: 20px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.comparisonTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #00ff88;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.comparisonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.comparisonCard {
+  padding: 14px;
+  background: rgba(0, 255, 136, 0.04);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.comparisonLabel {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.comparisonValue {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.comparisonDetail {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+

@@ -1,0 +1,344 @@
+.container {
+  padding: 2rem;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0 0;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.serverSelect,
+.metricSelect {
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 180px;
+}
+
+.serverSelect:hover,
+.metricSelect:hover {
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+.serverSelect:focus,
+.metricSelect:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.4);
+}
+
+.refreshBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border: none;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.noData {
+  text-align: center;
+  padding: 3rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12px;
+  color: var(--text-secondary);
+}
+
+/* Статистика */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  transition: all 0.3s;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+  border-color: var(--accent-secondary);
+}
+
+.statIcon {
+  font-size: 2.5rem;
+  color: var(--accent-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statContent {
+  flex: 1;
+}
+
+.statLabel {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.statValue {
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.statSubValue {
+  color: var(--accent-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Heatmap таблица */
+.heatmapSection {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.heatmapWrapper {
+  overflow-x: auto;
+}
+
+.heatmapTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 1px;
+  table-layout: fixed;
+}
+
+.heatmapTable thead {
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  z-index: 10;
+}
+
+.cornerCell {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 0.4rem 0.25rem;
+  text-align: center;
+  border: 1px solid var(--accent-primary);
+  border-radius: 4px;
+  width: 60px;
+  font-size: 0.75rem;
+}
+
+.hourCell {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 0.4rem 0.15rem;
+  text-align: center;
+  border: 1px solid var(--accent-primary);
+  border-radius: 4px;
+  width: calc((100% - 60px) / 24);
+  min-width: 35px;
+  font-size: 0.7rem;
+}
+
+.dayCell {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 0.4rem 0.25rem;
+  text-align: center;
+  border: 1px solid var(--accent-primary);
+  border-radius: 4px;
+  white-space: nowrap;
+  width: 60px;
+  font-size: 0.75rem;
+}
+
+.heatCell {
+  padding: 0;
+  text-align: center;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: calc((100% - 60px) / 24);
+  min-width: 35px;
+  height: 35px;
+  position: relative;
+}
+
+.heatCell:hover {
+  transform: scale(1.15);
+  z-index: 5;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+  border-color: var(--accent-secondary);
+}
+
+.cellValue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 35px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Легенда */
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12px;
+}
+
+.legendTitle {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-right: 1rem;
+}
+
+.legendItems {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.legendColor {
+  width: 30px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--accent-primary);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .heatmapWrapper {
+    overflow-x: scroll;
+  }
+
+  .heatmapTable {
+    min-width: 1400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .controls {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .serverSelect,
+  .metricSelect,
+  .refreshBtn {
+    width: 100%;
+  }
+
+  .statsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .legend {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .legendItems {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+

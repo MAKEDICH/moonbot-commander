@@ -1,0 +1,238 @@
+/**
+ * Orders - Таблица ордеров
+ * Table wrapper, table styles, rows, cells
+ */
+
+.tableWrapper {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.ordersTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 1000px;
+}
+
+.ordersTable thead {
+  background: linear-gradient(135deg, rgba(13, 25, 45, 0.95) 0%, rgba(17, 30, 50, 0.95) 100%);
+  border-bottom: 2px solid var(--accent-primary);
+}
+
+.ordersTable thead tr {
+  background: rgba(0, 245, 255, 0.05);
+  border-bottom: 2px solid var(--accent-primary);
+}
+
+.ordersTable th {
+  padding: 12px 10px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  color: var(--accent-primary);
+  position: relative;
+}
+
+.ordersTable tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.2s;
+}
+
+.ordersTable tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.ordersTable td {
+  padding: 10px;
+  font-size: 13px;
+  vertical-align: middle;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Sticky колонка (только ID) */
+.stickyCol {
+  position: sticky !important;
+  left: 0 !important;
+  background: var(--bg-secondary) !important;
+  z-index: 10 !important;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.ordersTable tbody td.stickyCol {
+  z-index: 5 !important;
+}
+
+/* Открытый ордер */
+.openOrder {
+  background: rgba(0, 255, 136, 0.05) !important;
+  border-left: 3px solid #00ff88;
+}
+
+.openOrder:hover {
+  background: rgba(0, 255, 136, 0.1) !important;
+}
+
+/* Кликабельная строка для открытия графика */
+.clickableRow {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clickableRow:hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.clickableRow:active {
+  background: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Cell styles */
+.orderId {
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.statusOpen {
+  background: rgba(255, 99, 71, 0.2);
+  color: #ff6347;
+  border: 1px solid #ff6347;
+}
+
+.statusClosed {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  border: 1px solid #00ff88;
+}
+
+.symbol {
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.price {
+  font-family: 'Courier New', monospace;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.quantity {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.btc {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.percent {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.profitPositive {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+}
+
+.profitNegative {
+  color: #f43f5e;
+  text-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
+}
+
+.strategy code {
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.botName {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  color: var(--accent-secondary);
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Новые колонки */
+.signalType {
+  font-size: 12px;
+  color: var(--accent-primary);
+}
+
+.so {
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.latency {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  color: var(--text-secondary);
+}
+
+.taskId {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.delta {
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Бейджи для эмулятора */
+.emulatorBadge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #9945FF, #14F195);
+  color: white;
+  white-space: nowrap;
+}
+
+.realBadge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  white-space: nowrap;
+}
+
+

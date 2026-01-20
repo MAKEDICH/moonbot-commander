@@ -1,0 +1,110 @@
+/**
+ * Dashboard - Компактный вид
+ * Стили для компактного отображения серверов
+ */
+
+/* === COMPACT VIEW STYLES === */
+/* Компактный вид серверов */
+.serversGrid.compactView {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.serverCard.compact {
+  padding: 0.75rem;
+}
+
+.serverCard.compact .serverHeader {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.serverCard.compact .serverName {
+  font-size: 0.85rem;
+}
+
+.serverCard.compact .serverStatus {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.6rem;
+}
+
+.serverCard.compact .serverDetails {
+  gap: 0.4rem;
+}
+
+.serverCard.compact .serverDetail {
+  font-size: 0.75rem;
+}
+
+.serverCard.compact .serverDetail span:first-child {
+  display: none;
+}
+
+.serverCard.compact .serverDetail span:last-child {
+  font-size: 0.7rem;
+}
+
+/* Компактная информация - горизонтальная строка */
+.compactInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  margin-top: 0.4rem;
+}
+
+.compactGroup {
+  color: var(--accent-primary);
+  font-weight: 600;
+  background: rgba(0, 245, 255, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.compactTime {
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+.compactVersion {
+  color: var(--accent-primary);
+  font-weight: 500;
+  background: rgba(0, 245, 255, 0.08);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  font-size: 0.6rem;
+  border: 1px solid rgba(0, 245, 255, 0.2);
+}
+
+.compactBotStatusIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.compactBotStatusIcon.compactRunning {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+.compactBotStatusIcon.compactStopped {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+
