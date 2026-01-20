@@ -1,0 +1,347 @@
+/**
+ * StrategyCompare - Боковая панель
+ * Sidebar, server section, manual input, color picker
+ */
+
+/* ===== Боковая панель ===== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(99, 102, 241, 0.2);
+    padding: 24px;
+    padding-top: 70px;
+    transform: translateX(440px);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    z-index: 999;
+    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+.sidebarTitle {
+    margin: 0 0 24px 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+}
+
+/* ===== Секция сервера ===== */
+.serverSection {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 16px;
+}
+
+.serverSection h3 {
+    margin: 0 0 14px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #a5b4fc;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.serverSelect {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 12px;
+    color: #e2e8f0;
+    font-size: 14px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.serverSelect:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+.serverSelect:focus {
+    outline: none;
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.serverButtons {
+    display: flex;
+    gap: 10px;
+}
+
+.loadButton {
+    flex: 1;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+.loadButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+}
+
+.loadButton:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.loadButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.progressWrapper {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 10px;
+}
+
+.progressBar {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progressBar::-webkit-progress-bar {
+    background: rgba(99, 102, 241, 0.2);
+    border-radius: 3px;
+}
+
+.progressBar::-webkit-progress-value {
+    background: linear-gradient(90deg, #818cf8, #c084fc);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.progressText {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #a5b4fc;
+    text-align: center;
+}
+
+/* ===== Разделитель ===== */
+.divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+    margin: 24px 0;
+}
+
+/* ===== Кнопки управления ===== */
+.controlButtons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.parseButton {
+    flex: 1;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.parseButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+}
+
+.clearButton {
+    padding: 14px 18px;
+    background: transparent;
+    color: #f87171;
+    border: 2px solid rgba(248, 113, 113, 0.4);
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.clearButton:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: #f87171;
+}
+
+/* ===== Ручной ввод ===== */
+.manualSection {
+    margin-bottom: 24px;
+}
+
+.manualSection p {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #a5b4fc;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.manualTextarea {
+    width: 100%;
+    height: 140px;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 12px;
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    resize: vertical;
+    transition: all 0.2s ease;
+    line-height: 1.6;
+}
+
+.manualTextarea::placeholder {
+    color: #64748b;
+}
+
+.manualTextarea:focus {
+    outline: none;
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* ===== Палитра цветов ===== */
+.colorSection {
+    padding: 20px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 16px;
+}
+
+.colorRow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.colorRow:last-child {
+    margin-bottom: 0;
+}
+
+.colorRow label {
+    flex: 1;
+    font-size: 14px;
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+.colorInput {
+    width: 60px;
+    height: 44px;
+    border: 2px solid rgba(99, 102, 241, 0.3);
+    border-radius: 10px;
+    cursor: pointer;
+    padding: 4px;
+    background: rgba(15, 23, 42, 0.6);
+    transition: all 0.2s ease;
+}
+
+.colorInput:hover {
+    border-color: #818cf8;
+    transform: scale(1.05);
+}
+
+/* ===== Кнопка с анимацией огня ===== */
+.parseButtonFire {
+    animation: fireGlow 1s ease-in-out infinite alternate;
+    background: linear-gradient(135deg, #f97316 0%, #ef4444 50%, #f97316 100%);
+    box-shadow: 
+        0 0 20px rgba(249, 115, 22, 0.6),
+        0 0 40px rgba(239, 68, 68, 0.4),
+        0 0 60px rgba(249, 115, 22, 0.2);
+}
+
+.parseButtonFire::before {
+    content: '🔥';
+    margin-right: 8px;
+    animation: fireFlicker 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes fireGlow {
+    0% {
+        box-shadow: 
+            0 0 20px rgba(249, 115, 22, 0.6),
+            0 0 40px rgba(239, 68, 68, 0.4),
+            0 0 60px rgba(249, 115, 22, 0.2);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 
+            0 0 30px rgba(249, 115, 22, 0.8),
+            0 0 60px rgba(239, 68, 68, 0.6),
+            0 0 80px rgba(249, 115, 22, 0.4);
+        transform: scale(1.02);
+    }
+}
+
+@keyframes fireFlicker {
+    0% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
+/* ===== Счётчик стратегий ===== */
+.strategiesCounter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: 12px;
+    margin: 16px 0;
+}
+
+.counterIcon {
+    font-size: 20px;
+}
+
+.counterText {
+    font-size: 14px;
+    color: #6ee7b7;
+}
+
+.counterText strong {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10b981;
+    margin-left: 4px;
+}
+

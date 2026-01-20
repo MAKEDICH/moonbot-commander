@@ -1,0 +1,55 @@
+/**
+ * Dashboard - Toast уведомления
+ * Стили для Toast уведомлений
+ */
+
+/* === TOAST NOTIFICATIONS === */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out, slideOut 0.3s ease-in 2.7s;
+  z-index: 10000;
+  max-width: 400px;
+  backdrop-filter: blur(10px);
+}
+
+.toast.success {
+  background: rgba(0, 255, 136, 0.9);
+  color: #000;
+  border: 1px solid #00ff88;
+}
+
+.toast.error {
+  background: rgba(255, 0, 85, 0.9);
+  color: #fff;
+  border: 1px solid #ff0055;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+

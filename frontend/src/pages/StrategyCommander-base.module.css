@@ -1,0 +1,56 @@
+/**
+ * StrategyCommander - Базовые стили
+ * Контейнер, header, кнопки, анимации
+ */
+
+.container {
+  animation: fadeIn 0.3s ease-out;
+  padding-bottom: 40px;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Заголовок */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--accent-gradient);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  transition: var(--transition);
+}
+
+.backButton:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+

@@ -1,0 +1,194 @@
+/**
+ * ScheduledCommands - Настройки
+ * Settings Modal, intervals, control info
+ */
+
+/* Settings Modal Styles */
+.settingsSection {
+  margin: 1.5rem 0;
+}
+
+.settingsSection label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.intervalInput {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.intervalInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.settingsInfo {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.settingsInfo h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: var(--primary-color);
+  font-size: 0.95rem;
+}
+
+.controlInfo {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(0, 245, 255, 0.05);
+  border: 2px solid rgba(0, 245, 255, 0.2);
+  border-radius: 12px;
+}
+
+.controlInfo h4 {
+  color: var(--accent-primary);
+  margin-bottom: 1rem;
+}
+
+.controlInfo ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.controlInfo li {
+  margin: 0.75rem 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.warningText {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 71, 87, 0.1);
+  border-left: 4px solid #ff4757;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.intervalTable {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tableRow {
+  display: flex;
+  gap: 1rem;
+  padding: 0.4rem;
+  background: rgba(79, 209, 197, 0.05);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.tableLabel {
+  font-weight: 600;
+  min-width: 90px;
+  color: var(--primary-color);
+  font-size: 0.85rem;
+}
+
+.infoText {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: rgba(79, 209, 197, 0.1);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* Smart Mode Info Styles */
+.smartModeInfo {
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modeStep {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem;
+  background: rgba(79, 209, 197, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.stepIcon {
+  font-size: 1.5rem;
+  min-width: 35px;
+  text-align: center;
+}
+
+.modeStep strong {
+  display: block;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.modeStep p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  font-size: 0.85rem;
+}
+
+.benefitsBox {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(79, 209, 197, 0.1), rgba(102, 126, 234, 0.1));
+  border-radius: 8px;
+  border: 2px solid var(--primary-color);
+}
+
+.benefitsBox h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: var(--primary-color);
+  font-size: 0.95rem;
+}
+
+.benefitsBox ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.benefitsBox li {
+  margin: 0.5rem 0;
+  line-height: 1.4;
+  position: relative;
+  padding-left: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.benefitsBox li::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 0.4rem;
+  width: 5px;
+  height: 5px;
+  background: var(--primary-color);
+  border-radius: 50%;
+}
+
+

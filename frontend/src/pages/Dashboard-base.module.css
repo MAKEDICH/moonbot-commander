@@ -1,0 +1,379 @@
+/**
+ * Dashboard - Базовые стили
+ * Контейнеры, layout, header, базовые элементы
+ */
+
+/* === DASHBOARD === */
+.dashboard {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.dashboard::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(0, 245, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(180, 0, 255, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(255, 0, 85, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header h1 {
+  font-size: 2.25rem;
+  background: linear-gradient(135deg, #00f5ff 0%, #b400ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  position: relative;
+}
+
+.header h1::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #00f5ff, #b400ff);
+  border-radius: 2px;
+}
+
+/* Header Actions Container */
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.settingsBtn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  color: var(--accent-primary);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.settingsBtn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(0, 245, 255, 0.3) 0%, transparent 70%);
+  transition: width 0.5s, height 0.5s;
+  transform: translate(-50%, -50%);
+}
+
+.settingsBtn:hover {
+  background: rgba(0, 245, 255, 0.05);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 245, 255, 0.5);
+}
+
+.settingsBtn:hover::before {
+  width: 200%;
+  height: 200%;
+}
+
+/* === LOADING === */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(0, 245, 255, 0.1);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === SECTION === */
+.section {
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -2rem;
+  right: -2rem;
+  height: 100px;
+  background: radial-gradient(ellipse at center, rgba(0, 245, 255, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.sectionHeader h2 {
+  font-size: 1.75rem;
+  background: linear-gradient(135deg, #ffffff 0%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+.sectionControls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section h2 {
+  font-size: 1.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+/* === DASHBOARD GRID LAYOUT === */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.dashboardColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* === SECTION BADGES === */
+.sectionBadge {
+  padding: 0.35rem 0.75rem;
+  background: rgba(0, 245, 255, 0.1);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  color: #00f5ff;
+  font-weight: 600;
+}
+
+/* === PERIOD DROPDOWN === */
+.periodDropdownWrapper {
+  position: relative;
+}
+
+.periodDropdownBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(0, 245, 255, 0.1);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  color: #00f5ff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.periodDropdownBtn:hover {
+  background: rgba(0, 245, 255, 0.2);
+  border-color: rgba(0, 245, 255, 0.5);
+}
+
+.periodDropdownBtn svg {
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+}
+
+.periodDropdownBtn svg.rotated {
+  transform: rotate(180deg);
+}
+
+.periodDropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 140px;
+  background: linear-gradient(180deg, rgba(20, 25, 35, 0.98), rgba(15, 18, 25, 0.98));
+  border: 1px solid rgba(0, 245, 255, 0.2);
+  border-radius: 10px;
+  padding: 0.4rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  animation: periodDropdownFadeIn 0.15s ease;
+}
+
+@keyframes periodDropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.periodDropdownItem {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.periodDropdownItem:hover {
+  background: rgba(0, 245, 255, 0.1);
+  color: #00f5ff;
+}
+
+.periodDropdownItem.active {
+  background: rgba(0, 245, 255, 0.15);
+  color: #00f5ff;
+  font-weight: 600;
+}
+
+.loadingSection {
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.emptySection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.emptySection svg {
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.emptySection p {
+  margin: 0;
+}
+
+.errorSection {
+  padding: 2rem;
+  text-align: center;
+  color: #ff0055;
+}
+
+/* Form Elements */
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.formGroup small {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 245, 255, 0.05);
+  border: 1px solid rgba(0, 245, 255, 0.3);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: rgba(0, 245, 255, 0.1);
+  box-shadow: 0 0 15px rgba(0, 245, 255, 0.2);
+}
+
+

@@ -1,0 +1,162 @@
+/**
+ * Balances - Таблица
+ * Table container, table styles, sorting
+ */
+
+.tableContainer {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 
+    0 10px 30px -10px rgba(0, 0, 0, 0.15),
+    0 5px 15px -5px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  position: relative;
+}
+
+.tableContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.1) 20%, 
+    rgba(255, 255, 255, 0.1) 80%, 
+    transparent
+  );
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background: var(--bg-tertiary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.table thead th {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.table thead th:nth-child(4),
+.table thead th:nth-child(5) {
+  min-width: 180px;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  position: relative;
+  padding-right: 30px !important;
+}
+
+.sortable:hover {
+  color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sortable:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sortIcon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+  color: var(--accent-primary);
+}
+
+.sortable:hover .sortIcon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+  position: relative;
+  animation: slideInFromLeft 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+.table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+.table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+.table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+.table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.table tbody tr::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.05) 10%, 
+    rgba(255, 255, 255, 0.05) 90%, 
+    transparent
+  );
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+  transform: translateX(4px);
+  box-shadow: 
+    inset 4px 0 0 0 var(--accent-primary),
+    0 4px 12px -4px rgba(0, 0, 0, 0.1);
+}
+
+.table tbody tr:hover::after {
+  transform: scaleX(1);
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.inactiveRow {
+  opacity: 0.5;
+}
+
+

@@ -1,0 +1,117 @@
+/**
+ * StrategyCommander - Confirm Dialog
+ * Модальное окно подтверждения
+ */
+
+/* Confirm Dialog */
+.confirmOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.2s ease-out;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirmDialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: scaleIn 0.3s ease-out;
+}
+
+.confirmHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.confirmIcon {
+  font-size: 24px;
+  color: var(--accent-secondary);
+}
+
+.confirmHeader h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.confirmBody {
+  margin-bottom: 24px;
+}
+
+.confirmBody p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirmCancel,
+.confirmOk {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.confirmCancel {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.confirmCancel:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.confirmOk {
+  background: var(--accent-gradient);
+  color: white;
+  border: none;
+}
+
+.confirmOk:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+

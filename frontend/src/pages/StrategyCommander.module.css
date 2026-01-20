@@ -1,0 +1,25 @@
+/**
+ * StrategyCommander - Главный файл стилей
+ * Объединяет все модули стилей для страницы StrategyCommander
+ * 
+ * Структура:
+ * - StrategyCommander-base.module.css - базовые стили, header
+ * - StrategyCommander-toast.module.css - toast уведомления
+ * - StrategyCommander-confirm.module.css - confirm dialog
+ * - StrategyCommander-input.module.css - секция ввода
+ * - StrategyCommander-selectors.module.css - селекторы
+ * - StrategyCommander-table.module.css - таблица
+ * - StrategyCommander-commands.module.css - пак команд
+ * - StrategyCommander-history.module.css - история
+ * - StrategyCommander-responsive.module.css - адаптивные стили
+ */
+
+@import './StrategyCommander-base.module.css';
+@import './StrategyCommander-toast.module.css';
+@import './StrategyCommander-confirm.module.css';
+@import './StrategyCommander-input.module.css';
+@import './StrategyCommander-selectors.module.css';
+@import './StrategyCommander-table.module.css';
+@import './StrategyCommander-commands.module.css';
+@import './StrategyCommander-history.module.css';
+@import './StrategyCommander-responsive.module.css';

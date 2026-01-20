@@ -1,0 +1,12 @@
+/**
+ * Groups - Главный файл стилей
+ * 
+ * Страница управления группами серверов.
+ * Импортирует все подмодули стилей.
+ */
+
+@import './Groups-base.module.css';
+@import './Groups-cards.module.css';
+@import './Groups-servers.module.css';
+@import './Groups-modal.module.css';
+@import './Groups-responsive.module.css';

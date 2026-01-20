@@ -1,0 +1,140 @@
+/**
+ * Useful - Прогресс и уведомления
+ * Progress bars, error messages, warnings
+ */
+
+/* ===== Прогресс ===== */
+.progressCard {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.progressWrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.progressBar {
+    width: 280px;
+    height: 16px;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progressBar::-webkit-progress-bar {
+    background: #0b1326;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+}
+
+.progressBar::-webkit-progress-value {
+    background: linear-gradient(90deg, #22c55e 0%, #38bdf8 100%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progressBar::-moz-progress-bar {
+    background: linear-gradient(90deg, #22c55e 0%, #38bdf8 100%);
+    border-radius: 10px;
+}
+
+.progressText {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* Прогресс загрузки дат листинга */
+.listingProgressWrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #1f2937;
+}
+
+.listingProgressText {
+    font-size: 11px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.listingProgressBar {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.listingProgressBar::-webkit-progress-bar {
+    background: #0b1326;
+    border-radius: 3px;
+}
+
+.listingProgressBar::-webkit-progress-value {
+    background: linear-gradient(90deg, #f59e0b 0%, #eab308 100%);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.listingProgressBar::-moz-progress-bar {
+    background: linear-gradient(90deg, #f59e0b 0%, #eab308 100%);
+    border-radius: 3px;
+}
+
+.errorMessage {
+    margin-top: 12px;
+    padding: 12px;
+    background: #2a0f14;
+    border: 1px solid #7f1d1d;
+    border-radius: 8px;
+    color: #ef4444;
+    font-size: 13px;
+    white-space: pre-wrap;
+}
+
+/* ===== Предупреждения ===== */
+.warningCard {
+    background: #1a1a0f;
+    border: 1px solid #78350f;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+}
+
+.warningDetails {
+    cursor: pointer;
+}
+
+.warningSummary {
+    color: #fbbf24;
+    font-size: 13px;
+    font-weight: 500;
+    outline: none;
+}
+
+.warningSummary:hover {
+    color: #fcd34d;
+}
+
+.warningMessage {
+    margin-top: 8px;
+    padding: 8px;
+    background: #1f1f14;
+    border-radius: 4px;
+    color: #d97706;
+    font-size: 12px;
+    white-space: pre-wrap;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+

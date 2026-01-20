@@ -1,0 +1,282 @@
+/**
+ * Стили для компонента выбора серверов
+ */
+
+/* ========== SERVER SELECTOR ========== */
+.serverSection {
+    background: linear-gradient(165deg, 
+        rgba(17, 12, 46, 0.98) 0%, 
+        rgba(30, 27, 75, 0.85) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, 
+        rgba(124, 58, 237, 0.15), 
+        rgba(139, 92, 246, 0.08));
+    transition: all 0.3s;
+}
+
+.sectionHeader:hover .toggleBtn {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 800;
+    color: #e0e7ff;
+}
+
+.cardTitle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #e0e7ff;
+}
+
+.toggleBtn {
+    background: linear-gradient(135deg, 
+        rgba(124, 58, 237, 0.2), 
+        rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    color: #a78bfa;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggleBtn:hover {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+}
+
+.sectionBody {
+    padding: 22px;
+}
+
+.serverControls {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.searchBox {
+    flex: 1;
+    min-width: 240px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(165deg, 
+        rgba(0, 0, 0, 0.4), 
+        rgba(17, 12, 46, 0.6));
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 14px;
+    padding: 0 16px;
+    transition: all 0.3s ease;
+}
+
+.searchBox:focus-within {
+    border-color: rgba(139, 92, 246, 0.6);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1), 0 0 25px rgba(139, 92, 246, 0.15);
+}
+
+.searchBox input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #e0e7ff;
+    padding: 14px 0;
+    font-size: 14px;
+}
+
+.searchBox input:focus {
+    outline: none;
+}
+
+.searchBox input::placeholder {
+    color: rgba(167, 139, 250, 0.5);
+}
+
+.searchBox svg {
+    color: #a78bfa;
+    font-size: 20px;
+}
+
+.quickBtns {
+    display: flex;
+    gap: 12px;
+}
+
+.quickBtns button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    background: linear-gradient(135deg, 
+        rgba(124, 58, 237, 0.2), 
+        rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    border-radius: 14px;
+    color: #c4b5fd;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quickBtns button:hover {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+}
+
+.serverList {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.serverList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.serverList::-webkit-scrollbar-track {
+    background: rgba(17, 12, 46, 0.5);
+    border-radius: 3px;
+}
+
+.serverList::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #7c3aed, #a855f7);
+    border-radius: 3px;
+}
+
+.serverGroup {
+    background: linear-gradient(165deg, 
+        rgba(30, 27, 75, 0.6), 
+        rgba(49, 46, 129, 0.3));
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 18px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.serverGroup:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.1);
+}
+
+.groupHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, 
+        rgba(124, 58, 237, 0.1), 
+        rgba(139, 92, 246, 0.05));
+    cursor: pointer;
+    font-weight: 800;
+    color: #c4b5fd;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    transition: all 0.2s;
+}
+
+.groupHeader:hover {
+    background: linear-gradient(135deg, 
+        rgba(124, 58, 237, 0.2), 
+        rgba(139, 92, 246, 0.1));
+}
+
+.groupHeader input {
+    width: 20px;
+    height: 20px;
+    accent-color: #7c3aed;
+}
+
+.groupCount {
+    margin-left: auto;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 5px 14px;
+    border-radius: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.serverItems {
+    padding: 12px 20px 16px 50px;
+}
+
+.serverItem {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
+}
+
+.serverItem:hover {
+    background: linear-gradient(90deg, 
+        rgba(139, 92, 246, 0.15), 
+        transparent);
+    transform: translateX(6px);
+}
+
+.serverItem input {
+    width: 18px;
+    height: 18px;
+    accent-color: #7c3aed;
+}
+
+.serverName {
+    flex: 1;
+    font-size: 14px;
+    color: #e0e7ff;
+    font-weight: 600;
+}
+
+.serverHost {
+    font-size: 11px;
+    color: rgba(167, 139, 250, 0.6);
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+
+.serverCount {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+

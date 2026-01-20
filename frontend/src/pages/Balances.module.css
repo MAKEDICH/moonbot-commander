@@ -1,0 +1,21 @@
+/**
+ * Balances - Главный файл стилей
+ * Объединяет все модули стилей для страницы Balances
+ * 
+ * Структура:
+ * - Balances-base.module.css - базовые стили, header
+ * - Balances-controls.module.css - элементы управления
+ * - Balances-table.module.css - таблица
+ * - Balances-cells.module.css - ячейки таблицы
+ * - Balances-status.module.css - статусы
+ * - Balances-footer.module.css - footer
+ * - Balances-responsive.module.css - адаптивные стили
+ */
+
+@import './Balances-base.module.css';
+@import './Balances-controls.module.css';
+@import './Balances-table.module.css';
+@import './Balances-cells.module.css';
+@import './Balances-status.module.css';
+@import './Balances-footer.module.css';
+@import './Balances-responsive.module.css';

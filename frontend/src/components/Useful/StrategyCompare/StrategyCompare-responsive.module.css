@@ -1,0 +1,93 @@
+/**
+ * StrategyCompare - Адаптивные стили
+ * Все @media запросы для адаптивности
+ */
+
+/* ===== Адаптивность ===== */
+@media (max-width: 1200px) {
+    .sidebar {
+        width: 380px;
+    }
+    
+    .mainContent.shifted {
+        padding-right: 420px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        transform: translateX(100%);
+    }
+    
+    .mainContent {
+        padding-right: 24px;
+    }
+    
+    .mainContent.shifted {
+        padding-right: 24px;
+    }
+    
+    .titleRow {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .controlsRow {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .baselineSelect {
+        width: 100%;
+    }
+    
+    /* Адаптивность для секции отправки */
+    .serverControls {
+        flex-direction: column;
+    }
+    
+    .serverSearchBox {
+        min-width: 100%;
+    }
+    
+    .quickSelectBtns {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .quickSelectBtn {
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .commandPackActions {
+        flex-direction: column;
+    }
+    
+    .generateBtn,
+    .copyBtn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .serverItems {
+        padding-left: 20px;
+    }
+    
+    .serverItem {
+        flex-wrap: wrap;
+    }
+    
+    .serverHost {
+        width: 100%;
+        margin-left: 26px;
+        margin-top: 2px;
+    }
+    
+    .sendResultCommand {
+        max-width: 100%;
+    }
+}
+
+

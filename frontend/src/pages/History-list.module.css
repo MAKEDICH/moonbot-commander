@@ -1,0 +1,195 @@
+/**
+ * History - Стили списка истории
+ * 
+ * Содержит стили для списка записей истории и их элементов.
+ */
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: listFadeIn 0.5s ease-out;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes listFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.historyItem {
+  background: linear-gradient(135deg,
+    rgba(30, 30, 40, 0.6),
+    rgba(40, 30, 50, 0.4)
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  animation: itemSlide 0.4s ease-out backwards;
+  z-index: 1;
+}
+
+.historyItem:nth-child(1) { animation-delay: 0.05s; }
+.historyItem:nth-child(2) { animation-delay: 0.1s; }
+.historyItem:nth-child(3) { animation-delay: 0.15s; }
+.historyItem:nth-child(4) { animation-delay: 0.2s; }
+.historyItem:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes itemSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.historyItem::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0, 255, 255, 0.3),
+    rgba(255, 0, 136, 0.3),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.historyItem:hover {
+  border-color: rgba(0, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+              0 0 0 1px rgba(0, 255, 255, 0.1) inset;
+  transform: translateY(-2px);
+  z-index: 2;
+}
+
+.historyItem:hover::before {
+  opacity: 1;
+}
+
+.itemHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.itemServer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(0, 255, 255, 0.05);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #00f5ff;
+  transition: all 0.3s ease;
+}
+
+.itemServer:hover {
+  background: rgba(0, 255, 255, 0.1);
+  transform: scale(1.02);
+}
+
+.itemServer svg {
+  font-size: 18px;
+  background: linear-gradient(135deg, #00f5ff, #00b3cc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.itemTime {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  letter-spacing: 0.3px;
+}
+
+.itemStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: auto;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.itemStatus::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.itemStatus:hover::before {
+  opacity: 0.3;
+}
+
+.itemStatus.success {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 100, 0.1));
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.itemStatus.success::before {
+  background: radial-gradient(circle, rgba(0, 255, 136, 0.4), transparent);
+}
+
+.itemStatus.error {
+  background: linear-gradient(135deg, rgba(255, 0, 85, 0.1), rgba(255, 0, 136, 0.1));
+  color: #ff0055;
+  border: 1px solid rgba(255, 0, 85, 0.2);
+}
+
+.itemStatus.error::before {
+  background: radial-gradient(circle, rgba(255, 0, 85, 0.4), transparent);
+}
+
+.itemStatus svg {
+  font-size: 16px;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+

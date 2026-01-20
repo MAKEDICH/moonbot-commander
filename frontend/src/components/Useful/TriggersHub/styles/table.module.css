@@ -1,0 +1,183 @@
+/**
+ * Стили для таблицы (TableRow)
+ */
+
+.tableWrapper {
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 22px;
+    overflow: hidden;
+    background: linear-gradient(165deg, 
+        rgba(17, 12, 46, 0.98) 0%, 
+        rgba(30, 27, 75, 0.8) 100%);
+    backdrop-filter: blur(20px);
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.4),
+        inset 0 0 40px rgba(139, 92, 246, 0.03);
+}
+
+.tableScroll {
+    overflow: auto;
+    max-height: calc(100vh - 520px);
+}
+
+.tableScroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.tableScroll::-webkit-scrollbar-track {
+    background: rgba(17, 12, 46, 0.8);
+}
+
+.tableScroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #7c3aed, #a855f7);
+    border-radius: 5px;
+    border: 2px solid rgba(17, 12, 46, 0.8);
+}
+
+.tableScroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #8b5cf6, #c084fc);
+}
+
+.table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+    table-layout: auto;
+}
+
+.table th,
+.table td {
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+    padding: 16px 18px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table th {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(135deg, 
+        rgba(17, 12, 46, 0.99) 0%, 
+        rgba(30, 27, 75, 0.95) 100%);
+    z-index: 10;
+    font-weight: 800;
+    color: #c4b5fd;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 2px;
+    backdrop-filter: blur(10px);
+    text-shadow: 0 0 15px rgba(196, 181, 253, 0.3);
+}
+
+.table th,
+.table td {
+    width: auto;
+}
+
+.table th:first-child,
+.table td:first-child { 
+    width: 140px; 
+    max-width: 180px;
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+    color: #e0e7ff;
+}
+
+.table tbody tr:hover {
+    background: linear-gradient(90deg, 
+        rgba(139, 92, 246, 0.12), 
+        transparent 70%);
+}
+
+.trHit {
+    outline: 2px solid #fbbf24;
+    outline-offset: -2px;
+    background: linear-gradient(90deg, 
+        rgba(251, 191, 36, 0.15), 
+        transparent 70%) !important;
+    box-shadow: inset 0 0 30px rgba(251, 191, 36, 0.1);
+}
+
+.trSelected {
+    outline: 2px solid #06b6d4;
+    outline-offset: -2px;
+    background: linear-gradient(90deg, 
+        rgba(6, 182, 212, 0.15), 
+        transparent 70%) !important;
+    box-shadow: inset 0 0 30px rgba(6, 182, 212, 0.1);
+}
+
+.trChanged td {
+    color: #f472b6 !important;
+    font-weight: 700;
+    text-shadow: 0 0 15px rgba(244, 114, 182, 0.3);
+}
+
+/* ========== VALUE CELL ========== */
+.tdValue {
+    white-space: normal;
+    min-width: 350px;
+    width: 40%;
+}
+
+.valueTextarea {
+    width: 100%;
+    min-width: 280px;
+    background: linear-gradient(165deg, 
+        rgba(0, 0, 0, 0.5), 
+        rgba(17, 12, 46, 0.7));
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    color: #e0e7ff;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    resize: vertical;
+    min-height: 44px;
+    transition: all 0.3s ease;
+}
+
+.valueTextarea:focus {
+    outline: none;
+    border-color: rgba(139, 92, 246, 0.6);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1), 0 0 20px rgba(139, 92, 246, 0.15);
+}
+
+/* ========== NUMBERS CELL ========== */
+.tdNumbers {
+    white-space: normal;
+}
+
+.nums {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* ========== PAGINATION ========== */
+.pagination {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, 
+        rgba(17, 12, 46, 0.98), 
+        rgba(30, 27, 75, 0.9));
+    border-top: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.paginationInput {
+    width: 65px;
+    text-align: center;
+    background: rgba(17, 12, 46, 0.8);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #e0e7ff;
+    border-radius: 10px;
+    padding: 8px;
+}
+

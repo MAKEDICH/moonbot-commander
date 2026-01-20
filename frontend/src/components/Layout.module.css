@@ -1,0 +1,976 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.sidebar {
+  width: 280px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.logoSection {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.logoIcon {
+  width: 48px;
+  height: 48px;
+  color: var(--accent-primary);
+}
+
+.logoTextContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+}
+
+.logoText {
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.logoSubtext {
+  font-size: 20px;
+  font-weight: 500;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.5px;
+}
+
+.nav {
+  flex: 1;
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.navItem::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  height: 60%;
+  width: 3px;
+  background: linear-gradient(180deg, #00f5ff 0%, #b400ff 100%);
+  border-radius: 0 4px 4px 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navItem::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(180, 0, 255, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 12px;
+}
+
+.navItem:hover {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
+}
+
+.navItem:hover::after {
+  opacity: 1;
+}
+
+.navItem:hover::before {
+  transform: translateY(-50%) scaleY(1);
+}
+
+.navItem.active {
+  background: linear-gradient(135deg, rgba(0, 245, 255, 0.12) 0%, rgba(180, 0, 255, 0.08) 100%);
+  color: #00f5ff;
+  border-color: rgba(0, 245, 255, 0.2);
+  box-shadow: 
+    0 4px 20px -4px rgba(0, 245, 255, 0.15),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.navItem.active::before {
+  transform: translateY(-50%) scaleY(1);
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.5);
+}
+
+.navItem.active::after {
+  opacity: 0;
+}
+
+.navItem svg {
+  font-size: 20px;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.navItem:hover svg {
+  transform: scale(1.1);
+}
+
+/* Красный индикатор нового обновления */
+.updateBadge {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.6), 0 0 16px rgba(255, 68, 68, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: translateY(-50%) scale(1);
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.6), 0 0 16px rgba(255, 68, 68, 0.3);
+  }
+  50% {
+    transform: translateY(-50%) scale(1.2);
+    box-shadow: 0 0 12px rgba(255, 68, 68, 0.8), 0 0 24px rgba(255, 68, 68, 0.5);
+  }
+}
+
+.navItem.active svg {
+  filter: drop-shadow(0 0 6px rgba(0, 245, 255, 0.6));
+}
+
+.navItem span {
+  position: relative;
+  z-index: 1;
+}
+
+/* === DOCS SECTION === */
+.docsSection {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.12) 0%, rgba(0, 245, 255, 0.08) 100%);
+  border: 1px solid rgba(138, 43, 226, 0.2);
+  border-radius: 14px;
+  margin: auto 12px 12px 12px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.docsSection:hover {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.2) 0%, rgba(0, 245, 255, 0.12) 100%);
+  border-color: rgba(138, 43, 226, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(138, 43, 226, 0.2);
+}
+
+.docsSection:active {
+  transform: translateY(0);
+}
+
+.docsIcon {
+  font-size: 24px;
+  color: #a855f7;
+  flex-shrink: 0;
+}
+
+.docsText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.docsTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.docsSubtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* === SUPPORT SECTION === */
+.supportSection {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.supportSection:hover {
+  background: rgba(0, 245, 255, 0.05);
+  border-left-color: var(--accent-primary);
+  transform: translateX(2px);
+}
+
+.supportSection:active {
+  transform: translateX(4px);
+}
+
+.supportTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.supportWallet {
+  margin-bottom: 8px;
+}
+
+.supportWallet:last-child {
+  margin-bottom: 0;
+}
+
+.supportBadge {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: rgba(0, 245, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.supportAddress {
+  font-size: 9px;
+  font-family: 'Courier New', monospace;
+  color: var(--text-secondary);
+  word-break: break-all;
+  line-height: 1.3;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 245, 255, 0.1);
+}
+
+.userSection {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.userInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.userDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.username {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logoutBtn {
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logoutBtn:hover {
+  background: var(--bg-hover);
+  color: var(--error);
+}
+
+.logoutBtn svg {
+  font-size: 20px;
+}
+
+.changePasswordBtn {
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.changePasswordBtn:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.changePasswordBtn svg {
+  font-size: 20px;
+}
+
+/* Кнопка доната */
+.donateBtn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ff1493, #ff69b4);
+  color: white;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+  cursor: pointer;
+}
+
+.donateBtn:hover {
+  background: linear-gradient(135deg, #ff69b4, #ff1493);
+  box-shadow: 0 6px 20px rgba(255, 20, 147, 0.5);
+  transform: translateY(-2px) scale(1.05);
+  animation: heartbeat 1s ease-in-out infinite;
+}
+
+.donateBtn:active {
+  transform: translateY(0) scale(1);
+  box-shadow: 0 2px 8px rgba(255, 20, 147, 0.3);
+}
+
+.donateBtn svg {
+  font-size: 18px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Модальное окно доната */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.donateModal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.closeModalBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  z-index: 1;
+}
+
+.closeModalBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.donateHeader {
+  text-align: center;
+  padding: 32px 24px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.donateIcon {
+  font-size: 48px;
+  color: #ff1493;
+  margin-bottom: 16px;
+  animation: heartPulse 2s ease-in-out infinite;
+}
+
+@keyframes heartPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.donateHeader h2 {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff1493, #ff69b4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.donateContent {
+  padding: 32px 24px;
+}
+
+.thankYouText {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.donateDescription {
+  font-size: 15px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.walletSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.walletItem {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  transition: var(--transition);
+}
+
+.walletItem:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.1);
+}
+
+.walletLabel {
+  margin-bottom: 12px;
+}
+
+.networkBadge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: var(--accent-gradient);
+  color: white;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.walletAddress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.walletAddress code {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--accent-primary);
+  word-break: break-all;
+}
+
+.copyBtn {
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.copyBtn:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: scale(1.1);
+}
+
+.copyBtn svg {
+  font-size: 18px;
+}
+
+.donateFooter {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.trademark {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.telegramLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #0088cc 0%, #229ED9 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 136, 204, 0.3);
+}
+
+.telegramLink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 136, 204, 0.5);
+  background: linear-gradient(135deg, #229ED9 0%, #0088cc 100%);
+}
+
+.telegramLink:active {
+  transform: translateY(0);
+}
+
+.telegramGroupLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.telegramGroupLink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(135deg, #16213e 0%, #0f1419 100%);
+}
+
+.telegramGroupLink:active {
+  transform: translateY(0);
+}
+
+.telegramIcon {
+  font-size: 16px;
+  animation: float 2s ease-in-out infinite;
+}
+
+.moonbotIconSmall {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: middle;
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.secretText {
+  cursor: pointer;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(100, 100, 100, 0.5);
+  color: transparent;
+  user-select: none;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+}
+
+.secretText:hover {
+  background: rgba(120, 120, 120, 0.6);
+  transform: scale(1.02);
+}
+
+.secretText.revealed {
+  background: none;
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.secretText.revealed:hover {
+  transform: none;
+  background: none;
+}
+
+.main {
+  flex: 1;
+  margin-left: 280px;
+  padding: 32px;
+  width: calc(100% - 280px);
+}
+
+/* Mobile Responsive */
+
+/* Кнопка гамбургер-меню (показывается только на мобильных) */
+.mobileMenuToggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1001;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 24px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mobileMenuToggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 16px rgba(0, 245, 255, 0.3);
+}
+
+.mobileMenuToggle:active {
+  transform: scale(0.95);
+}
+
+/* Оверлей для мобильного меню */
+.mobileOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 999;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@media (max-width: 768px) {
+  /* Показываем кнопку гамбургера */
+  .mobileMenuToggle {
+    display: flex;
+  }
+
+  /* Показываем оверлей */
+  .mobileOverlay {
+    display: block;
+  }
+
+  /* Sidebar скрыт по умолчанию, выезжает слева */
+  .sidebar {
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Когда меню открыто */
+  .sidebar.sidebarOpen {
+    left: 0;
+  }
+
+  /* Main контент занимает всю ширину */
+  .main {
+    margin-left: 0;
+    width: 100%;
+    padding: 80px 16px 16px 16px; /* Отступ сверху для кнопки гамбургера */
+  }
+
+  /* Навигация вертикальная на мобильных */
+  .nav {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+  }
+
+  /* Показываем текст пунктов меню */
+  .navItem span {
+    display: inline;
+  }
+
+  /* Показываем детали пользователя */
+  .userDetails {
+    display: block;
+  }
+
+  /* Логотип немного меньше */
+  .logoText {
+    font-size: 20px;
+  }
+
+  .logoIcon {
+    font-size: 28px;
+  }
+
+  /* Донейт кнопка компактнее */
+  .donateBtn {
+    padding: 8px 10px;
+  }
+
+  /* Модальное окно доната на весь экран */
+  .donateModal {
+    width: 95vw;
+    max-height: 85vh;
+    border-radius: 12px;
+  }
+
+  .donateHeader {
+    padding: 24px 16px 16px;
+  }
+
+  .donateHeader h2 {
+    font-size: 22px;
+  }
+
+  .donateIcon {
+    font-size: 36px;
+  }
+
+  .donateContent {
+    padding: 24px 16px;
+  }
+
+  .thankYouText {
+    font-size: 18px;
+  }
+
+  .donateDescription {
+    font-size: 14px;
+  }
+
+  .walletAddress code {
+    font-size: 12px;
+  }
+
+  .networkBadge {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}
+
+/* Для очень маленьких экранов */
+@media (max-width: 360px) {
+  .sidebar {
+    max-width: 90vw;
+  }
+
+  .mobileMenuToggle {
+    width: 44px;
+    height: 44px;
+    top: 12px;
+    left: 12px;
+  }
+
+  .main {
+    padding: 72px 12px 12px 12px;
+  }
+
+  .logoText {
+    font-size: 18px;
+  }
+
+  .walletAddress code {
+    font-size: 11px;
+  }
+}
+
+/* Старые стили мобильной версии - удаляем */
+/* @media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  
+  .main {
+    margin-left: 0;
+    width: 100%;
+    padding: 16px;
+  }
+  
+  .nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  
+  .navItem span {
+    display: none;
+  }
+  
+  .userDetails {
+    display: none;
+  }
+} */
+
+
+

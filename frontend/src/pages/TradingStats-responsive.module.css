@@ -1,0 +1,95 @@
+/**
+ * TradingStats - Адаптивные стили
+ * Все @media запросы для адаптивности
+ */
+
+@media (max-width: 1600px) {
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1400px) {
+  .overallStats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .tablesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .hotIndicators {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .topDeals {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .tablesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .filters {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .dropdown {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .section {
+    padding: 14px;
+  }
+  
+  .overallStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .hotIndicators {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 500px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+

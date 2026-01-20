@@ -1,0 +1,52 @@
+# UDP Configuration
+# Настройки UDP соединения с MoonBot
+# Оптимизировано для 3000+ серверов
+
+udp:
+  timeout: 5  # секунд
+  max_retries: 3
+  default_port: 5005
+  
+  # Настройки сокетов
+  socket:
+    reuse_address: true
+    buffer_size: 65535  # Максимальный размер UDP пакета (для графиков)
+    # Увеличенные буферы для высоких нагрузок
+    recv_buffer_size: 4194304  # 4MB - для 3000+ серверов
+    send_buffer_size: 1048576  # 1MB
+    
+  # Настройки listener
+  listener:
+    initial_command: "lst"  # Первая команда при подключении
+    retry_interval: 1.0  # секунд между попытками
+    heartbeat_interval: 30  # секунд между проверками
+    
+  # Пул соединений
+  pool:
+    max_connections: 5000  # Увеличено для 3000 серверов
+    idle_timeout: 300  # секунд
+    
+  # Таймауты для разных операций
+  timeouts:
+    connect: 3.0
+    send: 2.0
+    receive: 5.0
+    command: 10.0
+  
+  # Настройки пула воркеров (для высоких нагрузок)
+  worker_pool:
+    enabled: true
+    workers: 16  # Количество воркеров для обработки сообщений
+    queue_size: 50000  # Размер очереди сообщений
+    queue_timeout: 5.0  # Таймаут ожидания в очереди
+  
+  # Batch processing (пакетная обработка)
+  batch:
+    enabled: true
+    max_batch_size: 100  # Максимальный размер пакета
+    max_batch_wait_ms: 50  # Максимальное время ожидания пакета
+
+
+
+
+

@@ -1,0 +1,132 @@
+/**
+ * CommandsNew - Стили групп серверов
+ * 
+ * Содержит стили для списка групп и элементов серверов.
+ */
+
+/* ЛЕВАЯ КОЛОНКА - Доступные серверы */
+.serverGroupsList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.serverGroup {
+  margin-bottom: 0.5rem;
+}
+
+.groupHeaderCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 0.3rem;
+}
+
+.groupHeaderCheckbox:hover {
+  background: rgba(0, 245, 255, 0.1);
+}
+
+.groupHeaderCheckbox .checkbox {
+  color: var(--accent-primary);
+}
+
+.groupTitle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.groupTitle strong {
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.groupCount {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: normal;
+}
+
+.groupServersFlat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-left: 1.5rem;
+}
+
+.serverItemFlat {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-primary);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.serverItemFlat:hover {
+  border-color: var(--accent-primary);
+  background: rgba(0, 245, 255, 0.05);
+}
+
+.serverItemFlat.selected {
+  background: rgba(0, 245, 255, 0.1);
+  border-color: var(--accent-primary);
+}
+
+.serverItemFlat .checkbox {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.serverItemFlat.selected .checkbox {
+  color: var(--accent-primary);
+}
+
+.serverItemFlat .serverInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.serverItemFlat .serverName {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.serverItemFlat .serverDetails {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Старые стили (скрыть) */
+.groupHeader,
+.groupToggle,
+.groupSelectBtn,
+.groupServers,
+.serverItem,
+.serverCheckbox,
+.addServerBtn,
+.removeServerBtn {
+  display: none;
+}
+
+

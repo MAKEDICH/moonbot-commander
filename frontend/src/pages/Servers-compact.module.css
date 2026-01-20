@@ -1,0 +1,140 @@
+/**
+ * Servers - Компактный вид
+ * Compact view styles, compact bot info
+ */
+
+/* Компактная информация о боте */
+.compactBotInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.compactBotInfo .compactVersion {
+  color: var(--accent-primary);
+  font-weight: 500;
+  background: rgba(0, 245, 255, 0.08);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  font-size: 0.65rem;
+  border: 1px solid rgba(0, 245, 255, 0.2);
+}
+
+.compactBotInfo .compactBotStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.compactBotInfo .compactBotStatus.compactRunning {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+.compactBotInfo .compactBotStatus.compactStopped {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* Скрываем версию и состояние в компактном виде как отдельные элементы */
+.serverCard.compact .serverVersion,
+.serverCard.compact .serverBotStatus {
+  display: none;
+}
+
+/* === COMPACT VIEW STYLES === */
+/* Компактный вид серверов */
+.serverGrid.compactView {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.serverCard.compact {
+  padding: 12px;
+}
+
+.serverCard.compact .serverHeader {
+  margin-bottom: 8px;
+}
+
+.serverCard.compact .serverIcon {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+
+.serverCard.compact .statusBadge {
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+}
+
+.serverCard.compact .serverName {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.serverCard.compact .serverAddress {
+  font-size: 11px;
+  padding: 3px 6px;
+  margin-bottom: 6px;
+}
+
+.serverCard.compact .serverDescription {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.serverCard.compact .groupBadges {
+  margin-bottom: 8px;
+  gap: 4px;
+}
+
+.serverCard.compact .groupBadge {
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+.serverCard.compact .listenerSection {
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.serverCard.compact .serverActions {
+  padding-top: 10px;
+  gap: 6px;
+}
+
+.serverCard.compact .actionBtn {
+  padding: 8px;
+  font-size: 12px;
+}
+
+/* Компактный вид UDP Listener */
+.compactListener {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.compactListenerText {
+  color: var(--text-secondary);
+}
+
+

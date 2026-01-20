@@ -1,0 +1,109 @@
+/**
+ * Servers - UDP Listener
+ * Listener section, buttons, stats
+ */
+
+/* UDP Listener Section */
+.listenerSection {
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.listenerHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.listenerLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.listenerIconActive {
+  color: #00ff88;
+  font-size: 18px;
+  animation: pulse 2s infinite;
+}
+
+.listenerIconInactive {
+  color: #95a5a6;
+  font-size: 18px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.listenerStats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.listenerStats small {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.listenerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.listenerBtn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.startBtn {
+  background: #27ae60;
+  color: white;
+}
+
+.startBtn:hover:not(:disabled) {
+  background: #229954;
+  transform: translateY(-1px);
+}
+
+.stopBtn {
+  background: #e74c3c;
+  color: white;
+}
+
+.stopBtn:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+.syncBtn {
+  background: #3498db;
+  color: white;
+}
+
+.syncBtn:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.listenerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+

@@ -1,0 +1,122 @@
+/**
+ * StrategyCompare - Панель управления
+ * Compare controls, baseline select, checkboxes
+ */
+
+/* ===== Панель управления сравнением ===== */
+.compareControls {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 24px;
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.compareControls h3 {
+    margin: 0 0 20px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f87171;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.compareControls h3::before {
+    content: '⚙️';
+}
+
+.controlsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.controlLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.baselineSelect {
+    padding: 10px 16px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 10px;
+    color: #e2e8f0;
+    font-size: 14px;
+    min-width: 220px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.baselineSelect:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+.baselineSelect:focus {
+    outline: none;
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 8px 14px;
+    background: rgba(99, 102, 241, 0.08);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.checkboxLabel:hover {
+    background: rgba(99, 102, 241, 0.15);
+    color: #e2e8f0;
+}
+
+.checkboxLabel input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #818cf8;
+    cursor: pointer;
+}
+
+.compareButton {
+    padding: 14px 32px;
+    color: #0f172a;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.compareButton:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.compareButton:active {
+    transform: translateY(-1px);
+}
+
+

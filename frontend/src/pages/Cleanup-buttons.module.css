@@ -1,0 +1,167 @@
+/**
+ * Cleanup - Стили кнопок
+ * 
+ * Содержит стили для кнопок сохранения и действий.
+ */
+
+.saveButton {
+  padding: 0.85rem 2rem;
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #000000;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+  text-shadow: 
+    0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 3px rgba(255, 255, 255, 0.3);
+  -webkit-font-smoothing: antialiased;
+}
+
+.saveButton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.5s, height 0.5s;
+}
+
+.saveButton:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px -8px rgba(0, 255, 136, 0.6);
+  background: linear-gradient(135deg, #00ff99 0%, #00dd7b 100%);
+}
+
+.saveButton:hover:not(:disabled)::before {
+  width: 300px;
+  height: 300px;
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actionButtons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.actionButton {
+  padding: 1.1rem 1.3rem;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-height: 48px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.actionButton::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.actionButton:hover::before {
+  transform: translateX(100%);
+}
+
+.actionButton.safe {
+  background: linear-gradient(135deg, #0099ff 0%, #0077dd 100%);
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px -6px rgba(0, 136, 255, 0.5);
+  font-weight: 600;
+}
+
+.actionButton.safe:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px -8px rgba(0, 136, 255, 0.7);
+  background: linear-gradient(135deg, #00aaff 0%, #0088ee 100%);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.actionButton.danger {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 2px solid #ff3333;
+  color: #ff3333;
+  box-shadow: 
+    0 4px 15px -3px rgba(255, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 0, 0, 0.1);
+  font-weight: 800;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+  text-shadow: none;
+  position: relative;
+}
+
+.actionButton.danger::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.05) 0%, rgba(255, 0, 0, 0.02) 100%);
+  border-radius: 12px;
+  z-index: -1;
+}
+
+.actionButton.danger:hover:not(:disabled) {
+  transform: translateY(-3px);
+  background: #ff3333;
+  border-color: #ff3333;
+  color: #ffffff;
+  text-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 0 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 8px 25px -5px rgba(255, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.actionButton.danger:hover:not(:disabled)::before {
+  opacity: 0;
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(30%);
+}
+
+

@@ -1,0 +1,164 @@
+/**
+ * APIErrors - Стили таблицы
+ * 
+ * Содержит стили для таблицы ошибок.
+ */
+
+/* Empty State */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: rgba(20, 20, 35, 0.5);
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  color: #10b981;
+  margin-bottom: 16px;
+}
+
+.empty p {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+}
+
+.empty small {
+  color: var(--text-secondary);
+}
+
+/* Table */
+.tableContainer {
+  background: rgba(20, 20, 35, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  vertical-align: top;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.timeCell {
+  white-space: nowrap;
+  min-width: 130px;
+}
+
+.timeReceived {
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.timeError {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+.botCell {
+  min-width: 100px;
+}
+
+.botBadge {
+  display: inline-block;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.codeCell {
+  min-width: 70px;
+}
+
+.codeBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.code4xx {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.code5xx {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.codeOther {
+  background: rgba(107, 114, 128, 0.15);
+  color: #9ca3af;
+}
+
+.codeUnknown {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+
+.symbolCell {
+  min-width: 80px;
+  color: #00ff88;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.messageCell {
+  max-width: 500px;
+}
+
+.errorText {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* Footer */
+.footer {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(20, 20, 35, 0.5);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+

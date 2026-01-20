@@ -1,0 +1,82 @@
+import { defineConfig, loadEnv } from 'vite'
+import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
+
+// Конфигурация использует переменные окружения для гибкости (dev/staging/prod)
+export default defineConfig(({ mode }) => {
+  // Загружаем переменные окружения
+  const env = loadEnv(mode, process.cwd(), '');
+  
+  // Определяем backend URL из переменных окружения или дефолт
+  const apiPort = env.VITE_API_PORT || '8000';
+  const apiUrl = env.VITE_API_URL || `http://127.0.0.1:${apiPort}`;  // FIXED: Use 127.0.0.1 instead of localhost to force IPv4
+  
+  return {
+    plugins: [
+      react(),
+      visualizer({
+        open: false,  // НЕ открывать автоматически (только по запросу)
+        filename: 'bundle-stats.html',
+        gzipSize: true,
+        brotliSize: true,
+        template: 'treemap', // sunburst, treemap, network
+      })
+    ],
+    server: {
+      host: '0.0.0.0',  // Слушаем на всех интерфейсах для доступа по IP
+      port: 3000,
+      open: false,
+      proxy: {
+        '/api': {
+          // ИСПРАВЛЕНО: Используем переменные окружения вместо хардкода
+          target: apiUrl,
+          changeOrigin: true,
+          secure: false,  // Для самоподписанных сертификатов в dev
+          // Логирование proxy запросов для отладки
+          configure: (proxy, options) => {
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              console.log('[Vite Proxy]', req.method, req.url, '→', options.target);
+            });
+          }
+        },
+        '/ws': {
+          // WebSocket proxy для real-time обновлений
+          target: apiUrl.replace('http', 'ws'),
+          ws: true,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy, options) => {
+            proxy.on('error', (err, req, res) => {
+              console.error('[Vite WS Proxy] Error:', err);
+            });
+            proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
+              console.log('[Vite WS Proxy] WebSocket connection:', req.url);
+            });
+          }
+        }
+      }
+    },
+    build: {
+      minify: mode === 'production' ? 'terser' : false,
+      sourcemap: mode !== 'production',  // Sourcemap только в dev
+      // Удаляем console.log в production
+      terserOptions: mode === 'production' ? {
+        compress: {
+          drop_console: true,
+          drop_debugger: true
+        }
+      } : {},
+      // Оптимизации для production
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Разделяем vendor код для лучшего кеширования
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'ui-vendor': ['@emotion/react', '@emotion/styled', 'framer-motion'],
+          }
+        }
+      }
+    }
+  };
+});
+

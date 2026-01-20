@@ -1,0 +1,216 @@
+########################
+# Общие артефакты / IDE
+########################
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+########################
+# Python / Backend
+########################
+
+# База данных и связанные файлы
+backend/moonbot_commander.db
+backend/moonbot_commander.db-*
+
+# Данные бота (графики, кеши, экспорт и т.п.)
+backend/data/
+backend/backups/
+backend/migration_backups/
+backend/updates/*.log
+backend/services/scheduler_enabled.txt
+backend/services/update_check_cache.json
+
+# Скомпилированные/временные
+backend/**/__pycache__/
+
+# Логи приложения
+logs/
+
+########################
+# Node / Frontend
+########################
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+########################
+# Конфигурация окружения
+########################
+.env
+*.env.local
+docker/.env
+
+########################
+# Временные и бэкап-папки
+########################
+_backup_large_files/
+_backup_large_files_v2/
+backup_large_files/
+
+# ==================== КРИТИЧЕСКИ ВАЖНЫЕ ====================
+# ВАЖНО: .env содержит секретные ключи и НЕ должен попасть в Git!
+# Если случайно закоммитили - используйте git-filter-repo или BFG
+
+# ENVIRONMENT FILES - Секретные ключи!
+backend/.env
+frontend/.env
+.env
+.env.local
+.env.*.local
+
+# DATABASE - База данных пользователей!
+backend/*.db
+backend/*.db-*
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.backup
+
+# BACKUPS - Резервные копии БД
+backend/backups/
+backups/
+backend/migration_backups/
+full_backups/
+
+# ЛОГИ - Могут содержать чувствительную информацию
+logs/
+*.log
+backend/*.log
+backend/backend.log
+backend/backend-error.log
+backend/scheduler.log
+backend_crash.log
+frontend/vite.log
+moonbot_commander.log
+logs/*
+services/*.json
+
+# ВРЕМЕННЫЕ ФАЙЛЫ PYTHON
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+
+# ВИРТУАЛЬНЫЕ ОКРУЖЕНИЯ
+venv/
+env/
+ENV/
+.venv
+backend/venv/
+backend/env/
+
+# NODE_MODULES - ОГРОМНАЯ папка!
+frontend/node_modules/
+node_modules/
+
+# PRODUCTION BUILD FRONTEND
+frontend/dist/
+frontend/build/
+
+# ALEMBIC VERSIONS (опционально - зависит от workflow)
+# backend/alembic/versions/*.py
+
+# NSSM (Windows Service Manager)
+nssm.exe
+nssm/
+
+# IDE И РЕДАКТОРЫ
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# WINDOWS
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# LINUX/MAC
+.Trash-*/
+.nfs*
+
+# ВРЕМЕННЫЕ ФАЙЛЫ
+*.tmp
+*.temp
+*.bak
+*.hex
+
+# BUNDLE STATS (генерируется при сборке)
+frontend/bundle-stats.html
+
+# UPDATE SIGNAL FILES
+.update_signal
+.update_status.json
+
+# АРХИВЫ РЕЛИЗОВ
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# ЛОГИ CLEANUP
+AUDIT-UNUSED-FILES.txt
+PROJECT-MAP.txt
+CLEANUP-UNUSED-FILES.bat
+backend/services/*.txt
+
+# ТЕСТОВЫЕ ФАЙЛЫ (можно удалить)
+TEST-*.bat
+DEBUG-*.bat
+TEMP-*.bat
+test_*.py
+
+# ВРЕМЕННЫЕ HELPER ФАЙЛЫ
+DOWNLOAD-UPDATE.bat
+UPDATE-ASCII.bat
+UPDATE-backup.bat
+convert.ps1
+
+# PACKAGE LOCK (можно не коммитить в монорепо)
+# frontend/package-lock.json
+# frontend/yarn.lock
+
+# COVERAGE REPORTS
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# MYPY
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ПРОФИЛИРОВАНИЕ
+*.prof
+*.lprof
+
+# CERTIFICATES (если используются)
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx

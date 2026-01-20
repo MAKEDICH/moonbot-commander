@@ -1,0 +1,23 @@
+/**
+ * TradingStats - Главный файл стилей
+ * Объединяет все модули стилей для страницы TradingStats
+ * 
+ * Структура:
+ * - TradingStats-base.module.css - базовые стили, header
+ * - TradingStats-filters.module.css - фильтры и dropdown
+ * - TradingStats-cards.module.css - карточки и метрики
+ * - TradingStats-sections.module.css - секции и сетки
+ * - TradingStats-table.module.css - таблицы
+ * - TradingStats-heatmap.module.css - тепловая карта
+ * - TradingStats-modal.module.css - модальное окно
+ * - TradingStats-responsive.module.css - адаптивные стили
+ */
+
+@import './TradingStats-base.module.css';
+@import './TradingStats-filters.module.css';
+@import './TradingStats-cards.module.css';
+@import './TradingStats-sections.module.css';
+@import './TradingStats-table.module.css';
+@import './TradingStats-heatmap.module.css';
+@import './TradingStats-modal.module.css';
+@import './TradingStats-responsive.module.css';

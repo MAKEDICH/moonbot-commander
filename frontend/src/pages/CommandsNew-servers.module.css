@@ -1,0 +1,11 @@
+/**
+ * CommandsNew - Стили выбора серверов
+ * 
+ * Главный файл, импортирует все подмодули стилей серверов.
+ */
+
+@import './CommandsNew-servers-selector.module.css';
+@import './CommandsNew-servers-checkbox.module.css';
+@import './CommandsNew-servers-groups.module.css';
+@import './CommandsNew-servers-selected.module.css';
+@import './CommandsNew-servers-compact.module.css';

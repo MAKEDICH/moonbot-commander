@@ -1,0 +1,14 @@
+/**
+ * Cleanup - Главный файл стилей
+ * 
+ * Страница очистки данных.
+ * Импортирует все подмодули стилей.
+ */
+
+@import './Cleanup-base.module.css';
+@import './Cleanup-messages.module.css';
+@import './Cleanup-cards.module.css';
+@import './Cleanup-forms.module.css';
+@import './Cleanup-buttons.module.css';
+@import './Cleanup-stats.module.css';
+@import './Cleanup-responsive.module.css';

@@ -1,0 +1,102 @@
+/**
+ * Useful - Базовые стили
+ * Контейнер, заголовок страницы, анимации
+ */
+
+/* ===== Контейнер ===== */
+.container {
+    padding: 20px;
+    min-height: 100%;
+    background: linear-gradient(180deg, #0f172a 0%, #0b1020 100%);
+    color: #e2e8f0;
+}
+
+/* ===== Заголовок страницы ===== */
+.pageHeader {
+    margin-bottom: 24px;
+}
+
+.pageTitle {
+    margin: 0 0 8px 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.pageDescription {
+    margin: 0;
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+/* ===== Секции контента ===== */
+.contentSection {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== Контейнер секции ===== */
+.sectionContainer {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ===== Загрузчик секции ===== */
+.sectionLoader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 60px 20px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.loaderSpinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #1f2937;
+    border-top-color: #22c55e;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.sectionCard {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.sectionTitle {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.emptyMessage {
+    padding: 24px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+

@@ -1,0 +1,33 @@
+# Security Configuration
+# Настройки безопасности приложения
+
+security:
+  # JWT настройки
+  jwt:
+    algorithm: "HS256"
+    access_token_expire_minutes: 43200  # 30 дней
+  
+  # Ключи безопасности (загружаются из .env)
+  # Эти значения ДОЛЖНЫ быть в .env файле!
+  # Запустите: python utils/init_security.py
+  keys:
+    secret_key_env: "SECRET_KEY"
+    encryption_key_env: "ENCRYPTION_KEY"
+  
+  # Код для сброса системы
+  system_reset:
+    code_env: "SYSTEM_RESET_CODE"
+    default_code: "aezakmi"  # Только для dev окружения
+  
+  # Настройки паролей
+  password:
+    max_length: 72  # Ограничение bcrypt
+    min_length: 8
+  
+  # 2FA настройки
+  two_factor:
+    enabled: true
+    issuer_name: "MoonBot Commander"
+
+
+

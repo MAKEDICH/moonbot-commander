@@ -1,0 +1,90 @@
+/**
+ * History - Стили состояний
+ * 
+ * Содержит стили для пустого состояния и загрузки.
+ */
+
+.emptyState {
+  text-align: center;
+  padding: 100px 20px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.emptyState svg {
+  font-size: 100px;
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(255, 0, 136, 0.3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 20px rgba(0, 255, 255, 0.2));
+  animation: emptyFloat 3s ease-in-out infinite;
+}
+
+@keyframes emptyFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.emptyState p {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #00f5ff, #ff0088);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.emptySubtext {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 20px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 20px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  position: relative;
+}
+
+.loading::before {
+  content: '';
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(0, 255, 255, 0.1);
+  border-top-color: #00f5ff;
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  margin-bottom: 80px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading::after {
+  content: 'Загрузка...';
+  position: absolute;
+  bottom: 45%;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  animation: loadingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loadingPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+

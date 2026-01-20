@@ -1,0 +1,77 @@
+# MoonBot Commander - Application Configuration
+# Основные настройки приложения
+# Оптимизировано для 3000+ серверов (оптимизации применяются автоматически)
+
+app:
+  name: "MoonBot Commander"
+  version: "3.0.0"
+  debug: false
+
+database:
+  url_env: "DATABASE_URL"  # Имя переменной окружения
+  # Для высоких нагрузок рекомендуется PostgreSQL:
+  # DATABASE_URL=postgresql://user:pass@localhost:5432/moonbot
+  default_url: "sqlite:///./moonbot_commander.db"
+  echo: false
+  check_same_thread: false  # Для SQLite
+
+# Режим работы приложения
+mode:
+  # local - локальная разработка (ephemeral ports + keep-alive)
+  # server - продакшен сервер (global socket, no keep-alive)
+  # auto - автоматическое определение
+  moonbot_mode_env: "MOONBOT_MODE"
+  default_mode: "auto"
+
+cors:
+  # Разрешенные origins для CORS
+  origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+    - "http://127.0.0.1:3000"
+    - "http://127.0.0.1:5173"
+  # Fallback если YAML не используется
+  origins_env: "CORS_ORIGINS"
+
+rate_limiting:
+  enabled: true
+  # Увеличенные лимиты для 3000 серверов
+  per_minute: 10000  # Глобальный лимит
+  per_user_per_minute: 1000  # На пользователя
+  per_ip_per_minute: 500  # На IP
+
+caching:
+  enabled: true
+  ttl_seconds: 300  # 5 минут
+  # Можно переопределить через env
+  enabled_env: "CACHE_ENABLED"
+  ttl_env: "CACHE_TTL_SECONDS"
+  # Специальные TTL для разных типов данных
+  balance_ttl: 10  # Балансы обновляются часто
+  strategies_ttl: 60  # Стратегии реже
+
+backup:
+  enabled: true
+  retention_days: 30
+  auto_backup_interval_hours: 24
+  directory: "./backups"
+  # Переопределение через env
+  directory_env: "BACKUP_DIR"
+  retention_days_env: "BACKUP_RETENTION_DAYS"
+
+api:
+  pagination:
+    default_limit: 100
+    max_limit: 500
+    min_limit: 1
+
+# Настройки для высоких нагрузок
+performance:
+  # Асинхронная обработка
+  async_db_operations: true
+  # Размер пула потоков для CPU-bound операций
+  thread_pool_size: 16
+  # Включить метрики производительности
+  metrics_enabled: true
+
+

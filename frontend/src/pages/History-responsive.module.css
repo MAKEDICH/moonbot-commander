@@ -1,0 +1,103 @@
+/**
+ * History - Адаптивные стили
+ * 
+ * Содержит @media запросы для различных размеров экрана.
+ */
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .clearBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+  
+  .subtitle {
+    font-size: 16px;
+  }
+
+  .filterBar {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    padding: 16px 20px;
+  }
+  
+  .filterGroup,
+  .searchGroup {
+    width: 100%;
+  }
+  
+  .filterSelect {
+    width: 100%;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .searchGroup {
+    min-width: 100%;
+  }
+  
+  .searchInput {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .totalCount {
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .historyItem {
+    padding: 20px 16px;
+  }
+
+  .itemHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .itemStatus {
+    margin-left: 0;
+  }
+  
+  .itemServer {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  
+  .itemTime {
+    font-size: 12px;
+  }
+  
+  .commandText,
+  .responseText {
+    font-size: 13px;
+    padding: 14px 16px 14px 28px;
+  }
+  
+  .commandText::before {
+    left: 8px;
+    top: 14px;
+    font-size: 14px;
+  }
+  
+  .emptyState svg {
+    font-size: 80px;
+  }
+  
+  .emptyState p {
+    font-size: 20px;
+  }
+  
+  .emptySubtext {
+    font-size: 14px;
+  }
+}
+
+

@@ -1,0 +1,61 @@
+/**
+ * Cleanup - Стили форм
+ * 
+ * Содержит стили для полей ввода и групп форм.
+ */
+
+.flexRow {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 250px;
+}
+
+.inputGroup label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.inputGroup span {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+}
+
+.inputField {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  width: 120px;
+  transition: all 0.3s;
+  outline: none;
+}
+
+.inputField:focus {
+  border-color: rgba(0, 245, 255, 0.5);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.1);
+}
+
+.combinedInputs {
+  display: flex;
+  gap: 0.75rem;
+}
+
+

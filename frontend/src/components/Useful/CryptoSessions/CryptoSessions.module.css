@@ -1,0 +1,951 @@
+/**
+ * Crypto Sessions - Точная копия стилей из оригинального HTML
+ */
+
+/* ===== CSS Variables ===== */
+.wrapper {
+    --bg-primary: #0a0e17;
+    --bg-secondary: #111827;
+    --bg-card: #1a1f2e;
+    --bg-card-hover: #232a3d;
+    --accent-cyan: #00d4ff;
+    --accent-magenta: #ff00aa;
+    --accent-gold: #ffd700;
+    --accent-green: #00ff88;
+    --accent-orange: #ff6b35;
+    --accent-purple: #a855f7;
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-color: #2d3748;
+    --glow-cyan: 0 0 30px rgba(0, 212, 255, 0.3);
+    --glow-magenta: 0 0 30px rgba(255, 0, 170, 0.3);
+    --glow-gold: 0 0 30px rgba(255, 215, 0, 0.3);
+}
+
+/* ===== Wrapper ===== */
+.wrapper {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100%;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ===== Animated Background ===== */
+.bgAnimation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.bgAnimation::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+        radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(255, 0, 170, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 60%);
+    animation: bgPulse 15s ease-in-out infinite;
+}
+
+@keyframes bgPulse {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-5%, -5%) scale(1.1); }
+}
+
+/* ===== Grid Overlay ===== */
+.gridOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    background-image: 
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+}
+
+/* ===== Container ===== */
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 30px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== Header ===== */
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.headerTitle {
+    font-size: 3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 10px 0;
+    letter-spacing: -1px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 300;
+    margin: 0;
+}
+
+/* ===== Current Time Panel ===== */
+.currentTimePanel {
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 25px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    box-shadow: var(--glow-cyan);
+    position: relative;
+    overflow: hidden;
+}
+
+.currentTimePanel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta), var(--accent-cyan));
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.timeDisplay {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.timeLabel {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.timeValue {
+    font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    text-shadow: var(--glow-cyan);
+}
+
+.dateValue {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+/* ===== Timezone Selector ===== */
+.timezoneSelector {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.timezoneSelector label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.timezoneSelect {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 20px;
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.timezoneSelect:hover {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+}
+
+.timezoneSelect:focus {
+    outline: none;
+    border-color: var(--accent-cyan);
+}
+
+.timezoneSelect option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* ===== Active Sessions ===== */
+.activeSessions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.activeBadge {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
+    border: 1px solid var(--accent-green);
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    color: var(--accent-green);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.activeBadgeIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+}
+
+.activeBadgeIcon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.activeBadgeDot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    animation: blink 1s ease-in-out infinite;
+}
+
+.lowActivity {
+    color: var(--text-muted);
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
+}
+
+/* ===== Timeline Container ===== */
+.timelineContainer {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.timelineHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.timelineTitle {
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.timelineTitleIcon {
+    width: 24px;
+    height: 24px;
+    fill: var(--accent-cyan);
+}
+
+/* ===== Timeline Wrapper ===== */
+.timelineWrapper {
+    position: relative;
+    height: 300px;
+    margin-top: 20px;
+}
+
+.timelineScale {
+    position: absolute;
+    top: 0;
+    left: 130px;
+    right: 0;
+    height: 40px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.hourMark {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: left;
+    white-space: nowrap;
+    padding-left: 3px;
+}
+
+.hourMark::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 1px;
+    height: 8px;
+    background: var(--border-color);
+}
+
+.hourMark.major::before {
+    height: 15px;
+    background: var(--text-muted);
+}
+
+/* ===== Session Tracks ===== */
+.sessionTracks {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.sessionTrack {
+    position: relative;
+    height: 50px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.trackLabel {
+    position: absolute;
+    left: 0;
+    width: 120px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    z-index: 2;
+}
+
+.trackBarContainer {
+    position: absolute;
+    left: 130px;
+    right: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+
+.sessionBar {
+    position: absolute;
+    height: 100%;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: white;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.sessionBar span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.sessionBar svg {
+    width: 20px;
+    height: 20px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
+.sessionBar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+}
+
+.sessionBar:hover {
+    transform: scaleY(1.1);
+    z-index: 10;
+}
+
+.sessionBar.active {
+    animation: activeGlow 2s ease-in-out infinite;
+}
+
+@keyframes activeGlow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+/* ===== Session Colors ===== */
+.sessionAsia { background: linear-gradient(135deg, #ff6b35, #f7931a); }
+.sessionEurope { background: linear-gradient(135deg, #00d4ff, #0099cc); }
+.sessionAmerica { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+.sessionPacific { background: linear-gradient(135deg, #00ff88, #00cc6a); }
+
+/* ===== Peak Hours ===== */
+.peakHours {
+    position: absolute;
+    height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 5px,
+        rgba(255, 215, 0, 0.1) 5px,
+        rgba(255, 215, 0, 0.1) 10px
+    );
+    border: 2px solid var(--accent-gold);
+    border-radius: 8px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 5px;
+}
+
+.peakLabel {
+    background: var(--accent-gold);
+    color: var(--bg-primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Current Time Indicator ===== */
+.currentTimeIndicator {
+    position: absolute;
+    top: 40px;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent-magenta);
+    z-index: 100;
+    box-shadow: 0 0 20px var(--accent-magenta);
+}
+
+.currentTimeIndicator::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid var(--accent-magenta);
+}
+
+.indicatorTime {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-magenta);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* ===== Sessions Grid ===== */
+.sessionsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* ===== Session Card ===== */
+.sessionCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 25px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.sessionCard:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-cyan);
+}
+
+.sessionCard.cardActive {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+}
+
+.sessionCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.sessionCard.asia::before { background: linear-gradient(90deg, #ff6b35, #f7931a); }
+.sessionCard.europe::before { background: linear-gradient(90deg, #00d4ff, #0099cc); }
+.sessionCard.america::before { background: linear-gradient(90deg, #a855f7, #7c3aed); }
+.sessionCard.pacific::before { background: linear-gradient(90deg, #00ff88, #00cc6a); }
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.sessionIcon {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.sessionIcon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.iconAsia { background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(247, 147, 26, 0.2)); }
+.iconEurope { background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 153, 204, 0.2)); }
+.iconAmerica { background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(124, 58, 237, 0.2)); }
+.iconPacific { background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 106, 0.2)); }
+
+.sessionStatus {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.statusActive {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.statusInactive {
+    background: rgba(100, 116, 139, 0.15);
+    color: var(--text-muted);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.statusUpcoming {
+    background: rgba(255, 215, 0, 0.15);
+    color: var(--accent-gold);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.sessionName {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.sessionRegion {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0 0 20px 0;
+}
+
+/* ===== Session Times ===== */
+.sessionTimes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.timeBlock {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.timeBlockLabel {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.timeBlockValue {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+/* ===== Timer Section ===== */
+.timerSection {
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 15px;
+}
+
+.timerLabel {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.timerLabelIcon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.timerDisplay {
+    display: flex;
+    gap: 10px;
+}
+
+.timerUnit {
+    background: var(--bg-primary);
+    border-radius: 10px;
+    padding: 10px 15px;
+    text-align: center;
+    flex: 1;
+}
+
+.timerValue {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent-cyan);
+}
+
+.timerUnitLabel {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 3px;
+}
+
+/* ===== Progress Section ===== */
+.progressSection {
+    margin-top: 15px;
+}
+
+.progressHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.progressLabel {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.progressValue {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent-cyan);
+}
+
+.progressBar {
+    height: 6px;
+    background: var(--bg-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+}
+
+.fillAsia { background: linear-gradient(90deg, #ff6b35, #f7931a); }
+.fillEurope { background: linear-gradient(90deg, #00d4ff, #0099cc); }
+.fillAmerica { background: linear-gradient(90deg, #a855f7, #7c3aed); }
+.fillPacific { background: linear-gradient(90deg, #00ff88, #00cc6a); }
+
+/* ===== Overlap Section ===== */
+.overlapSection {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.overlapTitle {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.overlapTitleIcon {
+    width: 24px;
+    height: 24px;
+    fill: var(--accent-gold);
+}
+
+.overlapGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.overlapCard {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.overlapCard.overlapCardActive {
+    animation: overlapPulse 2s ease-in-out infinite;
+}
+
+@keyframes overlapPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+    50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); }
+}
+
+.overlapSessions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.overlapBadge {
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+}
+
+.overlapBadgeIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+}
+
+.overlapBadgeIcon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.badgeAsia { background: rgba(255, 107, 53, 0.2); color: #ff6b35; }
+.badgeEurope { background: rgba(0, 212, 255, 0.2); color: #00d4ff; }
+.badgeAmerica { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.badgePacific { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+
+.overlapPlus {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.overlapTime {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.overlapNote {
+    font-size: 0.8rem;
+    color: var(--accent-gold);
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-align: center;
+}
+
+/* ===== Footer ===== */
+.footerInfo {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.footerInfo p {
+    margin: 0;
+}
+
+.footerInfo a {
+    color: var(--accent-cyan);
+    text-decoration: none;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .headerTitle {
+        font-size: 2rem;
+    }
+
+    .currentTimePanel {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .timeDisplay {
+        align-items: center;
+    }
+
+    .timeValue {
+        font-size: 2rem;
+    }
+
+    .timezoneSelector {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .timezoneSelect {
+        min-width: 100%;
+    }
+
+    .sessionsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .timelineWrapper {
+        height: 400px;
+    }
+
+    .trackLabel {
+        width: 80px;
+        font-size: 0.75rem;
+    }
+
+    .trackBarContainer {
+        left: 90px;
+    }
+
+    .timelineScale {
+        left: 90px;
+    }
+
+    .overlapGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .sessionsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .overlapGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Scrollbar Styling ===== */
+.wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.wrapper::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.wrapper::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}

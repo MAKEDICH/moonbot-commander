@@ -1,0 +1,145 @@
+/**
+ * APIErrors - Стили фильтров
+ * 
+ * Содержит стили для секции фильтров и ботов.
+ */
+
+.filtersSection {
+  background: rgba(20, 20, 35, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.filtersHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.resetFiltersBtn {
+  margin-left: auto;
+  background: rgba(239, 68, 68, 0.15);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #ef4444;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.resetFiltersBtn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filterGroup label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filterGroup select {
+  background: rgba(20, 20, 35, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filterGroup select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.filterGroup select option {
+  background: #1a1a2e;
+  color: var(--text-primary);
+  padding: 8px;
+}
+
+/* Bot Summary */
+.botSummary {
+  margin-bottom: 24px;
+}
+
+.botSummary h3 {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px 0;
+}
+
+.botCards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.botCard {
+  background: rgba(20, 20, 35, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.botCard:hover {
+  background: rgba(30, 30, 50, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.botCardActive {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.botName {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.botStats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.botCount {
+  font-size: 0.85rem;
+  color: #ef4444;
+}
+
+.botCodes {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+

@@ -1,0 +1,69 @@
+/**
+ * Balances - Адаптивные стили
+ * Все @media запросы для адаптивности
+ */
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tableContainer {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .titleIcon {
+    font-size: 28px;
+  }
+
+  .controls {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .currencyFilter,
+  .autoRefreshToggle,
+  .refreshButton {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .filterSelect {
+    width: 100%;
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .legend {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+

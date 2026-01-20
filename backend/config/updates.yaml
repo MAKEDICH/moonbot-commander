@@ -1,0 +1,89 @@
+# ============================================================
+# Конфигурация системы обновлений MoonBot Commander
+# ============================================================
+
+# GitHub репозиторий
+github:
+  owner: "MAKEDICH"
+  repo: "moonbot-commander"
+  api_base: "https://api.github.com"
+  
+# Интервалы проверки
+check:
+  # Интервал автоматической проверки (в секундах)
+  interval: 21600  # 6 часов
+  
+  # Таймаут запроса к GitHub API
+  timeout: 30
+  
+  # Кэширование результатов
+  cache_enabled: true
+  cache_file: "update_check_cache.json"
+
+# Бэкапы
+backup:
+  # Директория для бэкапов
+  directory: "./backups"
+  
+  # Сколько бэкапов хранить
+  keep_count: 5
+  
+  # Что включать в бэкап
+  include:
+    - "moonbot_commander.db"
+    - ".env"
+    - "scheduler_enabled.txt"
+    - "VERSION.txt"
+
+# Защищённые файлы (никогда не перезаписываются)
+protected:
+  files:
+    - ".env"
+    - "moonbot_commander.db"
+    - "scheduler_enabled.txt"
+    
+  directories:
+    - "backups"
+    - "logs"
+    - "data"
+    - "migration_backups"
+
+# Миграции
+migrations:
+  # Автоматически применять миграции при обновлении
+  auto_apply: true
+  
+  # Создавать бэкап перед миграциями
+  backup_before: true
+  
+  # Остановить обновление при ошибке миграции
+  stop_on_error: true
+
+# Уведомления
+notifications:
+  # Показывать уведомление о доступном обновлении
+  show_available: true
+  
+  # Уровни важности
+  severity:
+    # Обычное обновление
+    normal: "info"
+    
+    # Обновление с миграциями БД
+    with_migrations: "warning"
+    
+    # Критическое обновление безопасности
+    security: "critical"
+
+# Логирование
+logging:
+  # Уровень логирования
+  level: "INFO"
+  
+  # Файл лога
+  file: "updates/logs/update.log"
+  
+  # Максимальный размер лога (МБ)
+  max_size_mb: 10
+
+

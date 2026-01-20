@@ -1,0 +1,37 @@
+# Scheduler Configuration
+# Настройки планировщика задач
+
+scheduler:
+  enabled: true
+  check_interval: 5  # секунд между проверками
+  
+  # Настройки выполнения задач
+  execution:
+    max_retries: 3
+    retry_delay: 10  # секунд
+    timeout: 300  # секунд (5 минут)
+    
+  # Очистка старых задач
+  cleanup:
+    enabled: true
+    retention_days: 90
+    cleanup_interval_hours: 24
+    
+  # Типы повторения
+  recurrence_types:
+    - "once"         # Один раз
+    - "daily"        # Ежедневно
+    - "weekly"       # Еженедельно
+    - "monthly"      # Ежемесячно
+    - "weekly_days"  # По дням недели
+    
+  # Настройки логирования scheduler
+  logging:
+    log_completed_tasks: true
+    log_failed_tasks: true
+    log_skipped_tasks: false
+
+
+
+
+

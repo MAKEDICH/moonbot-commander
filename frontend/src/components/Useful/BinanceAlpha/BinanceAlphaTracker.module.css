@@ -1,0 +1,498 @@
+/**
+ * Binance Alpha Tracker Styles
+ */
+
+.container {
+    padding: 0;
+}
+
+/* Заголовок */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #f0b90b 0%, #ffd700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.refreshBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(240, 185, 11, 0.1);
+    border: 1px solid rgba(240, 185, 11, 0.2);
+    color: #f0b90b;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.refreshBtn:hover:not(:disabled) {
+    background: rgba(240, 185, 11, 0.2);
+    border-color: rgba(240, 185, 11, 0.4);
+}
+
+.refreshBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.refreshBtn.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Статус */
+.statusBanner {
+    padding: 0.75rem 1rem;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    color: #10b981;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.error {
+    padding: 0.75rem 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+/* Предупреждение (пустые данные) */
+.warning {
+    padding: 1rem 1.5rem;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 10px;
+    color: #fbbf24;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+/* Фильтр по сетям */
+.filterSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.filterLabel {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.filterButtons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filterBtn {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filterBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.filterBtn.active {
+    background: rgba(240, 185, 11, 0.15);
+    border-color: #f0b90b;
+    color: #f0b90b;
+}
+
+/* Поиск */
+.searchSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.searchWrapper {
+    flex: 1;
+    position: relative;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 0.75rem 2.5rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: #f0b90b;
+    box-shadow: 0 0 0 2px rgba(240, 185, 11, 0.1);
+}
+
+.searchInput::placeholder {
+    color: #64748b;
+}
+
+.clearBtn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(239, 68, 68, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    color: #ef4444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.clearBtn:hover {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.searchInfo {
+    color: #f0b90b;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* Сортировка */
+.sortSection {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.sortLabel {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.sortButtons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sortBtn {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sortBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.sortBtn.active {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: #6366f1;
+    color: #818cf8;
+}
+
+/* Статистика */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.statCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.statLabel {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+}
+
+.statValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f0b90b 0%, #ffd700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Прогресс бар */
+.progressSection {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(240, 185, 11, 0.2);
+    border-radius: 12px;
+}
+
+.progressHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.progressStage {
+    font-size: 0.85rem;
+    color: #f0b90b;
+    font-weight: 500;
+}
+
+.progressPercent {
+    font-size: 0.9rem;
+    color: #fff;
+    font-weight: 700;
+}
+
+.progressBar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, #f0b90b 0%, #ffd700 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(240, 185, 11, 0.5);
+}
+
+/* Кнопки копирования */
+.copySection {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.copyBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f0b90b 0%, #ffd700 100%);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.copyBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(240, 185, 11, 0.3);
+}
+
+.copyBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.copyBtn.copied {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+}
+
+/* Сетка монет */
+.coinsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    min-height: 200px;
+}
+
+.coinCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.coinCard:hover {
+    background: rgba(240, 185, 11, 0.1);
+    border-color: #f0b90b;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(240, 185, 11, 0.15);
+}
+
+.coinSymbol {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f0b90b;
+    margin-bottom: 0.25rem;
+}
+
+.coinName {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.coinChain {
+    font-size: 0.65rem;
+    color: #6366f1;
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+/* Загрузка и пустое состояние */
+.loading,
+.empty {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.loading::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(240, 185, 11, 0.2);
+    border-top-color: #f0b90b;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 0.75rem;
+}
+
+/* Последнее обновление */
+.lastUpdate {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .filterSection,
+    .sortSection {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .filterButtons,
+    .sortButtons {
+        width: 100%;
+    }
+    
+    .filterBtn,
+    .sortBtn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .copySection {
+        grid-template-columns: 1fr;
+    }
+    
+    .coinsGrid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+    
+    .searchSection {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .searchInfo {
+        text-align: center;
+    }
+}
+

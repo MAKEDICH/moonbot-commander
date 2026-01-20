@@ -1,0 +1,189 @@
+/**
+ * ScheduledCommands - Карточки команд
+ * Стили для списка команд и карточек
+ */
+
+.commandsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.commandCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s;
+}
+
+.commandCard:hover {
+  border-color: var(--accent-secondary);
+  box-shadow: 0 4px 16px rgba(0, 245, 255, 0.2);
+}
+
+.commandHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.commandHeader h3 {
+  font-size: 1.3rem;
+  color: var(--accent-primary);
+  margin: 0;
+}
+
+.statusBadge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.statusPending {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border: 1px solid #ffc107;
+}
+
+.statusExecuting {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+  border: 1px solid #2196f3;
+}
+
+.statusCompleted {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+
+.statusFailed {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+  border: 1px solid #f44336;
+}
+
+.statusCancelled {
+  background: rgba(158, 158, 158, 0.2);
+  color: #9e9e9e;
+  border: 1px solid #9e9e9e;
+}
+
+.commandDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.detailRow svg {
+  color: var(--accent-primary);
+}
+
+.commandsPreview {
+  background: var(--bg-tertiary);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--bg-primary);
+}
+
+.commandsPreview strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--accent-primary);
+}
+
+.commandsPreview pre {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.errorMessage {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid #f44336;
+  padding: 0.75rem;
+  border-radius: 6px;
+  color: #f44336;
+}
+
+.commandSettings {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.settingBadge {
+  padding: 0.3rem 0.6rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.commandActions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bg-tertiary);
+}
+
+.editBtn, .cancelBtn, .deleteBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.editBtn {
+  background: var(--accent-secondary);
+  color: #1a1d29;
+}
+
+.editBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.4);
+}
+
+.cancelBtn {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border: 1px solid #ffc107;
+}
+
+.cancelBtn:hover {
+  background: rgba(255, 193, 7, 0.3);
+}
+
+.deleteBtn {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+  border: 1px solid #f44336;
+}
+
+.deleteBtn:hover {
+  background: rgba(244, 67, 54, 0.3);
+}
+
+

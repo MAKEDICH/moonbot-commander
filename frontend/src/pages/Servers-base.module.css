@@ -1,0 +1,129 @@
+/**
+ * Servers - Базовые стили
+ * Контейнеры, layout, header, базовые элементы
+ */
+
+.servers {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  gap: 20px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  width: 100%;
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--accent-gradient);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.addBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.balancesBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.balancesBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+}
+
+.emptyState svg {
+  font-size: 80px;
+  margin-bottom: 20px;
+  opacity: 0.3;
+}
+
+.emptyState p {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.emptySubtext {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.addBtnLarge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: var(--accent-gradient);
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  transition: var(--transition);
+}
+
+.addBtnLarge:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+

@@ -1,0 +1,14 @@
+/**
+ * History - Главный файл стилей
+ * 
+ * Страница истории команд.
+ * Импортирует все подмодули стилей.
+ */
+
+@import './History-base.module.css';
+@import './History-filters.module.css';
+@import './History-search.module.css';
+@import './History-list.module.css';
+@import './History-commands.module.css';
+@import './History-states.module.css';
+@import './History-responsive.module.css';

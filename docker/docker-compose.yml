@@ -1,0 +1,104 @@
+# ============================================================
+# MOONBOT COMMANDER - DOCKER COMPOSE
+# ============================================================
+# 
+# Quick start:
+#   docker compose up -d
+#
+# Stop:
+#   docker compose down
+#
+# View logs:
+#   docker compose logs -f
+#
+# Rebuild:
+#   docker compose build --no-cache
+#
+# ============================================================
+
+version: '3.8'
+
+services:
+  # ============================================================
+  # BACKEND - FastAPI Application
+  # ============================================================
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: moonbot-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Database persistence
+      - moonbot-data:/app/data
+      # Logs (created inside container)
+      - moonbot-logs:/app/logs
+    environment:
+      - MOONBOT_MODE=server
+      - DATABASE_URL=sqlite:////app/data/moonbot_commander.db
+      - CORS_ORIGINS=*
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+
+  # ============================================================
+  # SCHEDULER - Background Tasks
+  # ============================================================
+  scheduler:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: moonbot-scheduler
+    volumes:
+      - moonbot-data:/app/data
+      - moonbot-logs:/app/logs
+    environment:
+      - MOONBOT_MODE=server
+      - DATABASE_URL=sqlite:////app/data/moonbot_commander.db
+    command: python -m services.scheduler
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+
+  # ============================================================
+  # FRONTEND - React Application
+  # ============================================================
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: moonbot-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - moonbot-network
+
+# ============================================================
+# VOLUMES
+# ============================================================
+volumes:
+  moonbot-data:
+    driver: local
+  moonbot-logs:
+    driver: local
+
+# ============================================================
+# NETWORKS
+# ============================================================
+networks:
+  moonbot-network:
+    driver: bridge
+

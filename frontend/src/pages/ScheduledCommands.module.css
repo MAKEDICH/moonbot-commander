@@ -1,0 +1,25 @@
+/**
+ * ScheduledCommands - Главный файл стилей
+ * Объединяет все модули стилей для страницы ScheduledCommands
+ * 
+ * Структура:
+ * - ScheduledCommands-base.module.css - базовые стили, layout
+ * - ScheduledCommands-toggle.module.css - toggle переключатель
+ * - ScheduledCommands-cards.module.css - карточки команд
+ * - ScheduledCommands-modal.module.css - модальные окна
+ * - ScheduledCommands-form.module.css - элементы форм
+ * - ScheduledCommands-settings.module.css - настройки
+ * - ScheduledCommands-presets.module.css - пресеты команд
+ * - ScheduledCommands-weekdays.module.css - выбор дней недели
+ * - ScheduledCommands-responsive.module.css - адаптивные стили
+ */
+
+@import './ScheduledCommands-base.module.css';
+@import './ScheduledCommands-toggle.module.css';
+@import './ScheduledCommands-cards.module.css';
+@import './ScheduledCommands-modal.module.css';
+@import './ScheduledCommands-form.module.css';
+@import './ScheduledCommands-settings.module.css';
+@import './ScheduledCommands-presets.module.css';
+@import './ScheduledCommands-weekdays.module.css';
+@import './ScheduledCommands-responsive.module.css';

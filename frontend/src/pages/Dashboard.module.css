@@ -1,0 +1,29 @@
+/**
+ * Dashboard - Главный файл стилей
+ * Объединяет все модули стилей для страницы Dashboard
+ * 
+ * Структура:
+ * - Dashboard-base.module.css - базовые стили, layout, header
+ * - Dashboard-stats.module.css - статистические карточки
+ * - Dashboard-moonbot.module.css - баннер MoonBot
+ * - Dashboard-cleanup.module.css - кнопка и модал очистки
+ * - Dashboard-trading.module.css - графики торговли
+ * - Dashboard-servers.module.css - карточки серверов
+ * - Dashboard-compact.module.css - компактный вид
+ * - Dashboard-modal.module.css - модальные окна
+ * - Dashboard-profit.module.css - таблица прибыли
+ * - Dashboard-toast.module.css - toast уведомления
+ * - Dashboard-responsive.module.css - адаптивные стили
+ */
+
+@import './Dashboard-base.module.css';
+@import './Dashboard-stats.module.css';
+@import './Dashboard-moonbot.module.css';
+@import './Dashboard-cleanup.module.css';
+@import './Dashboard-trading.module.css';
+@import './Dashboard-servers.module.css';
+@import './Dashboard-compact.module.css';
+@import './Dashboard-modal.module.css';
+@import './Dashboard-profit.module.css';
+@import './Dashboard-toast.module.css';
+@import './Dashboard-responsive.module.css';

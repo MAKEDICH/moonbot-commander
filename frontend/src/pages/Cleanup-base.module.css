@@ -1,0 +1,128 @@
+/**
+ * Cleanup - Базовые стили
+ * 
+ * Содержит стили для контейнера, заголовка, секций и общих элементов.
+ */
+
+.cleanup {
+  padding: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.header {
+  margin-bottom: 2rem;
+  text-align: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #ff4d4d 0%, #ff8080 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.header p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.section {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.section h2 {
+  font-size: 1.2rem;
+  margin: 0 0 1.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Классы состояний */
+.protected {
+  color: #4caf50 !important;
+}
+
+.success {
+  color: #00ff88 !important;
+  font-weight: 600 !important;
+}
+
+.warning {
+  color: #ff9800 !important;
+}
+
+.danger {
+  color: #ff4444 !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 15px rgba(255, 68, 68, 0.6);
+}
+
+.help {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 0.5rem 0 1rem 0;
+  line-height: 1.7;
+  opacity: 0.8;
+  padding-left: 0.5rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Загрузка */
+.loading {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loading::before {
+  content: '';
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 77, 77, 0.1);
+  border-top-color: #ff4d4d;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+

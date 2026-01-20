@@ -1,0 +1,25 @@
+/**
+ * Servers - Главный файл стилей
+ * Объединяет все модули стилей для страницы Servers
+ * 
+ * Структура:
+ * - Servers-base.module.css - базовые стили, layout
+ * - Servers-buttons.module.css - кнопки управления
+ * - Servers-cards.module.css - карточки серверов
+ * - Servers-compact.module.css - компактный вид
+ * - Servers-listener.module.css - UDP listener
+ * - Servers-modal.module.css - модальные окна
+ * - Servers-groups.module.css - группы серверов
+ * - Servers-form.module.css - стили форм
+ * - Servers-responsive.module.css - адаптивные стили
+ */
+
+@import './Servers-base.module.css';
+@import './Servers-buttons.module.css';
+@import './Servers-cards.module.css';
+@import './Servers-compact.module.css';
+@import './Servers-listener.module.css';
+@import './Servers-modal.module.css';
+@import './Servers-groups.module.css';
+@import './Servers-form.module.css';
+@import './Servers-responsive.module.css';

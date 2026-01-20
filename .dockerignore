@@ -1,0 +1,71 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.eggs
+*.egg-info
+.pytest_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Virtual environments
+venv
+.venv
+env
+
+# Node
+node_modules
+.npm
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build artifacts
+dist
+build
+*.log
+
+# Local files (keep .env.example)
+*.sqlite
+*.sqlite3
+.env
+.env.local
+
+# Database files in root (but not in backend/data)
+/*.db
+
+# Backups
+backups
+migration_backups
+full_backups
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in container)
+docs
+*.md
+!README.md
+
+# Windows scripts
+*.bat
+
+# Test files (keep conftest.py and __init__.py)
+backend/tests/test_*.py
+

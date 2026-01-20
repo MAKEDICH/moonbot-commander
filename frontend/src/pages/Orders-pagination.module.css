@@ -1,0 +1,111 @@
+/**
+ * Orders - Пагинация
+ * Pagination controls, page buttons, page input
+ */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.pageBtn {
+  padding: 8px 16px;
+  background: var(--accent-gradient);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.pageBtn:disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.5;
+}
+
+.pageInfo {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.pageJump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageInput {
+  width: 60px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.pageInput::placeholder {
+  color: #6b7280;
+  opacity: 0.8;
+}
+
+.pageInput:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.pageInput:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.8);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+  box-shadow: 
+    0 0 0 3px rgba(99, 102, 241, 0.2),
+    0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.goToPageBtn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8) 0%, rgba(168, 85, 247, 0.8) 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.goToPageBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 1) 0%, rgba(168, 85, 247, 1) 100%);
+}
+
+.goToPageBtn:active {
+  transform: translateY(0);
+}
+
+

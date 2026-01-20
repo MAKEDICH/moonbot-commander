@@ -1,0 +1,236 @@
+/**
+ * ScheduledCommands - Модальные окна
+ * Стили для модальных окон и форм
+ */
+
+/* Модальное окно */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.modalContent {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 245, 255, 0.3);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.modalHeader h2 {
+  margin: 0;
+  color: var(--accent-primary);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.3s;
+}
+
+.closeBtn:hover {
+  color: var(--accent-primary);
+}
+
+.form {
+  padding: 1.5rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.formGroup input[type="text"],
+.formGroup input[type="number"],
+.formGroup input[type="date"],
+.formGroup input[type="time"],
+.formGroup textarea {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+/* Стилизация иконок календаря и часов */
+.formGroup input[type="date"]::-webkit-calendar-picker-indicator,
+.formGroup input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.2);
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.formGroup input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.formGroup input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  filter: invert(1) brightness(1.5);
+}
+
+/* Специальный стиль для input в модальном окне */
+.modalContent input[type="text"],
+.modalContent input[type="password"] {
+  color: #ffffff !important;
+  background: rgba(26, 29, 41, 0.8) !important;
+  border: 2px solid rgba(0, 245, 255, 0.3) !important;
+}
+
+.modalContent input[type="text"]:focus,
+.modalContent input[type="password"]:focus {
+  color: #ffffff !important;
+  background: rgba(26, 29, 41, 0.95) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
+}
+
+.formGroup textarea {
+  resize: vertical;
+  font-family: 'Fira Code', monospace;
+}
+
+.formGroup small {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 245, 255, 0.05);
+  border-left: 3px solid rgba(0, 245, 255, 0.4);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.dateTimeGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.timezoneSelect {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.timezoneSelect:hover {
+  border-color: var(--accent-primary);
+}
+
+.timezoneSelect:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 245, 255, 0.1);
+}
+
+.timezoneSelect option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.5rem;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bg-tertiary);
+}
+
+.saveBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-primary);
+  color: #1a1d29;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: var(--accent-secondary);
+  transform: translateY(-2px);
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelBtnModal {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--text-secondary);
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.cancelBtnModal:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.labelNote {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(0, 245, 255, 0.7);
+  margin-left: 0.5rem;
+  font-style: italic;
+}
+
+
